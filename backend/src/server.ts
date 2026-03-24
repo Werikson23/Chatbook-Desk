@@ -11,12 +11,6 @@ import {
 } from "./services/PaymentGatewayServices/PaymentGatewayServices";
 import { i18nReady } from "./services/TranslationServices/i18nService";
 
-// Environment Variable Validation
-if (!process.env.PORT) {
-  logger.error("PORT environment variable is not set.");
-  process.exit(1);
-}
-
 // Function to start server and initialize services
 async function startServer() {
   try {

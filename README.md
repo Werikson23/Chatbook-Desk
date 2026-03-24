@@ -1,6 +1,8 @@
 [![en](https://img.shields.io/badge/lang-en-green.svg)](README.md)
 [![pt-br](https://img.shields.io/badge/lang-pt--br-red.svg)](README.pt.md)
 
+**Chatbook-Desk** — fork/development based on the Ticketz project (see history and license below).
+
 # About the Project
 
 Ticketz is a communicator with CRM and helpdesk features that utilizes WhatsApp as a means of communication with clients.
@@ -103,14 +105,38 @@ git clone https://github.com/allgood/ticketz.git
 cd ticketz
 ```
 
-## Running Locally
+### Repository layout
 
-By default, the configuration is set to run the system only on the local computer. To run it on a local network, you need to edit the `.env-backend-local` and `.env-frontend-local` files and change the backend and frontend addresses from `localhost` to the desired IP, for example, `192.168.0.10`.
+- **`docker/`** — Compose files (`docker-compose.dev.yml` = infra only; `docker-compose-local.yaml` / `docker-compose.prod.yml` / ACME / Cloudflare) and `docker/confs/`.
+- **`env/`** — Environment files for each **Docker** stack; local Node uses `backend/.env.development` from `backend/.env.example`.
+- **`docs/`** — Guides, `docs/futuras/`, and `docs/operations/` (backup Postgres).
+- **`tests/`** — Placeholder for cross-cutting tests; backend Jest tests remain in `backend/`.
 
-To run the system, simply execute the following command:
+### Quick start (development)
+
+From the repository root, after installing Node 20 and Docker:
 
 ```bash
-docker compose -f docker-compose-local.yaml up -d
+npm install
+cp backend/.env.example backend/.env.development
+# optional: cp frontend/.env.example frontend/.env.development
+npm run dev:up
+cd backend && npm ci && npm run generate:i18nkeys && npm run build && npx sequelize db:migrate && npx sequelize db:seed:all && cd ..
+npm run dev
+```
+
+`npm run dev` runs backend + frontend with hot reload; Postgres/Redis stay in Docker. Stop infra: `npm run dev:down`.
+
+Health checks: `GET /health` (liveness), `GET /ready` (DB) on the backend port.
+
+## Running Locally
+
+By default, the configuration is set to run the system only on the local computer. To run it on a local network, you need to edit the `env/.env-backend-local` and `env/.env-frontend-local` files and change the backend and frontend addresses from `localhost` to the desired IP, for example, `192.168.0.10`.
+
+To run the system from the repository root, execute the following command:
+
+```bash
+docker compose -f docker/docker-compose-local.yaml up -d
 ```
 
 On the first run, the system will initialize the databases and tables, and after a few minutes, Ticketz will be accessible through port 3000.
@@ -122,7 +148,15 @@ The application will restart automatically after each server reboot.
 Execution can be stopped with the command:
 
 ```bash
-docker compose -f docker-compose-local.yaml down
+docker compose -f docker/docker-compose-local.yaml down
+```
+
+### Production-style stack (healthchecks)
+
+Full stack with `depends_on` conditions and container healthchecks (adjust `env/*` for real URLs):
+
+```bash
+docker compose -f docker/docker-compose.prod.yml up -d
 ```
 
 ## Running and Serving on the Internet
@@ -133,7 +167,7 @@ Having a server accessible via the internet, it is necessary to adjust two DNS n
 * **frontend:** ticketz.example.com
 * **email:** ticketz@example.com
 
-You need to edit the `.env-backend-acme` and `.env-frontend-acme` files, defining these values in them.
+You need to edit the `env/.env-backend-acme` and `env/.env-frontend-acme` files, defining these values in them.
 
 If you want to use reCAPTCHA in the company signup, you also need to insert the secret and site keys in the backend and frontend files, respectively.
 
@@ -142,19 +176,19 @@ This guide assumes that the terminal is open and logged in with a regular user w
 Being in the project's root folder, execute the following command to start the service:
 
 ```bash
-sudo docker compose -f docker-compose-acme.yaml up -d
+sudo docker compose -f docker/docker-compose-acme.yaml up -d
 ```
 
 On the first run, Docker will compile the code and create the containers, and then Ticketz will initialize the databases and tables. This operation can take quite some time, after which Ticketz will be accessible at the provided frontend address.
 
-The default username is the email address provided on the `.env-backend-acme` file and the default password is 123456.
+The default username is the email address provided on the `env/.env-backend-acme` file and the default password is 123456.
 
 The application will restart automatically after each server reboot.
 
 To terminate the service, use the following command:
 
 ```bash
-sudo docker compose -f docker-compose-acme.yaml down
+sudo docker compose -f docker/docker-compose-acme.yaml down
 ```
 
 Important Notice

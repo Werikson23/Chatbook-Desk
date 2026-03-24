@@ -21,6 +21,7 @@ import { green } from '@material-ui/core/colors';
 import { PhoneCallContext } from "../../context/PhoneCall/PhoneCallContext";
 import { wavoipAvailable, wavoipCall } from "../../helpers/wavoipCallManager";
 import { toBeChecked } from "@testing-library/jest-dom/matchers";
+import TicketCloseModal from "../TicketCloseModal";
 
 const useStyles = makeStyles(theme => ({
 	actionButtons: {
@@ -39,6 +40,7 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
 	const history = useHistory();
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [loading, setLoading] = useState(false);
+	const [closeModalOpen, setCloseModalOpen] = useState(false);
 	const ticketOptionsMenuOpen = Boolean(anchorEl);
 	const { user } = useContext(AuthContext);
 	const { setCurrentTicket } = useContext(TicketsContext);
@@ -58,12 +60,13 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
 		setAnchorEl(null);
 	};
 
-	const handleUpdateTicketStatus = async (e, status, userId) => {
+	const handleUpdateTicketStatus = async (e, status, userId, extraData = {}) => {
 		setLoading(true);
 		try {
 			await api.put(`/tickets/${ticket.id}`, {
 				status: status,
 				userId: userId || null,
+        ...extraData
 			});
 
 			setLoading(false);
@@ -78,6 +81,14 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
 			toastError(err);
 		}
 	};
+
+  const handleConfirmClose = ({ closeReasonId, farewellTemplateId }) => {
+    setCloseModalOpen(false);
+    handleUpdateTicketStatus(null, "closed", user?.id, {
+      closeReasonId,
+      farewellTemplateId
+    });
+  };
   
   const handleCall = async () => {
     wavoipCall(ticket, () => {
@@ -161,7 +172,7 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
               </Tooltip>
               <ThemeProvider theme={customTheme}>
                 <Tooltip title={i18n.t("messagesList.header.buttons.resolve")}>
-                  <IconButton onClick={e => handleUpdateTicketStatus(e, "closed", user?.id)} color="primary">
+                  <IconButton onClick={() => setCloseModalOpen(true)} color="primary">
                     <CheckCircleIcon />
                   </IconButton>
                 </Tooltip>
@@ -192,6 +203,13 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
 					{i18n.t("messagesList.header.buttons.accept")}
 				</ButtonWithSpinner>
 			)}
+      <TicketCloseModal
+        open={closeModalOpen}
+        onClose={() => setCloseModalOpen(false)}
+        onConfirm={handleConfirmClose}
+        ticket={ticket}
+        loading={loading}
+      />
 		</div>
 	);
 };

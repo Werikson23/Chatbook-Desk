@@ -31,6 +31,9 @@ export function SelectCountry({ className, label, value, name, onChange }) {
         value={value}
         onChange={onChange}
       >
+        {!countries.some((country) => country.iso2 === value) && (
+          <MenuItem value={value || ""}>{value || i18n.t('addressForm.country')}</MenuItem>
+        )}
         {countries.map((country) => (
           <MenuItem key={country.iso2} value={country.iso2}>
             {country.emoji} {country.name}

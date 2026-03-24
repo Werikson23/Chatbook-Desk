@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import * as Yup from "yup";
 import { Formik, Form, Field } from "formik";
 import { toast } from "react-toastify";
@@ -16,20 +16,14 @@ import {
   TextField,
   Switch,
   FormControlLabel,
-  FormControl,
-  FormGroup,
   Typography,
-  Tooltip,
-  Paper,
-  Grid,
-  Checkbox,
+  Grid
 } from "@material-ui/core";
 
 import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
 import toastError from "../../errors/toastError";
 import QueueSelect from "../QueueSelect";
-import HelpOutlineOutlinedIcon from "@material-ui/icons/HelpOutlineOutlined";
 
 import { SelectLanguage } from "../SelectLanguage";
 
@@ -67,20 +61,31 @@ const SessionSchema = Yup.object().shape({
     .required("Required"),
 });
 
+const normalizeLanguage = (rawLanguage) => {
+  if (rawLanguage === null || rawLanguage === undefined) return "";
+  const value = String(rawLanguage).trim();
+  if (!value) return "";
+  if (value === "pt-PT") return "pt_PT";
+  if (value === "pt-BR") return "pt";
+  return value;
+};
+
+const buildInitialState = () => ({
+  name: "",
+  greetingMessage: "",
+  complationMessage: "",
+  outOfHoursMessage: "",
+  ratingMessage: "",
+  transferMessage: "",
+  isDefault: false,
+  token: "",
+  provider: "beta",
+  language: localStorage.getItem("language") || ""
+});
+
 const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
   const classes = useStyles();
-  const initialState = {
-    name: "",
-    greetingMessage: "",
-    complationMessage: "",
-    outOfHoursMessage: "",
-    ratingMessage: "",
-    transferMessage: "",
-    isDefault: false,
-    token: "",
-    provider: "beta",
-    language: localStorage.getItem("language") || "",
-  };
+  const initialState = useMemo(() => buildInitialState(), []);
   const [whatsApp, setWhatsApp] = useState(initialState);
   const [selectedQueueIds, setSelectedQueueIds] = useState([]);
 
@@ -90,7 +95,11 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
 
       try {
         const { data } = await api.get(`whatsapp/${whatsAppId}?session=0`);
-        setWhatsApp(data);
+        setWhatsApp({
+          ...initialState,
+          ...data,
+          language: normalizeLanguage(data?.language ?? localStorage.getItem("language"))
+        });
 
         const whatsQueueIds = data.queues?.map((queue) => queue.id);
         setSelectedQueueIds(whatsQueueIds);
@@ -99,7 +108,7 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
       }
     };
     fetchSession();
-  }, [whatsAppId]);
+  }, [whatsAppId, initialState]);
 
   const handleSaveWhatsApp = async (values) => {
     const whatsappData = { ...values, queueIds: selectedQueueIds };
@@ -188,7 +197,7 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
                     label={i18n.t("queueModal.form.greetingMessage")}
                     type="greetingMessage"
                     multiline
-                    rows={4}
+                    minRows={4}
                     fullWidth
                     name="greetingMessage"
                     spellCheck={true}
@@ -215,7 +224,7 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
                     label={i18n.t("queueModal.form.complationMessage")}
                     type="complationMessage"
                     multiline
-                    rows={4}
+                    minRows={4}
                     fullWidth
                     name="complationMessage"
                     spellCheck={true}
@@ -236,7 +245,7 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
                     label={i18n.t("queueModal.form.transferMessage")}
                     type="transferMessage"
                     multiline
-                    rows={4}
+                    minRows={4}
                     fullWidth
                     name="transferMessage"
                     spellCheck={true}
@@ -257,7 +266,7 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
                     label={i18n.t("queueModal.form.outOfHoursMessage")}
                     type="outOfHoursMessage"
                     multiline
-                    rows={4}
+                    minRows={4}
                     fullWidth
                     name="outOfHoursMessage"
                     spellCheck={true}
@@ -278,7 +287,7 @@ const WhatsAppModal = ({ open, onClose, whatsAppId }) => {
                     label={i18n.t("queueModal.form.ratingMessage")}
                     type="ratingMessage"
                     multiline
-                    rows={4}
+                    minRows={4}
                     fullWidth
                     name="ratingMessage"
                     spellCheck={true}

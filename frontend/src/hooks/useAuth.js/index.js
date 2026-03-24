@@ -19,12 +19,22 @@ const useAuth = () => {
 
   const socketManager = useContext(SocketContext);
 
+  const parseStoredToken = () => {
+    const rawToken = localStorage.getItem("token");
+    if (!rawToken) return null;
+    try {
+      return JSON.parse(rawToken);
+    } catch (_) {
+      localStorage.removeItem("token");
+      return null;
+    }
+  };
+
   api.interceptors.request.use(
     (config) => {
-      const token = localStorage.getItem("token");
+      const token = parseStoredToken();
       if (token) {
-        config.headers["Authorization"] = `Bearer ${JSON.parse(token)}`;
-        setIsAuth(true);
+        config.headers["Authorization"] = `Bearer ${token}`;
       }
       return config;
     },
@@ -60,7 +70,7 @@ const useAuth = () => {
   );
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = parseStoredToken();
     (async () => {
       if (token) {
         try {

@@ -20,7 +20,6 @@ if (!config) {
 
   axios.get(backendUrl)
     .then((response) => {
-      console.log(response);
       const serverDate = new Date(response.headers["date"]);
       const clientDate = new Date();
       const diff = Math.abs(serverDate - clientDate);

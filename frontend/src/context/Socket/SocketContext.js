@@ -43,7 +43,6 @@ import { createContext } from "react";
 import openSocket from "socket.io-client";
 import { getBackendSocketURL } from "../../services/config";
 import { decodeToken, isExpired } from "react-jwt";
-import api from "../../services/api";
 
 class ManagedSocket {
   constructor(socketManager) {
@@ -128,8 +127,12 @@ const socketManager = {
   socketReady: false,
 
   GetSocket: function(_discardCompanyId = null) {
-
-    const token = JSON.parse(localStorage.getItem("token"));
+    let token = null;
+    try {
+      token = JSON.parse(localStorage.getItem("token"));
+    } catch (_) {
+      localStorage.removeItem("token");
+    }
     if (!token) {
       return new DummySocket();
     }
@@ -147,13 +150,8 @@ const socketManager = {
       }
       
       if (isExpired(token)) {
-        console.debug("Expired token, refreshing token");
-
-        api.get("/auth/me").then((response) => {
-          console.debug("Token refreshed", response);
-          window.location.reload();
-        });
-
+        console.debug("Expired token, requesting re-login");
+        localStorage.removeItem("token");
         return new DummySocket();
       }
 
@@ -169,10 +167,15 @@ const socketManager = {
 
       this.currentSocket.io.on("reconnect_attempt", () => {
         this.currentSocket.io.opts.query.r = 1;
-        const newToken = JSON.parse(localStorage.getItem("token"));
-        if ( isExpired(newToken) ) {
+        let newToken = null;
+        try {
+          newToken = JSON.parse(localStorage.getItem("token"));
+        } catch (_) {
+          localStorage.removeItem("token");
+        }
+        if (!newToken || isExpired(newToken)) {
           console.debug("Refreshing");
-          window.location.reload();
+          localStorage.removeItem("token");
         } else {
           console.debug("Using new token");
           this.currentSocket.io.opts.query.token = newToken;
@@ -183,11 +186,16 @@ const socketManager = {
         console.debug(`socket disconnected because: ${reason}`);
         if (reason.startsWith("io server disconnect")) {
           console.debug("tryng to reconnect", this.currentSocket);
-          const newToken = JSON.parse(localStorage.getItem("token"));
+          let newToken = null;
+          try {
+            newToken = JSON.parse(localStorage.getItem("token"));
+          } catch (_) {
+            localStorage.removeItem("token");
+          }
           
-          if ( isExpired(newToken) ) {
+          if (!newToken || isExpired(newToken)) {
             console.debug("Expired token - refreshing");
-            window.location.reload();
+            localStorage.removeItem("token");
             return;
           }
           console.debug("Reconnecting using refreshed token");

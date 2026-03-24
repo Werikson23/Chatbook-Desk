@@ -2,6 +2,10 @@
 /dist
 /.well-known
 /.env
+/.env.development
+/.env.production
+!/.env.example
+!/.env.*.example
 /build
 /.project
 /public/config.json

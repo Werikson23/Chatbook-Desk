@@ -208,6 +208,9 @@ export const SendWhatsAppMedia = async ({
       media.mimetype,
       ptt
     );
+    if (!options) {
+      throw new Error("ERR_INVALID_MEDIA_OPTIONS");
+    }
     return sendWhatsappFile(ticket, mediaInfo, {
       caption: caption || undefined,
       fileName,

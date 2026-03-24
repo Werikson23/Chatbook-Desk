@@ -94,6 +94,8 @@ const ListTicketsService = async ({
     (await GetCompanySetting(companyId, "groupsTab", "disabled")) === "enabled";
 
   const user = await ShowUserService(userId);
+  const userQueueIds = user.queues?.map(queue => queue.id) || [];
+  const nonAdminQueueIds = queueIds.length ? queueIds : userQueueIds;
 
   const andedOrs: WhereOptions<Ticket>[] = [
     {
@@ -102,14 +104,32 @@ const ListTicketsService = async ({
   ];
 
   let whereCondition: Filterable["where"] = {
-    [Op.and]: andedOrs,
-    queueId: {
-      [Op.or]: user.profile === "admin" ? [queueIds, null] : [queueIds]
-    }
+    [Op.and]: andedOrs
   };
 
+  if (user.profile === "admin") {
+    if (queueIds.length) {
+      whereCondition = {
+        ...whereCondition,
+        queueId: {
+          [Op.or]: [queueIds, null]
+        }
+      };
+    }
+  } else if (nonAdminQueueIds.length) {
+    whereCondition = {
+      ...whereCondition,
+      queueId: {
+        [Op.or]: [nonAdminQueueIds]
+      }
+    };
+  }
+
   if (groupsTab) {
-    whereCondition.isGroup = groups === "true";
+    whereCondition = {
+      ...whereCondition,
+      isGroup: groups === "true"
+    };
   }
   let includeCondition: Includeable[];
 
@@ -145,11 +165,19 @@ const ListTicketsService = async ({
   if (showAll === "true" && user.profile === "admin") {
     andedOrs.length = 0;
     whereCondition = {
-      [Op.and]: andedOrs,
-      queueId: { [Op.or]: [queueIds, null] }
+      [Op.and]: andedOrs
     };
+    if (queueIds.length) {
+      whereCondition = {
+        ...whereCondition,
+        queueId: { [Op.or]: [queueIds, null] }
+      };
+    }
     if (groupsTab) {
-      whereCondition.isGroup = groups === "true";
+      whereCondition = {
+        ...whereCondition,
+        isGroup: groups === "true"
+      };
     }
   }
 

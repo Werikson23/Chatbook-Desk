@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import qs from 'query-string'
 
 import * as Yup from "yup";
 import { useHistory } from "react-router-dom";
@@ -19,7 +18,6 @@ import {
 	Select,
 } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
-import { useTheme } from "@material-ui/core";
 import Container from "@material-ui/core/Container";
 import { i18n } from "../../translate/i18n";
 
@@ -74,18 +72,10 @@ const UserSchema = Yup.object().shape({
 });
 
 const SignUp = () => {
-  const theme = useTheme();
 	const classes = useStyles();
 	const history = useHistory();
   const { getPublicSetting } = useSettings();
   const [allowSignup, setAllowSignup] = useState(false);
-
-	let companyId = null
-
-	const params = qs.parse(window.location.search)
-	if (params.companyId !== undefined) {
-		companyId = params.companyId
-	}
 
 	const initialState = { name: "", email: "", phone: "", password: "", planId: "", };
 
@@ -118,22 +108,26 @@ const SignUp = () => {
 			setPlans(list);
 		}
 		fetchData();
-	}, []);
+	}, [listPublicPlans]);
 
 	const captchaRef = useRef(null)
 
-  getPublicSetting("allowSignup").then(
-    (data) => {
-      setAllowSignup(data === "enabled");
-    }
-  )
+  useEffect(() => {
+    getPublicSetting("allowSignup")
+      .then((data) => {
+        setAllowSignup(data === "enabled");
+      })
+      .catch((error) => {
+        toastError(error);
+      });
+  }, [getPublicSetting]);
 
 	return (
 		<Container component="main" maxWidth="xs">
 			<CssBaseline />
 			<div className={classes.paper}>
         <div>
-          <img className={classes.logoImg} />
+          <img className={classes.logoImg} alt="Application logo" />
         </div>
 				<Formik
 					initialValues={user}

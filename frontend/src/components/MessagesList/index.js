@@ -773,7 +773,6 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
     socket.on(`company-${companyId}-presence`, (data) => {
       const { scrollTop, clientHeight, scrollHeight } = scrollRef.current;
-      console.log({ presence: data.presence, scrollTop, clientHeight, scrollHeight });
       const isAtBottom = scrollTop + clientHeight >= (scrollHeight - clientHeight / 4);
       if (data?.ticketId === ticket.id) {
         setContactPresence(data.presence);
@@ -938,9 +937,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
       return (
         <>
-          <audio className={classes.audioBottom} controls>
-            <source src={message.mediaUrl} type="audio/ogg"></source>
-          </audio>
+          <audio className={classes.audioBottom} controls src={message.mediaUrl} />
           {
             message.body &&
             !["🔊","Áudio"].includes(message.body) &&
@@ -952,7 +949,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       );
     }
 
-    if (!document || message.mediaType === "video") {
+    if (!document && message.mediaType === "video") {
       return (
         <>
           <div

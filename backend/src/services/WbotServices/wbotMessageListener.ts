@@ -1,6 +1,7 @@
 import path from "path";
 import * as Sentry from "@sentry/node";
 import { isNil, head, keys } from "lodash";
+import mime from "mime-types";
 
 import {
   WASocket,
@@ -490,9 +491,14 @@ const downloadMedia = async (
     throw new Error("ERR_FILESIZE_OVER_LIMIT");
   }
 
+  const inferredMimetype =
+    message?.mimetype ||
+    (msg?.documentMessage?.fileName
+      ? mime.lookup(msg.documentMessage.fileName) || ""
+      : "");
   const messageType = msg?.documentMessage
     ? "document"
-    : normalizeMediaType(message.mimetype);
+    : normalizeMediaType(inferredMimetype || "application/octet-stream");
 
   let stream: Transform;
   let contDownload = 0;
@@ -531,13 +537,17 @@ const downloadMedia = async (
   let filename = msg?.documentMessage?.fileName || "";
 
   if (!filename) {
-    const ext = message.mimetype.split("/")[1].split(";")[0];
+    const fallbackMime = inferredMimetype || "application/octet-stream";
+    const ext =
+      fallbackMime.includes("/") && fallbackMime.split("/")[1]
+        ? fallbackMime.split("/")[1].split(";")[0]
+        : "bin";
     filename = `${makeRandomId(5)}-${new Date().getTime()}.${ext}`;
   }
 
   const media = {
     data: buffer,
-    mimetype: message.mimetype,
+    mimetype: inferredMimetype || "application/octet-stream",
     filename
   };
   return media;
@@ -708,8 +718,12 @@ export const verifyMediaMessage = async (
     });
   }
 
-  const mimetype = mediaInfo?.mimetype || media?.mimetype || "";
-  const mediaType = mimetype.split("/")[0];
+  const mimetype =
+    mediaInfo?.mimetype ||
+    media?.mimetype ||
+    messageMedia?.mimetype ||
+    "application/octet-stream";
+  const mediaType = normalizeMediaType(mimetype);
   const filename = mediaInfo?.filename || media?.filename || "file.bin";
 
   let body = await getBodyMessage(msg?.message);

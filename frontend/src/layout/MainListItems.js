@@ -33,6 +33,8 @@ import AnnouncementIcon from "@material-ui/icons/Announcement";
 import ForumIcon from "@material-ui/icons/Forum";
 import LocalAtmIcon from '@material-ui/icons/LocalAtm';
 import RotateRight from "@material-ui/icons/RotateRight";
+import AssignmentTurnedInIcon from "@material-ui/icons/AssignmentTurnedIn";
+import SmsIcon from "@material-ui/icons/Sms";
 import { i18n } from "../translate/i18n";
 import BorderColorIcon from '@material-ui/icons/BorderColor';
 import { WhatsAppsContext } from "../context/WhatsApp/WhatsAppsContext";
@@ -305,7 +307,7 @@ const MainListItems = (props) => {
               to="/chats"
               primary={i18n.t("mainDrawer.listItems.chats")}
               icon={
-                <Badge color="secondary" variant="dot" invisible={invisible}>
+                <Badge color="secondary" variant="dot" overlap="rectangular" invisible={invisible}>
                   <ForumIcon />
                 </Badge>
               }
@@ -430,7 +432,7 @@ const MainListItems = (props) => {
               to="/connections"
               primary={i18n.t("mainDrawer.listItems.connections")}
               icon={
-                <Badge badgeContent={connectionWarning ? "!" : 0} color="error">
+                <Badge badgeContent={connectionWarning ? "!" : 0} color="error" overlap="rectangular">
                   <SyncAltIcon />
                 </Badge>
               }
@@ -439,6 +441,16 @@ const MainListItems = (props) => {
               to="/queues"
               primary={i18n.t("mainDrawer.listItems.queues")}
               icon={<AccountTreeOutlinedIcon />}
+            />
+            <ListItemLink
+              to="/close-reasons"
+              primary="Motivos de Encerramento"
+              icon={<AssignmentTurnedInIcon />}
+            />
+            <ListItemLink
+              to="/farewell-templates"
+              primary="Mensagens de Despedida"
+              icon={<SmsIcon />}
             />
             <ListItemLink
               to="/users"

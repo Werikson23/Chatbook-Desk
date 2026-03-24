@@ -42,7 +42,7 @@ contend:{minWidth: 300,maxWidth: 500,},
 function AnnouncementDialog({ announcement, open, handleClose }) {
  const classes=useStyles()
   const getMediaPath = (filename) => {
-    return `${getBackendURL()}}/public/${filename}`;
+    return `${getBackendURL()}/public/${filename}`;
   };
   return (
     <Dialog
@@ -253,6 +253,7 @@ export default function AnnouncementsPopover() {
         <Badge
           color="secondary"
           variant="dot"
+          overlap="rectangular"
           invisible={invisible || announcements.length < 1}
         >
           <AnnouncementIcon style={{ color: "white" }} />
@@ -283,9 +284,9 @@ export default function AnnouncementsPopover() {
             style={{ minWidth: 300 }}
           >
             {isArray(announcements) &&
-              announcements.map((item, key) => (
+              announcements.map((item) => (
                 <ListItem
-                  key={key}
+                  key={item.id}
                   style={{
                     // background: key % 2 === 0 ? "#ededed" : "white",
                     border: "1px solid #eee",

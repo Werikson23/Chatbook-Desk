@@ -53,7 +53,7 @@ cd ticketz
 O Ticketz fornece uma configuração do docker-compose para executar `postgres` e `redis`. Inicie com:
 
 ```bash
-docker compose -f docker-compose-dev.yaml up -d
+docker compose -f docker/docker-compose.dev.yml up -d
 ```
 
 Após alguns segundos, você terá:
@@ -81,14 +81,16 @@ O exemplo de configuração padrão deve ser copiado para o arquivo de configura
 **No Linux:**
 
 ```bash
-cp .env.dev .env
+cp .env.example .env.development
 ```
 
 **No Windows:**
 
 ```powershell
-copy .env.dev .env
+copy .env.example .env.development
 ```
+
+Para testes automatizados (`npm test` no backend), copie também `cp .env.test.example .env.test`.
 
 ### Inicializar o banco de dados
 
@@ -158,7 +160,7 @@ Todos os comandos devem ser executados dentro da pasta base do projeto (geralmen
 #### Parar os serviços
 
 ```bash
-docker compose -f docker-compose-dev.yaml down
+docker compose -f docker/docker-compose.dev.yml down
 ```
 
 #### Remover os dados (resetar)
@@ -173,7 +175,7 @@ docker volume rm ticketz_redis_data
 #### (Re)iniciar os serviços
 
 ```bash
-docker compose -f docker-compose-dev.yaml up -d
+docker compose -f docker/docker-compose.dev.yml up -d
 ```
 
 ### Alterar configurações
@@ -186,7 +188,7 @@ Por padrão, estas são as portas utilizadas neste guia:
 - Backend do Ticketz: 8080
 - Frontend do Ticketz: 3000
 
-Você pode alterar as portas de `postgres`, `redis` e `pgadmin` editando o arquivo `docker-compose-dev.yaml`.
+Você pode alterar as portas de `postgres`, `redis` e `pgadmin` editando o arquivo `docker/docker-compose.dev.yml`.
 
 Para alterar a porta do backend do Ticketz, edite o arquivo `.env` e também crie o arquivo `config-dev.json` em `frontend/public`, usando como base o `frontend/public/config-dev-example.json`.
 

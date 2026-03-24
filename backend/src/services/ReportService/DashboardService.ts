@@ -20,6 +20,7 @@ export type DashboardDateRange = {
   hour_from?: string;
   hour_to?: string;
   tz?: string;
+  closeReasonId?: string | number;
 };
 
 type TicketsStatisticsData = {
@@ -61,23 +62,36 @@ type UserReportData = {
 export async function calculateTicketStatistics(
   companyId: number,
   start: Date,
-  end: Date
+  end: Date,
+  closeReasonId?: number | null
 ): Promise<TicketTrackingStatistics> {
+  const trackingWhere: WhereOptions<TicketTraking> = {
+    companyId,
+    createdAt: {
+      [Op.between]: [start, end]
+    },
+    finishedAt: {
+      [Op.between]: [start, end]
+    }
+  };
+
+  if (closeReasonId) {
+    trackingWhere.ticketId = {
+      [Op.in]: literal(
+        `(SELECT "id" FROM "Tickets" WHERE "companyId" = ${Number(
+          companyId
+        )} AND "closeReasonId" = ${Number(closeReasonId)})`
+      )
+    };
+  }
+
   const ticketStatistics = (await TicketTraking.findOne({
     attributes: [
       [fn("AVG", col("waitTime")), "avgWaitTime"],
       [fn("AVG", col("serviceTime")), "avgServiceTime"],
       [fn("COUNT", col("id")), "totalClosed"]
     ],
-    where: {
-      companyId,
-      createdAt: {
-        [Op.between]: [start, end]
-      },
-      finishedAt: {
-        [Op.between]: [start, end]
-      }
-    },
+    where: trackingWhere,
     raw: true
   })) as unknown as TicketTrackingStatistics;
 
@@ -104,6 +118,7 @@ export async function calculateTicketStatistics(
         AND (tt."companyId" = :companyId)
         AND (tt."finishedAt" BETWEEN :startDate AND :endDate)
         AND (c."createdAt" BETWEEN :startDate AND :endDate)
+        AND (:closeReasonId IS NULL OR t."closeReasonId" = :closeReasonId)
   ) counters_list GROUP BY "contactId") counters_totals
   `;
 
@@ -111,7 +126,8 @@ export async function calculateTicketStatistics(
     replacements: {
       companyId,
       startDate: start,
-      endDate: end
+      endDate: end,
+      closeReasonId: closeReasonId || null
     },
     type: QueryTypes.SELECT
   })) as unknown as [{ count: number }];
@@ -189,6 +205,20 @@ export async function usersStatusSummary(companyId) {
 }
 
 export async function userReport(companyId: number, start: Date, end: Date) {
+  return userReportByFilter(companyId, start, end, null);
+}
+
+export async function userReportByFilter(
+  companyId: number,
+  start: Date,
+  end: Date,
+  closeReasonId?: number | null
+) {
+  const ticketFilterWhere: WhereOptions<Ticket> = {};
+  if (closeReasonId) {
+    ticketFilterWhere.closeReasonId = closeReasonId;
+  }
+
   const result = await User.findAll({
     attributes: [
       "id",
@@ -244,6 +274,7 @@ export async function userReport(companyId: number, start: Date, end: Date) {
         model: Ticket,
         as: "tickets",
         attributes: [],
+        where: ticketFilterWhere,
         required: false,
         include: [
           {
@@ -296,6 +327,7 @@ export async function ticketsStatisticsService(
   let start: Date;
   let end = new Date();
   const tz = params.tz || "Z";
+  const closeReasonId = params.closeReasonId ? Number(params.closeReasonId) : null;
 
   if (params.date_from && params.date_to) {
     start = new Date(
@@ -322,7 +354,12 @@ export async function ticketsStatisticsService(
       ),
       close: await listCounterSerie(companyId, "ticket-close", start, end)
     },
-    ticketStatistics: await calculateTicketStatistics(companyId, start, end)
+    ticketStatistics: await calculateTicketStatistics(
+      companyId,
+      start,
+      end,
+      closeReasonId
+    )
   };
 }
 
@@ -333,6 +370,7 @@ export async function usersReportService(
   let start: Date;
   let end = new Date();
   const tz = params.tz || "Z";
+  const closeReasonId = params.closeReasonId ? Number(params.closeReasonId) : null;
 
   if (params.date_from && params.date_to) {
     start = new Date(`${params.date_from}T00:00:00${tz}`);
@@ -344,6 +382,6 @@ export async function usersReportService(
   return {
     start: params.date_from,
     end: params.date_to,
-    userReport: await userReport(companyId, start, end)
+    userReport: await userReportByFilter(companyId, start, end, closeReasonId)
   };
 }

@@ -27,8 +27,6 @@ function prepareChartData(emptyData, serie) {
 }
 
 export function TicketCountersChart({ ticketCounters, start, end, hour_start, hour_end }) {
-  const now = new Date();
-  const tz = getTimezoneOffset();
 	const theme = useTheme();
 	const t = (...params) => i18n.t(...params);
 
@@ -36,6 +34,8 @@ export function TicketCountersChart({ ticketCounters, start, end, hour_start, ho
 
   useEffect(() => {
     if (!ticketCounters?.create?.field) return;
+    const now = new Date();
+    const tz = getTimezoneOffset();
 
     const field = ticketCounters.create.field;
     const step = {
@@ -82,7 +82,10 @@ export function TicketCountersChart({ ticketCounters, start, end, hour_start, ho
     }));
     
     setChartData(chartData);
-  }, [ticketCounters]);
+  }, [ticketCounters, start, end, hour_start, hour_end]);
+
+  const now = new Date();
+  const tz = getTimezoneOffset();
   
 	return (
 		<React.Fragment>

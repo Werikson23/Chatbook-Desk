@@ -1,3 +1,5 @@
+name: ticketz
+
 networks:
   ticketz:
 
@@ -11,26 +13,30 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ../backend
       dockerfile: ./Dockerfile
     volumes:
       - backend_public:/usr/src/app/public
       - backend_private:/usr/src/app/private
     env_file:
-      - .env-backend-cloudflare
+      - ../env/.env-backend-local
     restart: always
     depends_on:
       - postgres
       - redis
+    ports:
+      - ${BACKEND_PORT:-8080}:3000
     networks:
       - ticketz
 
   frontend:
+    ports:
+      - ${FRONTEND_PORT:-3000}:80
     build:
-      context: ./frontend
+      context: ../frontend
       dockerfile: ./Dockerfile
     env_file:
-      - .env-frontend-cloudflare
+      - ../env/.env-frontend-local
     volumes:
       - backend_public:/var/www/backend-public
     restart: always
@@ -65,14 +71,18 @@ services:
     networks:
       - ticketz
 
-  cloudflared:
-    image: cloudflare/cloudflared
-    restart: always
-    command: tunnel run
+  sidekick:
+    image: ghcr.io/ticketz-oss/ticketz-sidekick:latest
+    profiles: ["do-not-start"]
     env_file:
-      - .env-cloudflared
+      - ../env/.env-backend-local
+    restart: unless-stopped
+    volumes:
+      - backend_public:/backend-public
+      - backend_private:/backend-private
+      - ../backups:/backups
+      - ../retrieve:/retrieve
     depends_on:
-      - backend
-      - frontend
+      - postgres
     networks:
       - ticketz

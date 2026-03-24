@@ -1,3 +1,18 @@
 .docker
 *~
 /.project
+
+/node_modules
+
+# Local secrets (templates: backend/.env.example, frontend/.env.example, env/ for Docker)
+backend/.env
+backend/.env.development
+backend/.env.production
+backend/.env.test
+frontend/.env
+frontend/.env.development
+frontend/.env.production
+!backend/.env.example
+!backend/.env.*.example
+!frontend/.env.example
+!frontend/.env.*.example

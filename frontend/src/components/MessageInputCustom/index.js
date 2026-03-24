@@ -891,74 +891,48 @@ const MessageInputCustom = (props) => {
   const handleUploadMedia = async (e) => {
     setLoading(true);
     e.preventDefault();
-
-    const formData = new FormData();
-    formData.append("fromMe", true);
-
-    medias.forEach(async (media, idx) => {
-
-      const file = media;
-
-      if (!file) { return; }
-
-      if (media?.type.split('/')[0] == 'image') {
+    const compressIfImage = (file) =>
+      new Promise((resolve, reject) => {
+        if (!file?.type?.startsWith("image/")) {
+          resolve(file);
+          return;
+        }
         new Compressor(file, {
           quality: 0.7,
-
-          async success(media) {
-            //const formData = new FormData();
-            // The third parameter is required for server
-            //formData.append('file', result, result.name);
-
-            formData.append("medias", media, media.name);
-            formData.append("body", media.name);
-
+          success(result) {
+            resolve(result);
           },
-          error(err) {
-            alert('erro')
-            console.log(err.message);
-          },
-
+          error(error) {
+            reject(error);
+          }
         });
-      } else {
-        formData.append("medias", media);
-        formData.append("body", media.name);
+      });
 
-      }
+    try {
+      for (const media of medias) {
+        const processedMedia = await compressIfImage(media);
+        const formData = new FormData();
+        formData.append("fromMe", true);
+        formData.append("medias", processedMedia, processedMedia.name || media.name);
+        formData.append("body", processedMedia.name || media.name);
 
-
-    },);
-
-    setTimeout(async()=> {
-
-      try {
         await api.post(`/messages/${ticketId}`, formData, {
           onUploadProgress: (event) => {
-            let progress = Math.round(
-              (event.loaded * 100) / event.total
-            );
+            const total = event.total || event.loaded || 1;
+            const progress = Math.round((event.loaded * 100) / total);
             setPercentLoading(progress);
-          },
-        })
-          .then((response) => {
-            setLoading(false)
-            setMedias([])
-            setPercentLoading(0);
-          })
-          .catch((err) => {
-            setLoading(false);
-            setMedias([]);
-            setPercentLoading(0);
-            toastError(err);
-          });
-      } catch (err) {
-        toastError(err);
+          }
+        });
       }
 
-
-    },2000)
-
-  }
+      setMedias([]);
+      setPercentLoading(0);
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handlePresenceUpdate = (presence) => {
     if (!socket || currentPresence === presence) return;
@@ -1080,7 +1054,7 @@ const MessageInputCustom = (props) => {
   };
 
   const isGroup = showTabGroups && ticket.isGroup;
-  const disableOption = !isGroup && loading || recording || ticketStatus === "closed";
+  const disableOption = (!isGroup && loading) || ticketStatus === "closed";
 
   const renderReplyingMessage = (message) => {
     return (
@@ -1207,7 +1181,7 @@ const MessageInputCustom = (props) => {
             loading={loading}
             recording={recording}
             ticketStatus={ticketStatus}
-            disabeleOption={disableOption}
+            disableOption={disableOption}
             handleSendMessage={handleSendMessage}
             handleCancelAudio={handleCancelAudio}
             handleUploadAudio={handleUploadAudio}

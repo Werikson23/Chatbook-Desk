@@ -311,6 +311,7 @@ const TicketsManagerTabs = () => {
           <Tab
             label={
               <Badge
+                overlap="rectangular"
                 className={classes.badge}
                 badgeContent={openCount}
                 color="primary"
@@ -323,6 +324,7 @@ const TicketsManagerTabs = () => {
           <Tab
             label={
               <Badge
+                overlap="rectangular"
                 className={classes.badge}
                 badgeContent={pendingCount}
                 color="secondary"

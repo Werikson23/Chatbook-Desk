@@ -1,6 +1,8 @@
 [![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
 [![pt-br](https://img.shields.io/badge/lang-pt--br-green.svg)](README.pt.md)
 
+**Chatbook-Desk** — repositório de desenvolvimento baseado no Ticketz (histórico e licença abaixo).
+
 # Sobre o projeto
 
 Ticketz é um comunicador com recursos de CRM e helpdesk que utiliza
@@ -130,18 +132,42 @@ git clone https://github.com/allgood/ticketz.git
 cd ticketz
 ```
 
+### Organização do repositório
+
+- **`docker/`** — Compose (`docker-compose.dev.yml` = só infra; `docker-compose-local.yaml`, `docker-compose.prod.yml`, ACME, Cloudflare) e `docker/confs/`.
+- **`env/`** — `.env-*` para cada stack **Docker**; Node local usa `backend/.env.development` a partir de `backend/.env.example`.
+- **`docs/`** — Guias, `docs/futuras/`, `docs/operations/` (backup Postgres).
+- **`tests/`** — Reservado para testes transversais; Jest do backend em `backend/`.
+
+### Início rápido (desenvolvimento)
+
+Na raiz do repositório, com Node 20 e Docker instalados:
+
+```bash
+npm install
+copy backend\.env.example backend\.env.development
+REM opcional: copy frontend\.env.example frontend\.env.development
+npm run dev:up
+cd backend && npm ci && npm run generate:i18nkeys && npm run build && npx sequelize db:migrate && npx sequelize db:seed:all && cd ..
+npm run dev
+```
+
+`npm run dev` sobe backend + frontend com hot reload; Postgres/Redis no Docker. Parar infra: `npm run dev:down`.
+
+Saúde da API: `GET /health` e `GET /ready` (inclui checagem do banco).
+
 ## Rodando localmente
 
 Por padrão a configuração está ajustada para executar o sistema apenas no
 próprio computador. Para executar em uma rede local é necessário editar os
-arquivos `.env-backend-local` e `.env-frontend-local` e alterar os endereços
+arquivos `env/.env-backend-local` e `env/.env-frontend-local` e alterar os endereços
 de backend e frontend de `localhost` para o ip desejado, por exemplo
 `192.168.0.10`
 
-Para executar o sistema basta executar o comando abaixo:
+Para executar o sistema, na raiz do repositório, use o comando abaixo:
 
 ```bash
-docker compose -f docker-compose-local.yaml up -d
+docker compose -f docker/docker-compose-local.yaml up -d
 ```
 
 Na primeira execução o sistema vai inicializar os bancos de dados e tabelas,
@@ -154,9 +180,16 @@ A aplicação irá se reiniciar automaticamente a cada reboot do servidor.
 A execução pode ser interrompida com o comando:
 
 ```bash
-docker compose -f docker-compose-local.yaml down
+docker compose -f docker/docker-compose-local.yaml down
 ```
 
+### Stack estilo produção (healthchecks)
+
+Stack completa com condições `depends_on` e healthchecks nos containers (ajuste `env/*` para URLs reais):
+
+```bash
+docker compose -f docker/docker-compose.prod.yml up -d
+```
 
 ## Rodando e servindo na internet
 
@@ -168,7 +201,7 @@ endereço de email para cadastro dos certificados, por exemplo:
 * **frontend:** ticketz.exemplo.com.br
 * **email:** ticketz@exemplo.com.br
 
-É necessário editar os arquivos `.env-backend-acme` e `.env-frontend-acme`
+É necessário editar os arquivos `env/.env-backend-acme` e `env/.env-frontend-acme`
 definindo neles estes valores.
 
 Se desejar utilizar reCAPTCHA na inscrição de empresas também é necessário
@@ -183,7 +216,7 @@ Estando então na pasta raiz do projeto, executa-se o seguinte comando para
 iniciar o serviço:
 
 ```bash
-sudo docker compose -f docker-compose-acme.yaml up -d
+sudo docker compose -f docker/docker-compose-acme.yaml up -d
 ```
 
 Na primeira execução o Docker irá fazer a compilação do código e criação dos
@@ -191,14 +224,14 @@ conteiners, e após isso o ticketz vai inicializar os bancos de dados e
 tabelas. Esta operação pode levar bastante tempo, depois disso o Ticketz
 estará acessível pelo endereço fornecido para oo frontend.
 
-O usuário padrão será o endereço de email fornecido na configuração do arquivo `.env-backend-acme` e a senha padrão é `123456`
+O usuário padrão será o endereço de email fornecido na configuração do arquivo `env/.env-backend-acme` e a senha padrão é `123456`
 
 A aplicação irá se reiniciar automaticamente a cada reboot do servidor.
 
 Para encerrar o serviço utiliza-se o seguinte comando:
 
 ```bash
-sudo docker compose -f docker-compose-acme.yaml down
+sudo docker compose -f docker/docker-compose-acme.yaml down
 ```
 
 Aviso Importante

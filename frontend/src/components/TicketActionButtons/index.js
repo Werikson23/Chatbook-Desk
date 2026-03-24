@@ -11,6 +11,7 @@ import TicketOptionsMenu from "../TicketOptionsMenu";
 import ButtonWithSpinner from "../ButtonWithSpinner";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
+import TicketCloseModal from "../TicketCloseModal";
 
 const useStyles = makeStyles(theme => ({
 	actionButtons: {
@@ -30,6 +31,7 @@ const TicketActionButtons = ({ ticket }) => {
 	const history = useHistory();
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [loading, setLoading] = useState(false);
+	const [closeModalOpen, setCloseModalOpen] = useState(false);
 	const ticketOptionsMenuOpen = Boolean(anchorEl);
 	const { user } = useContext(AuthContext);
 
@@ -41,12 +43,13 @@ const TicketActionButtons = ({ ticket }) => {
 		setAnchorEl(null);
 	};
 
-	const handleUpdateTicketStatus = async (e, status, userId) => {
+	const handleUpdateTicketStatus = async (e, status, userId, extraData = {}) => {
 		setLoading(true);
 		try {
 			await api.put(`/tickets/${ticket.id}`, {
 				status: status,
 				userId: userId || null,
+        ...extraData
 			});
 
 			setLoading(false);
@@ -60,6 +63,14 @@ const TicketActionButtons = ({ ticket }) => {
 			toastError(err);
 		}
 	};
+
+  const handleConfirmClose = ({ closeReasonId, farewellTemplateId }) => {
+    setCloseModalOpen(false);
+    handleUpdateTicketStatus(null, "closed", user?.id, {
+      closeReasonId,
+      farewellTemplateId
+    });
+  };
 
 	return (
 		<div className={classes.actionButtons}>
@@ -88,7 +99,7 @@ const TicketActionButtons = ({ ticket }) => {
 						size="small"
 						variant="contained"
 						color="primary"
-						onClick={e => handleUpdateTicketStatus(e, "closed", user?.id)}
+						onClick={() => setCloseModalOpen(true)}
 					>
 						{i18n.t("messagesList.header.buttons.resolve")}
 					</ButtonWithSpinner>
@@ -114,6 +125,13 @@ const TicketActionButtons = ({ ticket }) => {
 					{i18n.t("messagesList.header.buttons.accept")}
 				</ButtonWithSpinner>
 			)}
+      <TicketCloseModal
+        open={closeModalOpen}
+        onClose={() => setCloseModalOpen(false)}
+        onConfirm={handleConfirmClose}
+        ticket={ticket}
+        loading={loading}
+      />
 		</div>
 	);
 };

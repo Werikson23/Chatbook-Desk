@@ -17,6 +17,8 @@ import { incrementCounter } from "../CounterServices/IncrementCounter";
 import { getJidOf } from "../WbotServices/getJidOf";
 import Queue from "../../models/Queue";
 import { _t } from "../TranslationServices/i18nService";
+import CloseReason from "../../models/CloseReason";
+import FarewellTemplate from "../../models/FarewellTemplate";
 
 export interface UpdateTicketData {
   status?: string;
@@ -25,6 +27,8 @@ export interface UpdateTicketData {
   chatbot?: boolean;
   queueOptionId?: number;
   justClose?: boolean;
+  closeReasonId?: number | null;
+  farewellTemplateId?: number | null;
 }
 
 interface Request {
@@ -100,6 +104,7 @@ const UpdateTicketService = async ({
     const { justClose } = ticketData;
     let { status } = ticketData;
     let { queueId, userId } = ticketData;
+    const { closeReasonId, farewellTemplateId } = ticketData;
     const fromChatbot = ticketData.chatbot || false;
     let chatbot: boolean | null = fromChatbot;
     let queueOptionId: number | null = ticketData.queueOptionId || null;
@@ -149,6 +154,48 @@ const UpdateTicketService = async ({
     }
 
     const oldStatus = ticket.status;
+    let selectedCloseReason: CloseReason | null = null;
+    let selectedFarewellTemplate: FarewellTemplate | null = null;
+
+    if (status === "closed") {
+      if (reqUserId && !justClose && !closeReasonId) {
+        throw new AppError("ERR_CLOSE_REASON_REQUIRED", 400);
+      }
+
+      if (closeReasonId) {
+        selectedCloseReason = await CloseReason.findOne({
+          where: {
+            id: closeReasonId,
+            companyId,
+            isActive: true
+          },
+          include: [{ model: Queue, as: "queues", attributes: ["id"], through: { attributes: [] } }]
+        });
+        if (!selectedCloseReason) {
+          throw new AppError("ERR_CLOSE_REASON_NOT_FOUND", 404);
+        }
+        if (
+          selectedCloseReason.queues?.length &&
+          !selectedCloseReason.queues.some(queue => queue.id === ticket.queueId)
+        ) {
+          throw new AppError("ERR_CLOSE_REASON_INVALID_FOR_QUEUE", 400);
+        }
+      }
+
+      if (farewellTemplateId) {
+        selectedFarewellTemplate = await FarewellTemplate.findOne({
+          where: {
+            id: farewellTemplateId,
+            companyId,
+            isActive: true
+          }
+        });
+        if (!selectedFarewellTemplate) {
+          throw new AppError("ERR_FAREWELL_TEMPLATE_NOT_FOUND", 404);
+        }
+      }
+    }
+
     const oldUserId = ticket.user?.id;
     const oldQueueId = ticket.queueId;
 
@@ -212,7 +259,11 @@ const UpdateTicketService = async ({
           await ticket.update({
             chatbot: null,
             queueOptionId: null,
-            status: "closed"
+            status: "closed",
+            closeReasonId: selectedCloseReason?.id || null,
+            farewellTemplateId: selectedFarewellTemplate?.id || null,
+            closedByUserId: reqUserId || null,
+            closedAt: moment().toDate()
           });
 
           await ticket.reload();
@@ -238,10 +289,17 @@ const UpdateTicketService = async ({
         }
       }
 
-      if (
+      const isManualCloseRequest = status === "closed" && !!reqUserId;
+
+      if (selectedFarewellTemplate && ticket.channel === "whatsapp" && !isGroup) {
+        const body = formatBody(selectedFarewellTemplate.content, ticket);
+        const sentMessage = await SendWhatsAppMessage({ body, ticket });
+        await verifyMessage(sentMessage, ticket, ticket.contact);
+      } else if (
         !isGroup &&
         !ticket.contact.disableBot &&
         !justClose &&
+        !isManualCloseRequest &&
         ticket.whatsapp?.complationMessage.trim() &&
         ticket.whatsapp.status === "CONNECTED"
       ) {
@@ -283,7 +341,17 @@ const UpdateTicketService = async ({
       userId,
       whatsappId: ticket.whatsappId,
       chatbot,
-      queueOptionId
+      queueOptionId,
+      closeReasonId:
+        status === "closed"
+          ? selectedCloseReason?.id || null
+          : ticket.closeReasonId || null,
+      farewellTemplateId:
+        status === "closed"
+          ? selectedFarewellTemplate?.id || null
+          : ticket.farewellTemplateId || null,
+      closedByUserId: status === "closed" ? reqUserId || null : null,
+      closedAt: status === "closed" ? moment().toDate() : null
     });
 
     if (oldStatus !== status) {

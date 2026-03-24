@@ -93,7 +93,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     }
   }
 
-  if (medias) {
+  if (medias?.length) {
     if (channel === "whatsapp") {
       await Promise.all(
         medias.map(async (media: Express.Multer.File) => {
@@ -292,7 +292,7 @@ export const send = async (req: Request, res: Response): Promise<Response> => {
       number = CheckValidNumber.jid.replace(/\D/g, "");
     }
 
-    if (medias) {
+    if (medias?.length) {
       await Promise.all(
         medias.map(async (media: Express.Multer.File) => {
           await req.app.get("queues").messageQueue.add(

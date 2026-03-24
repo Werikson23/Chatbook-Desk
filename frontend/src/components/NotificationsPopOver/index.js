@@ -281,7 +281,7 @@ const NotificationsPopOver = (props) => {
 
       >
           <ChatIcon style={{ color: "white" }} />
-        {notifications.length > 0 ?<Badge variant="dot" color="secondary"
+        {notifications.length > 0 ?<Badge variant="dot" color="secondary" overlap="rectangular"
         style={{marginTop: "-25px"}}>
         </Badge>: ""}
       </IconButton>

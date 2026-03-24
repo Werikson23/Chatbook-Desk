@@ -1,6 +1,8 @@
 import { FileContents, FileStorage } from "@flystorage/file-storage";
 import { LocalStorageAdapter } from "@flystorage/local-fs";
 import mime from "mime-types";
+import fs from "fs/promises";
+import path from "path";
 import { getPublicPath } from "./GetPublicPath";
 import { logger } from "../utils/logger";
 import { makeRandomId } from "./MakeRandomId";
@@ -52,8 +54,10 @@ export default async function saveMediaToFile(
   const storage = new FileStorage(new LocalStorageAdapter(getPublicPath()));
 
   const mediaPath = `${relativePath}/${media.filename}`;
+  const absoluteDirectory = path.join(getPublicPath(), relativePath);
 
   try {
+    await fs.mkdir(absoluteDirectory, { recursive: true });
     await storage.write(mediaPath, media.data);
   } catch (error) {
     logger.error({ message: error.message }, "Error saving media file");

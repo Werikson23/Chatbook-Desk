@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 
 import Paper from "@material-ui/core/Paper";
 import Container from "@material-ui/core/Container";
@@ -266,6 +266,7 @@ const Dashboard = () => {
   const classes = useStyles();
   const [period, setPeriod] = useState(0);
   const [currentUser, setCurrentUser] = useState({});
+  const [authReady, setAuthReady] = useState(false);
   const [dateFrom, setDateFrom] = useState(
     moment("1", "D").format("YYYY-MM-DDTHH") + ":00"
   );
@@ -288,6 +289,9 @@ const Dashboard = () => {
   const [ticketsData, setTicketsData] = useState({});
   const [usersData, setUsersData] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [closeReasons, setCloseReasons] = useState([]);
+  const [selectedCloseReasonId, setSelectedCloseReasonId] = useState("");
+  const companyId = localStorage.getItem("companyId");
 
   const socketManager = useContext(SocketContext);
     
@@ -302,16 +306,31 @@ const Dashboard = () => {
   
   useEffect(() => {
     fetch('https://ipapi.co/json/')
-      .then(res => res.json())
+      .then(async (res) => {
+        if (!res.ok) {
+          return null;
+        }
+        const raw = await res.text();
+        try {
+          return JSON.parse(raw);
+        } catch (_) {
+          return null;
+        }
+      })
       .then(data => {
-        if (data.country === 'BR') {
+        if (data?.country === 'BR') {
           setSupportPix(true);
           setSupportIsBr(true);
         }
-      });
+      })
+      .catch(() => {});
   }, []);
   
   useEffect(() => {
+    if (!companyId) {
+      return undefined;
+    }
+
     const socket = socketManager.GetSocket(companyId);
     
     socket.on("userOnlineChange", updateStatus);
@@ -319,36 +338,58 @@ const Dashboard = () => {
 
     return () => {
       socket.disconnect();
-    }
-  }, [socketManager]);
+    };
+  }, [socketManager, companyId]);
   
   useEffect(() => {
-    getCurrentUserInfo().then(
-      (user) => {
+    const loadCurrentUser = async () => {
+      try {
+        const user = await getCurrentUserInfo();
         if (user?.profile !== "admin") {
           window.location.href = "/tickets";
+          return;
         }
         setCurrentUser(user);
+      } catch (_) {
+        window.location.href = "/login";
+      } finally {
+        setAuthReady(true);
       }
-    );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    };
+    loadCurrentUser();
+  }, [getCurrentUserInfo]);
 
-  useEffect(async () => {
-    const registry = await api.get("/ticketz/registry");
+  useEffect(() => {
+    const loadRegistry = async () => {
+      try {
+        const registry = await api.get("/ticketz/registry");
+        setRegistered(registry?.data?.disabled || !!registry?.data?.whatsapp);
+      } catch (_) {}
+    };
+    if (authReady && currentUser?.profile === "admin") {
+      loadRegistry();
+    }
+  }, [authReady, currentUser?.profile]);
 
-    setRegistered( registry?.data?.disabled || !!(registry?.data?.whatsapp ) );
+  useEffect(() => {
+    const loadCloseReasons = async () => {
+      try {
+        const { data } = await api.get("/close-reasons");
+        setCloseReasons(data || []);
+      } catch (_) {}
+    };
+    loadCloseReasons();
   }, []);
     
-  useEffect(() => {
-    fetchData();
-  }, [period]);
-  
   async function handleChangePeriod(value) {
     setPeriod(value);
   }
 
-  async function updateStatus() {
+  const updateStatus = useCallback(async () => {
+    if (!authReady || currentUser?.profile !== "admin") {
+      return;
+    }
+
     api.get("/dashboard/status").then(
       result => {
         const { data } = result;
@@ -410,9 +451,13 @@ const Dashboard = () => {
         setOpenedChartData(openedChartData);
       }
     ).catch(() => {});
-  }
+  }, [authReady, currentUser?.profile]);
   
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
+    if (!authReady || currentUser?.profile !== "admin") {
+      return;
+    }
+
     let params = { tz: getTimezoneOffset() };
     
     const days = Number(period);
@@ -445,6 +490,10 @@ const Dashboard = () => {
       return;
     }
 
+    if (selectedCloseReasonId) {
+      params.closeReasonId = selectedCloseReasonId;
+    }
+
     api.get("/dashboard/tickets", { params }).then(
       result => {
         if (result?.data) {
@@ -460,13 +509,15 @@ const Dashboard = () => {
           setLoadingUsers(false);
         }
       }).catch(() => {});
-  }
+  }, [period, dateFrom, dateTo, selectedCloseReasonId, authReady, currentUser?.profile]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     updateStatus();
   }, [])
-
-  const companyId = localStorage.getItem("companyId");
 
   function renderFilters() {
       return (
@@ -520,6 +571,24 @@ const Dashboard = () => {
             </>
           }
           <Grid item xs={12} sm={6} md={period ? 9 : 3} />
+          <Grid item xs={12} sm={6} md={3}>
+            <FormControl className={classes.selectContainer}>
+              <InputLabel id="close-reason-selector-label">Motivo de encerramento</InputLabel>
+              <Select
+                labelId="close-reason-selector-label"
+                id="close-reason-selector"
+                value={selectedCloseReasonId}
+                onChange={(e) => setSelectedCloseReasonId(e.target.value)}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {closeReasons.map(reason => (
+                  <MenuItem key={reason.id} value={reason.id}>
+                    {reason.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
         </>
       );
   }
@@ -554,7 +623,7 @@ const Dashboard = () => {
                   <Grid container justifyContent="flex-end">
                     <Grid className={classes.ticketzProBox} item xs={12} sm={4}>
                       <div>
-                        <img className={classes.ticketzProScreen} src="https://pro.ticke.tz/images/0/7/3/0/b/0730b234af7b4b0dac72d09828863bb7cb9193ea-ticketz-computador.png" />
+                        <img className={classes.ticketzProScreen} src="https://pro.ticke.tz/images/0/7/3/0/b/0730b234af7b4b0dac72d09828863bb7cb9193ea-ticketz-computador.png" alt="Ticketz Pro preview" />
                       </div>
                     </Grid>
                     { !proInstructionsOpen &&
@@ -562,7 +631,7 @@ const Dashboard = () => {
                       <Typography className={classes.ticketzProTitle} component="h3" variant="h5" gutterBottom>
                         Ticketz PRO
                       </Typography>
-                      <Typography component="h4" variant="h7" gutterBottom>
+                      <Typography component="div" variant="body2" gutterBottom>
                       <ul className={classes.ticketzProFeatures}>
                         <li>Whatsapp Oficial - Instagram - Messenger e outros</li>
                         <li>Features exclusivas</li>
@@ -573,7 +642,7 @@ const Dashboard = () => {
                       <Typography component="h3" variant="h5">
                         Assine por R$ 199/mês
                       </Typography>
-                      <Typography component="h3" variant="h7" gutterBottom>
+                      <Typography component="div" variant="body2" gutterBottom>
                         direto dentro do sistema
                       </Typography>
                       { gitinfo.commitHash && 
@@ -645,9 +714,9 @@ const Dashboard = () => {
                           }
                           }>
                           <div>
-                            <img className={classes.paymentpix} src="/ticketzpix.png" />
+                            <img className={classes.paymentpix} src="/ticketzpix.png" alt="QR code PIX Ticketz" />
                           </div>
-                          <Typography className={classes.pixkey} component="body2" paragraph>
+                          <Typography className={classes.pixkey} component="p" variant="body2" paragraph>
                             Clique para copiar a chave PIX
                           </Typography>
                         </div>
@@ -661,19 +730,19 @@ const Dashboard = () => {
                         </Typography>
                         { supportPix || <> 
                         {supportIsBr && <>
-                          <Typography component="body2" paragraph>
+                          <Typography component="p" variant="body2" paragraph>
                             {i18n.t("ticketz.support.recurringbrl")}
                           </Typography>
-                          <div><a href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c9380848f1b8ed1018f2b011f90061f" target="_blank">
-                            <img className={classes.paymentimg} src="/mercadopago.png" />
+                          <div><a href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c9380848f1b8ed1018f2b011f90061f" target="_blank" rel="noreferrer noopener">
+                            <img className={classes.paymentimg} src="/mercadopago.png" alt="Mercado Pago" />
                           </a></div>
                         </>}
                         {!supportIsBr && <>
-                          <Typography component="body2" paragraph>
+                          <Typography component="p" variant="body2" paragraph>
                             {i18n.t("ticketz.support.international")}
                           </Typography>
-                          <div><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=X6XHVCPMRQEL4" target="_blank">
-                            <img className={classes.paymentimg} src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" />
+                          <div><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=X6XHVCPMRQEL4" target="_blank" rel="noreferrer noopener">
+                            <img className={classes.paymentimg} src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" alt="PayPal donate" />
                           </a></div>
                         </>}
                         </> }

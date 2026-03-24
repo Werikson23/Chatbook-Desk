@@ -26,6 +26,8 @@ import QueueOption from "./QueueOption";
 import Tag from "./Tag";
 import TicketTag from "./TicketTag";
 import TicketTraking from "./TicketTraking";
+import CloseReason from "./CloseReason";
+import FarewellTemplate from "./FarewellTemplate";
 
 @Table
 class Ticket extends Model<Ticket> {
@@ -110,6 +112,30 @@ class Ticket extends Model<Ticket> {
 
   @BelongsTo(() => Company)
   company: Company;
+
+  @ForeignKey(() => CloseReason)
+  @Column
+  closeReasonId: number;
+
+  @BelongsTo(() => CloseReason)
+  closeReason: CloseReason;
+
+  @ForeignKey(() => FarewellTemplate)
+  @Column
+  farewellTemplateId: number;
+
+  @BelongsTo(() => FarewellTemplate)
+  farewellTemplate: FarewellTemplate;
+
+  @ForeignKey(() => User)
+  @Column
+  closedByUserId: number;
+
+  @BelongsTo(() => User, "closedByUserId")
+  closedByUser: User;
+
+  @Column
+  closedAt: Date;
 
   @Default(uuidv4())
   @Column

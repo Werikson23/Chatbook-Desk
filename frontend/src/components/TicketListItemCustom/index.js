@@ -223,6 +223,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
       return (
         <>
           <Badge
+            overlap="rectangular"
             className={classes.Radiusdot}
             badgeContent={`${ticketUser}`}
             //color="primary"
@@ -240,6 +241,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
 
           {ticket.whatsappId && (
             <Badge
+              overlap="rectangular"
               className={classes.Radiusdot}
               badgeContent={`${whatsAppName}`}
               style={{
@@ -258,6 +260,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
 
           {ticket.queue?.name !== null && (
             <Badge
+              overlap="rectangular"
               className={classes.Radiusdot}
               style={{
                 backgroundColor: ticket.queue?.color || "#7C7C7C",
@@ -336,6 +339,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
 
           {ticket.whatsappId && (
             <Badge
+              overlap="rectangular"
               className={classes.Radiusdot}
               badgeContent={`${whatsAppName}`}
               style={{
@@ -353,6 +357,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
 
           {ticket.queue?.name !== null && (
             <Badge
+              overlap="rectangular"
               className={classes.Radiusdot}
               style={{
                 backgroundColor: ticket.queue?.color || "#7C7C7C",
@@ -554,6 +559,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
         <ListItemSecondaryAction style={{}}>
           {ticket.status === "closed" && (
             <Badge
+              overlap="rectangular"
               className={classes.Radiusdot}
               badgeContent={i18n.t("common.closed")}
               //color="primary"
@@ -584,6 +590,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
               </Typography>
 
               <Badge
+                overlap="rectangular"
                 className={classes.newMessagesCount}
                 badgeContent={ticket.unreadMessages ? ticket.unreadMessages : null}
                 classes={{

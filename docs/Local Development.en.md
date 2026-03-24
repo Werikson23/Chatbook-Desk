@@ -53,7 +53,7 @@ cd ticketz
 Ticketz provide a docker compose configuration to run `postgres` and `redis`, launch it using:
 
 ```bash
-docker compose -f docker-compose-dev.yaml up -d
+docker compose -f docker/docker-compose.dev.yml up -d
 ```
 
 After a few seconds you will have:
@@ -81,14 +81,16 @@ The default configuration example must be copied to the configuration file. It h
 **On Linux:**
 
 ```bash
-cp .env.dev .env
+cp .env.example .env.development
 ```
 
 **On windows:**
 
 ```powershell
-copy .env.dev .env
+copy .env.example .env.development
 ```
+
+For backend automated tests (`npm test`), also copy `cp .env.test.example .env.test`.
 
 ### Initialize Database
 
@@ -158,7 +160,7 @@ All the commands should be entered inside the base projects folder (usually `tic
 #### Stop the services
 
 ```bash
-docker compose -f docker-compose-dev.yaml down
+docker compose -f docker/docker-compose.dev.yml down
 ```
 
 #### Remove the data (reset)
@@ -173,7 +175,7 @@ docker volume rm ticketz_redis_data
 #### (re)start the services
 
 ```bash
-docker compose -f docker-compose-dev.yaml up -d
+docker compose -f docker/docker-compose.dev.yml up -d
 ```
 
 ### Change configuration
@@ -186,7 +188,7 @@ By default these are the ports used on this guide:
 - Ticketz Backend: 8080
 - Ticketz Frontend: 3000
 
-You can change the `postgres`, `redis` and `pgadmin` ports changing the `docker-compose-dev.yaml` file
+You can change the `postgres`, `redis` and `pgadmin` ports changing the `docker/docker-compose.dev.yml` file
 
 To change the Ticketz Backend port you need to edit the `.env` file and also need to create the `config-dev.json` file on `frontend/public` using the `frontend/public/config-dev-example.json`
 

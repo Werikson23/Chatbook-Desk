@@ -155,7 +155,7 @@ export function TicketNotes({ ticket }) {
               <div className={classes.textFieldWrapper}>
                 <TextField
                   name="note"
-                  rows={3}
+                  minRows={3}
                   label={i18n.t("ticketOptionsMenu.appointmentsModal.textarea")}
                   placeholder={i18n.t("ticketOptionsMenu.appointmentsModal.placeholder")}
                   multiline

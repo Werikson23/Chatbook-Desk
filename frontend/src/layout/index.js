@@ -261,11 +261,17 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   }, []);
   
   useEffect(() => {
+    let isMounted = true;
     getCurrentUserInfo().then(
       (user) => {
-        setCurrentUser(user);
+        if (isMounted) {
+          setCurrentUser(user);
+        }
       }
     );
+    return () => {
+      isMounted = false;
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
@@ -509,7 +515,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
               >
                 {
                   Object.keys(messages).map((m) => (
-                    <MenuItem onClick={() => handleChooseLanguage(m)}>
+                    <MenuItem key={m} onClick={() => handleChooseLanguage(m)}>
                       <div style={{ fontWeight: currentLanguage === m ? "bold" : "normal" }}>
                         {messages[m].translations.mainDrawer.appBar.i18n.language}
                       </div>

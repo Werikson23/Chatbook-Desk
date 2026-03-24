@@ -533,7 +533,7 @@ export default function Options(props) {
               placeholder={i18n.t("settings.ticketAcceptedMessage.placeholder")}
               variant="standard"
               multiline
-              rows={4}
+              minRows={4}
               value={ticketAcceptedMessage}
               onChange={(e) => {
                 setTicketAcceptedMessage(e.target.value);
@@ -554,7 +554,7 @@ export default function Options(props) {
               placeholder={i18n.t("settings.transferMessage.placeholder")}
               variant="standard"
               multiline
-              rows={4}
+              minRows={4}
               value={transferMessage}
               onChange={(e) => {
                 setTransferMessage(e.target.value);

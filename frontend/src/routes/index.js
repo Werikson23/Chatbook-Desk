@@ -32,6 +32,8 @@ import Annoucements from "../pages/Annoucements";
 import Chat from "../pages/Chat";
 import ToDoList from "../pages/ToDoList/";
 import Subscription from "../pages/Subscription/";
+import CloseReasons from "../pages/CloseReasons";
+import FarewellTemplates from "../pages/FarewellTemplates";
 
 const Routes = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -117,6 +119,18 @@ const Routes = () => {
                   exact
                   path="/subscription"
                   component={Subscription}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/close-reasons"
+                  component={CloseReasons}
+                  isPrivate
+                />
+                <Route
+                  exact
+                  path="/farewell-templates"
+                  component={FarewellTemplates}
                   isPrivate
                 />
                 

@@ -94,7 +94,7 @@ const Login = () => {
 			<CssBaseline/>
 			<div className={classes.paper}>
 				<div>
-					<img className={classes.logoImg} />
+					<img className={classes.logoImg} alt="Application logo" />
 				</div>
 				<form className={classes.form} noValidate onSubmit={handlSubmit}>
 					<TextField

@@ -223,7 +223,8 @@ async function handleRatingsTimeout() {
             model: Contact
           },
           {
-            model: User
+            model: User,
+            as: "user"
           },
           {
             model: QueueModel,

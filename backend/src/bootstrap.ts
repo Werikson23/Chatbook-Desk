@@ -1,5 +1,4 @@
-import dotenv from "dotenv";
+import { loadEnvFiles, validateEnv } from "./config/envLoader";
 
-dotenv.config({
-  path: process.env.NODE_ENV === "test" ? ".env.test" : ".env"
-});
+loadEnvFiles();
+validateEnv();

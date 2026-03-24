@@ -41,6 +41,9 @@ import UserSocketSession from "../models/UserSocketSession";
 import OutOfTicketMessage from "../models/OutOfTicketMessages";
 import Translation from "../models/Translation";
 import Wavoip from "../models/Wavoip";
+import CloseReason from "../models/CloseReason";
+import CloseReasonQueue from "../models/CloseReasonQueue";
+import FarewellTemplate from "../models/FarewellTemplate";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const dbConfig = require("../config/database");
@@ -51,6 +54,9 @@ const models = [
   Company,
   User,
   UserSocketSession,
+  CloseReasonQueue,
+  CloseReason,
+  FarewellTemplate,
   Contact,
   ContactTag,
   Ticket,

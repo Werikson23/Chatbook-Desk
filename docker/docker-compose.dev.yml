@@ -1,3 +1,5 @@
+name: ticketz
+
 volumes:
   postgres_data:
   redis_data:
@@ -15,6 +17,11 @@ services:
     ports:
       - 5432:5432
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ticketz} -d ${POSTGRES_DB:-ticketz}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:alpine
@@ -24,6 +31,11 @@ services:
     restart: always
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   pgadmin4:
     image: dpage/pgadmin4:8

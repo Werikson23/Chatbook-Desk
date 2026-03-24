@@ -3,6 +3,11 @@
 /public/*
 /.well-known
 /.env
+/.env.development
+/.env.production
+/.env.test
+!/.env.example
+!/.env.*.example
 /.externalToolBuilders/
 /.project
 /.settings/

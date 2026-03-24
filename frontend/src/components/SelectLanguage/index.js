@@ -9,16 +9,53 @@ Object.keys(messages).forEach((key) => {
   languageOptions[key] = messages[key].translations.mainDrawer.appBar.i18n.language;
 });
 
+const normalizeLanguageValue = (rawValue) => {
+  if (rawValue === null || rawValue === undefined) {
+    return "";
+  }
+
+  const value = String(rawValue).trim();
+  if (!value) {
+    return "";
+  }
+
+  if (languageOptions[value]) {
+    return value;
+  }
+
+  const underscored = value.replace("-", "_");
+  if (languageOptions[underscored]) {
+    return underscored;
+  }
+
+  const lower = value.toLowerCase();
+  if (lower === "pt-br" || lower === "pt_br") {
+    return "pt";
+  }
+  if (lower === "pt-pt" || lower === "pt_pt") {
+    return "pt_PT";
+  }
+
+  return "";
+};
+
 export function SelectLanguage({ className, label, value, name, onChange, field, form, variant, margin, fullWidth }) {
   const handleChange = (event) => {
+    const nextValue = normalizeLanguageValue(event.target.value);
     if (form && field) {
-      form.setFieldValue(field.name, event.target.value);
+      form.setFieldValue(field.name, nextValue);
     } else if (onChange) {
-      onChange(event);
+      onChange({
+        ...event,
+        target: {
+          ...event.target,
+          value: nextValue
+        }
+      });
     }
   };
 
-  const selectedValue = field?.value || value;
+  const selectedValue = normalizeLanguageValue(field?.value ?? value);
   
   label = label || i18n.t("common.language");
 

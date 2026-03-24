@@ -24,6 +24,8 @@ import WhatsappQueue from "./WhatsappQueue";
 import QueueOption from "./QueueOption";
 import Ticket from "./Ticket";
 import { OpenHoursData } from "../helpers/checkOpenHours";
+import CloseReason from "./CloseReason";
+import CloseReasonQueue from "./CloseReasonQueue";
 
 @Table
 class Queue extends Model {
@@ -89,6 +91,9 @@ class Queue extends Model {
 
   @HasMany(() => Ticket)
   tickets: Ticket[];
+
+  @BelongsToMany(() => CloseReason, () => CloseReasonQueue)
+  closeReasons: Array<CloseReason & { CloseReasonQueue: CloseReasonQueue }>;
 }
 
 export default Queue;

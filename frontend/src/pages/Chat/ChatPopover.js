@@ -110,8 +110,16 @@ export default function ChatPopover() {
   const { datetimeToClient } = useDate();
   const [play] = useSound(notifySound);
   const soundAlertRef = useRef();
+  const mountedRef = useRef(true);
 
   const socketManager = useContext(SocketContext);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     soundAlertRef.current = play;
@@ -185,11 +193,14 @@ export default function ChatPopover() {
       const { data } = await api.get("/chats/", {
         params: { searchParam, pageNumber },
       });
+      if (!mountedRef.current) return;
       dispatch({ type: "LOAD_CHATS", payload: data.records });
       setHasMore(data.hasMore);
       setLoading(false);
     } catch (err) {
+      if (!mountedRef.current) return;
       toastError(err);
+      setLoading(false);
     }
   };
 
@@ -229,7 +240,7 @@ export default function ChatPopover() {
         color={invisible ? "default" : "inherit"}
         onClick={handleClick}
       >
-        <Badge color="secondary" variant="dot" invisible={invisible}>
+        <Badge color="secondary" variant="dot" overlap="rectangular" invisible={invisible}>
           <ForumIcon style={{ color: "white" }} />
         </Badge>
       </IconButton>
@@ -258,9 +269,9 @@ export default function ChatPopover() {
             style={{ minWidth: 300 }}
           >
             {isArray(chats) &&
-              chats.map((item, key) => (
+              chats.map((item) => (
                 <ListItem
-                  key={key}
+                  key={item.id}
                   style={{
                     border: "1px solid #eee",
                     cursor: "pointer",

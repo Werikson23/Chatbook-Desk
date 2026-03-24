@@ -38,6 +38,8 @@ interface TicketData {
 
 const updateMutex = new Mutex();
 
+const parseBoolean = (value?: string): boolean => value === "true" || value === "1";
+
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const {
     pageNumber,
@@ -64,16 +66,20 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
   let tagsIds: number[] = [];
   let usersIds: number[] = [];
 
-  if (queueIdsStringified) {
-    queueIds = JSON.parse(queueIdsStringified);
-  }
+  try {
+    if (queueIdsStringified) {
+      queueIds = JSON.parse(queueIdsStringified);
+    }
 
-  if (tagIdsStringified) {
-    tagsIds = JSON.parse(tagIdsStringified);
-  }
+    if (tagIdsStringified) {
+      tagsIds = JSON.parse(tagIdsStringified);
+    }
 
-  if (userIdsStringified) {
-    usersIds = JSON.parse(userIdsStringified);
+    if (userIdsStringified) {
+      usersIds = JSON.parse(userIdsStringified);
+    }
+  } catch (_) {
+    return res.status(400).json({ error: "ERR_INVALID_QUERY_FILTERS" });
   }
 
   const { tickets, count, hasMore } = await ListTicketsService({
@@ -91,8 +97,8 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
     userId,
     queueIds,
     withUnreadMessages,
-    notClosed: !!notClosed,
-    all: !!all,
+    notClosed: parseBoolean(notClosed),
+    all: parseBoolean(all),
     companyId
   });
 
@@ -123,16 +129,20 @@ export const kanban = async (
   let tagsIds: number[] = [];
   let usersIds: number[] = [];
 
-  if (queueIdsStringified) {
-    queueIds = JSON.parse(queueIdsStringified);
-  }
+  try {
+    if (queueIdsStringified) {
+      queueIds = JSON.parse(queueIdsStringified);
+    }
 
-  if (tagIdsStringified) {
-    tagsIds = JSON.parse(tagIdsStringified);
-  }
+    if (tagIdsStringified) {
+      tagsIds = JSON.parse(tagIdsStringified);
+    }
 
-  if (userIdsStringified) {
-    usersIds = JSON.parse(userIdsStringified);
+    if (userIdsStringified) {
+      usersIds = JSON.parse(userIdsStringified);
+    }
+  } catch (_) {
+    return res.status(400).json({ error: "ERR_INVALID_QUERY_FILTERS" });
   }
 
   const { tickets, count, hasMore } = await ListTicketsServiceKanban({

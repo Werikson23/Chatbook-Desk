@@ -6,7 +6,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import * as Sentry from "@sentry/node";
 
-import "./database";
+import sequelize from "./database";
 import path from "path";
 import uploadConfig from "./config/upload";
 import AppError from "./errors/AppError";
@@ -19,9 +19,26 @@ class SystemError extends Error {
   code?: string;
 }
 
-Sentry.init({ dsn: process.env.SENTRY_DSN });
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  enabled: Boolean(process.env.SENTRY_DSN)
+});
 
 const app = express();
+
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok", uptime: process.uptime() });
+});
+
+app.get("/ready", async (_req, res) => {
+  try {
+    await sequelize.authenticate();
+    res.status(200).json({ status: "ready" });
+  } catch (err) {
+    logger.warn({ err }, "Readiness check failed");
+    res.status(503).json({ status: "not_ready" });
+  }
+});
 
 app.set("queues", {
   messageQueue,

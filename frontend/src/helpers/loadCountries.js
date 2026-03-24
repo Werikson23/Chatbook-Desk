@@ -1,7 +1,16 @@
 export async function loadCountries() {
   try {
     const response = await fetch("https://cdn.jsdelivr.net/gh/dr5hn/countries-states-cities-database@master/json/countries.json");
-    const data = await response.json();
+    if (!response.ok) {
+      return [];
+    }
+    const raw = await response.text();
+    let data = [];
+    try {
+      data = JSON.parse(raw);
+    } catch (_) {
+      return [];
+    }
 
     const language = localStorage.getItem("language") || "en";
 
@@ -29,7 +38,16 @@ async function geolocateCountry() {
       const geoRes = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
       );
-      const geoData = await geoRes.json();
+      if (!geoRes.ok) {
+        return null;
+      }
+      const geoRaw = await geoRes.text();
+      let geoData = null;
+      try {
+        geoData = JSON.parse(geoRaw);
+      } catch (_) {
+        return null;
+      }
       const countryCode = geoData.address?.country_code;
       if (countryCode) {
         return countryCode.toUpperCase();
@@ -42,10 +60,18 @@ async function geolocateCountry() {
   // Fallback to ipinfo.io
   try {
     const response = await fetch("https://ipinfo.io/json");
-    const data = await response.json();
+    if (!response.ok) {
+      return null;
+    }
+    const raw = await response.text();
+    let data = null;
+    try {
+      data = JSON.parse(raw);
+    } catch (_) {
+      return null;
+    }
     return data.country;
-  } catch (error) {
-    console.error("Error fetching country:", error);
+  } catch (_) {
     return null;
   }
 }

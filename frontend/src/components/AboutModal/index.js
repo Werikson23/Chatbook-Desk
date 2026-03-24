@@ -63,17 +63,26 @@ const AboutModal = ({ open, onClose }) => {
 	};
 
   useEffect(() => {
+    let isMounted = true;
     getCurrentUserInfo().then(
       (user) => {
-        setCurrentUser(user);
+        if (isMounted) {
+          setCurrentUser(user);
+        }
       }
     );
 
     api.get("/").then(
       (response) => {
-        setBackendGitInfo(response.data);
+        if (isMounted) {
+          setBackendGitInfo(response.data);
+        }
       }
-    )
+    );
+
+    return () => {
+      isMounted = false;
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -93,7 +102,7 @@ const AboutModal = ({ open, onClose }) => {
 				{ currentUser?.super ? 
           <>
             <div>
-              <img className={classes.ticketzLogoImg} />
+              <img className={classes.ticketzLogoImg} alt="Ticketz logo" />
             </div>
             <Typography variant="body1" gutterBottom><b>Frontend: 
               { frontendGitInfo.tagName && `Version: ${frontendGitInfo.tagName} Build info: ${frontendGitInfo.buildTimestamp}` }
@@ -121,20 +130,20 @@ const AboutModal = ({ open, onClose }) => {
             }
             </Typography>
             <Typography variant="body1">{i18n.t("about.aboutdetail")}</Typography>
-            <Typography><Link target="_blank" href="https://todobom.com">{i18n.t("about.aboutauthorsite")}</Link></Typography>
-            <Typography><Link target="_blank" href="https://github.com/canove/whaticket-community">{i18n.t("about.aboutwhaticketsite")}</Link></Typography>
-            <Typography><Link target="_blank" href="https://github.com/vemfazer">{i18n.t("about.aboutvemfazersite")}</Link></Typography>
+            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://todobom.com">{i18n.t("about.aboutauthorsite")}</Link></Typography>
+            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/canove/whaticket-community">{i18n.t("about.aboutwhaticketsite")}</Link></Typography>
+            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/vemfazer">{i18n.t("about.aboutvemfazersite")}</Link></Typography>
             <Typography variant="h4">{i18n.t("about.licenseheading")}</Typography>
             <Typography variant="body1">{i18n.t("about.licensedetail")}</Typography>
-            <Typography><Link target="_blank" href="https://github.com/ticketz-oss/ticketz/blob/main/LICENSE.md">{i18n.t("about.licensefulltext")}</Link></Typography>
-            <Typography><Link target="_blank" href="https://github.com/ticketz-oss/ticketz">{i18n.t("about.licensesourcecode")}</Link></Typography>
+            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/ticketz-oss/ticketz/blob/main/LICENSE.md">{i18n.t("about.licensefulltext")}</Link></Typography>
+            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/ticketz-oss/ticketz">{i18n.t("about.licensesourcecode")}</Link></Typography>
           </>
           :
           <>
             <div>
-              <img className={classes.logoImg} />
+              <img className={classes.logoImg} alt="Application logo" />
             </div>
-            <Typography className={classes.textCenter} ><Link target="_blank" href="https://ticke.tz">{i18n.t("about.copyright")}</Link></Typography>
+            <Typography className={classes.textCenter} ><Link target="_blank" rel="noreferrer noopener" href="https://ticke.tz">{i18n.t("about.copyright")}</Link></Typography>
           </>
         }
 				</DialogContent>
