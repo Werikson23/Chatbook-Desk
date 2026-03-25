@@ -1,208 +1,245 @@
-[![en](https://img.shields.io/badge/lang-en-green.svg)](README.md)
-[![pt-br](https://img.shields.io/badge/lang-pt--br-red.svg)](README.pt.md)
+ChatBook-Desk
 
-**Chatbook-Desk** — fork/development based on the Ticketz project (see history and license below).
+Plataforma moderna de atendimento Omnichannel, CRM e Helpdesk, projetada para centralizar comunicações com clientes em um único lugar.
 
-# About the Project
+Inspirado nas melhores soluções do mercado, o ChatBook-Desk foi desenvolvido com arquitetura própria, foco em performance, escalabilidade e experiência do usuário.
 
-Ticketz is a communicator with CRM and helpdesk features that utilizes WhatsApp as a means of communication with clients.
+Ideal para empresas que desejam organizar atendimento, vendas e suporte com eficiência e previsibilidade.
 
-## Original Authorship
 
-This project was initiated in [an Open Source project](https://github.com/canove/whaticket-community), published by the developer [Cassio Santos](https://github.com/canove) under the permissive MIT license. It later received various improvements by unidentified authors and was commercially distributed directly between developers and users with the provision of source code. According to information from [this video, it was leaked and publicly released at some point](https://www.youtube.com/watch?v=SX_cGD5RLkQ).
+---
 
-After some research, it was further identified that the first SaaS version of Whaticket was created by the developer [Wender Teixeira](https://github.com/w3nder), including a version of [Whaticket Single](https://github.com/unkbot/whaticket-free) that uses the Baileys library for WhatsApp access.
+Visão Geral
 
-It is practically impossible to identify and credit the authors of the improvements. [The code published by the Vem Fazer channel](https://github.com/vemfazer/whaticket-versao-03-12-canal-vem-fazer) does not mention any license; therefore, I am assuming that all authors are comfortable with keeping these changes under the same license as the original project (MIT).
+O ChatBook-Desk permite gerenciar conversas, clientes e operações de atendimento em uma única plataforma.
 
-## Relicensing
+Principais objetivos:
 
-As I am making these changes and providing them at no cost, I want them to be available to everyone. Therefore, I am choosing to relicense under the AGPL, which requires that every user who has access to the system can obtain the source code.
+Centralizar comunicações
 
-Therefore, if you directly utilize this version, it is **very important to keep the link on the "About Ticketz" screen, which provides access to the repository**. If you wish, you can move the link to the source code elsewhere, but it must be easily accessible to any system user.
+Melhorar produtividade da equipe
 
-If you make changes to the code, you must change the link to a repository or another way to obtain the code for your changes.
+Organizar fluxo de atendimento
 
-If you wish to use parts of the code to fix any code **for your own use**, feel free to do so and you don't need to worry about the AGPL license. However, if you want to use any part added in this project in a system that you commercialize, you must either provide the code of your entire system to its users, or you must contact the author of the code to license it under different criteria.
+Automatizar processos repetitivos
 
-## Objective
+Gerar métricas estratégicas
 
-The objective of this project is to improve and keep open updates about the published Whaticket SaaS. Mainly focused on application quality and ease of installation and use.
+Permitir expansão para múltiplos canais
 
-The improvements developed by me will be placed here, and depending on the situation, I can transpose, always crediting, codes and improvements published in other projects also derived from Whaticket Community or Whaticket SaaS.
 
-## Contributing Back
 
-Whenever possible, I intend to backport some adjustments made here to the original projects.
+---
 
-Very Quick Start on a public Server
------------------------------------
+Principais Recursos
 
-There are Docker images provided from the project, so you can get **ticketz** to work very easily on a public server (baremetal or VPS).
+Inbox Omnichannel
 
-### First setup
+atendimento em tempo real
 
-Before starting you must complete this checklist:
+múltiplos agentes simultâneos
 
-- [ ] Have a clean server running Ubuntu 20 or newer
-- [ ] Ports 80 and 443 available and not filtered by firewall
-- [ ] One hostname with configured DNS pointing to your server
+histórico completo de conversas
 
-After this, just log in to your server and issue the following command, replacing the hostnames you already configured and your email address:
+transferência entre agentes
 
-```bash
-curl -sSL get.ticke.tz | sudo bash -s app.example.com name@example.com
-```
+notas internas
 
-After a few minutes you will have the server running at the hostname you defined.
+etiquetas personalizadas
 
-The default login will be the email address provided in the installation command and the default password is `123456`, you must change it right away.
+visualização organizada por filas
 
-### Upgrade
 
-The upgrade is just easy as the instalation, you just need to login to your server using the same username you used on the installation and issue the following command:
 
-```bash
-curl -sSL update.ticke.tz | sudo bash
-```
+---
 
-Your server will go down and after some minutes it will be running in the latest released version.
+CRM integrado
 
-### Inspect logs
+cadastro de clientes
 
-As all elements are running in containers the logs must be checked through the docker command.
+histórico de interações
 
-You must login to your server using the same user you used for the installation.
+múltiplos canais por contato
 
-First you need to move the current directory to the installation folder:
+organização por tags
 
-```bash
-cd ~/ticketz-docker-acme
-```
+acompanhamento de oportunidades
 
-After this you can get a full log report with the following command:
 
-```bash
-docker compose logs -t
-```
 
-If you want to "tail follow" the logs just add a `-f` parameter to that command:
+---
 
-```bash
-docker compose logs -t -f
+Sistema de Tickets
 
-```
+conversas organizadas como tickets
 
-Running from Source code Using Docker
--------------------------------------
+controle de status
 
-For installation, you need to have Docker Community Edition and the Git client installed. It is ideal to find the best way to install these resources on your preferred operating system. [The official Docker installation guide can be found here](https://docs.docker.com/engine/install/).
+prioridades
 
-In both cases, it is necessary to clone the repository, then open a command terminal:
+atribuição automática
 
-```bash
-git clone https://github.com/allgood/ticketz.git
-cd ticketz
-```
+categorização personalizada
 
-### Repository layout
 
-- **`docker/`** — Compose files (`docker-compose.dev.yml` = infra only; `docker-compose-local.yaml` / `docker-compose.prod.yml` / ACME / Cloudflare) and `docker/confs/`.
-- **`env/`** — Environment files for each **Docker** stack; local Node uses `backend/.env.development` from `backend/.env.example`.
-- **`docs/`** — Guides, `docs/futuras/`, and `docs/operations/` (backup Postgres).
-- **`tests/`** — Placeholder for cross-cutting tests; backend Jest tests remain in `backend/`.
 
-### Quick start (development)
+---
 
-From the repository root, after installing Node 20 and Docker:
+SLA configurável
 
-```bash
-npm install
-cp backend/.env.example backend/.env.development
-# optional: cp frontend/.env.example frontend/.env.development
-npm run dev:up
-cd backend && npm ci && npm run generate:i18nkeys && npm run build && npx sequelize db:migrate && npx sequelize db:seed:all && cd ..
-npm run dev
-```
+tempo máximo de resposta
 
-`npm run dev` runs backend + frontend with hot reload; Postgres/Redis stay in Docker. Stop infra: `npm run dev:down`.
+tempo máximo de resolução
 
-Health checks: `GET /health` (liveness), `GET /ready` (DB) on the backend port.
+regras por horário de atendimento
 
-## Running Locally
+configuração de feriados
 
-By default, the configuration is set to run the system only on the local computer. To run it on a local network, you need to edit the `env/.env-backend-local` and `env/.env-frontend-local` files and change the backend and frontend addresses from `localhost` to the desired IP, for example, `192.168.0.10`.
+suporte a plantões
 
-To run the system from the repository root, execute the following command:
+alertas automáticos
 
-```bash
-docker compose -f docker/docker-compose-local.yaml up -d
-```
 
-On the first run, the system will initialize the databases and tables, and after a few minutes, Ticketz will be accessible through port 3000.
 
-The default username is `admin@ticketz.host`, and the default password is 123456.
+---
 
-The application will restart automatically after each server reboot.
+Automações e Workflow
 
-Execution can be stopped with the command:
+mensagens automáticas
 
-```bash
-docker compose -f docker/docker-compose-local.yaml down
-```
+follow-up automático
 
-### Production-style stack (healthchecks)
+distribuição de tickets
 
-Full stack with `depends_on` conditions and container healthchecks (adjust `env/*` for real URLs):
+alteração automática de status
 
-```bash
-docker compose -f docker/docker-compose.prod.yml up -d
-```
+gatilhos baseados em eventos
 
-## Running and Serving on the Internet
+regras personalizadas
 
-Having a server accessible via the internet, it is necessary to adjust two DNS names of your choice, one for the backend and another for the frontend, and also an email address for certificate registration, for example:
 
-* **backend:** api.ticketz.example.com
-* **frontend:** ticketz.example.com
-* **email:** ticketz@example.com
 
-You need to edit the `env/.env-backend-acme` and `env/.env-frontend-acme` files, defining these values in them.
+---
 
-If you want to use reCAPTCHA in the company signup, you also need to insert the secret and site keys in the backend and frontend files, respectively.
+Dashboard e Analytics
 
-This guide assumes that the terminal is open and logged in with a regular user who has permission to use the `sudo` command to execute commands as root.
+volume de atendimentos
 
-Being in the project's root folder, execute the following command to start the service:
+tempo médio de resposta
 
-```bash
-sudo docker compose -f docker/docker-compose-acme.yaml up -d
-```
+tempo médio de resolução
 
-On the first run, Docker will compile the code and create the containers, and then Ticketz will initialize the databases and tables. This operation can take quite some time, after which Ticketz will be accessible at the provided frontend address.
+desempenho por agente
 
-The default username is the email address provided on the `env/.env-backend-acme` file and the default password is 123456.
+produtividade da equipe
 
-The application will restart automatically after each server reboot.
+indicadores operacionais
 
-To terminate the service, use the following command:
 
-```bash
-sudo docker compose -f docker/docker-compose-acme.yaml down
-```
 
-Important Notice
-----------------
+---
 
-This project is not affiliated with Meta, WhatsApp, or any other company. The use of the provided code is the sole responsibility of the users and does not imply any liability for the author or project collaborators.
+Gestão de Agentes
 
-Made Your Life Easier?
-----------------------
+múltiplos usuários
 
-If this project has helped you with a complex task, consider making a donation to the author via PayPal or Brazilian PIX below.
+permissões e níveis de acesso
 
-[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=X6XHVCPMRQEL4)
+monitoramento de desempenho
 
-![image](https://github.com/ticketz-oss/ticketz/assets/6070736/8e85b263-73ca-4fb4-9bdc-03fff356b6ff)
+controle de atividade
 
-PIX Key: 0699c69d-0951-4686-a5b7-c6cd21aa7e15
+
+
+---
+
+Arquitetura
+
+Projetado para ser:
+
+modular
+
+escalável
+
+previsível
+
+fácil de manter
+
+preparado para expansão
+
+
+Stack principal:
+
+Backend
+
+Node.js
+
+TypeScript
+
+API REST
+
+PostgreSQL
+
+Redis
+
+
+Frontend
+
+TypeScript
+
+SPA moderna
+
+componentes reutilizáveis
+
+interface otimizada para produtividade
+
+
+Infraestrutura
+
+Docker
+
+Docker Compose
+
+
+
+---
+
+Roadmap
+
+novos canais de comunicação
+
+automações avançadas
+
+relatórios inteligentes
+
+integrações adicionais
+
+melhorias de UX
+
+integração com IA
+
+
+
+---
+
+Aviso
+
+Este projeto não possui vínculo com:
+
+Meta
+
+WhatsApp
+
+Facebook
+
+qualquer empresa terceirizada
+
+
+
+---
+
+Licença
+
+Definir conforme estratégia do projeto:
+
+MIT AGPL Apache 2.0 Proprietária
