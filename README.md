@@ -1,245 +1,236 @@
-ChatBook-Desk
+# ChatBook-Desk
 
-Plataforma moderna de atendimento Omnichannel, CRM e Helpdesk, projetada para centralizar comunicações com clientes em um único lugar.
+Plataforma moderna de **atendimento Omnichannel**, **CRM** e **Helpdesk**, projetada para centralizar comunicações com clientes em um único lugar.
 
-Inspirado nas melhores soluções do mercado, o ChatBook-Desk foi desenvolvido com arquitetura própria, foco em performance, escalabilidade e experiência do usuário.
+Inspirado nas melhores soluções do mercado, o **ChatBook-Desk** foi desenvolvido com **arquitetura própria**, foco em **performance**, **escalabilidade** e **experiência do usuário**.
 
 Ideal para empresas que desejam organizar atendimento, vendas e suporte com eficiência e previsibilidade.
 
-
 ---
 
-Visão Geral
+# Visão Geral
 
 O ChatBook-Desk permite gerenciar conversas, clientes e operações de atendimento em uma única plataforma.
 
 Principais objetivos:
 
-Centralizar comunicações
-
-Melhorar produtividade da equipe
-
-Organizar fluxo de atendimento
-
-Automatizar processos repetitivos
-
-Gerar métricas estratégicas
-
-Permitir expansão para múltiplos canais
-
-
+- Centralizar comunicações com clientes
+- Melhorar produtividade da equipe
+- Organizar fluxo de atendimento
+- Automatizar processos repetitivos
+- Gerar métricas estratégicas
+- Permitir expansão para múltiplos canais
 
 ---
 
-Principais Recursos
+# Principais Recursos
 
-Inbox Omnichannel
+## Inbox Omnichannel
 
-atendimento em tempo real
+Centralize todas as conversas em uma única interface.
 
-múltiplos agentes simultâneos
-
-histórico completo de conversas
-
-transferência entre agentes
-
-notas internas
-
-etiquetas personalizadas
-
-visualização organizada por filas
-
-
+- Atendimento em tempo real
+- Múltiplos agentes simultâneos
+- Histórico completo de conversas
+- Transferência entre agentes
+- Notas internas
+- Etiquetas personalizadas
+- Visualização organizada por filas
+- Controle de status da conversa
 
 ---
 
-CRM integrado
+## CRM Integrado
 
-cadastro de clientes
+Gerencie informações de clientes de forma organizada.
 
-histórico de interações
-
-múltiplos canais por contato
-
-organização por tags
-
-acompanhamento de oportunidades
-
-
+- Cadastro de clientes
+- Histórico de interações
+- Múltiplos canais por contato
+- Organização por tags
+- Acompanhamento de oportunidades
+- Visão completa do relacionamento com o cliente
 
 ---
 
-Sistema de Tickets
+## Sistema de Tickets
 
-conversas organizadas como tickets
+Organização estruturada dos atendimentos.
 
-controle de status
-
-prioridades
-
-atribuição automática
-
-categorização personalizada
-
-
+- Conversas organizadas como tickets
+- Controle de status
+- Definição de prioridades
+- Atribuição automática
+- Categorização personalizada
+- Histórico completo de ações
 
 ---
 
-SLA configurável
+## SLA Configurável
 
-tempo máximo de resposta
+Controle de tempo e qualidade de atendimento.
 
-tempo máximo de resolução
-
-regras por horário de atendimento
-
-configuração de feriados
-
-suporte a plantões
-
-alertas automáticos
-
-
+- Tempo máximo de resposta
+- Tempo máximo de resolução
+- Regras por horário de atendimento
+- Configuração de feriados
+- Suporte a plantões
+- Alertas automáticos de atraso
 
 ---
 
-Automações e Workflow
+## Automações e Workflow
 
-mensagens automáticas
+Automatize tarefas repetitivas e aumente eficiência.
 
-follow-up automático
-
-distribuição de tickets
-
-alteração automática de status
-
-gatilhos baseados em eventos
-
-regras personalizadas
-
-
+- Mensagens automáticas
+- Follow-up automático
+- Distribuição automática de tickets
+- Alteração automática de status
+- Gatilhos baseados em eventos
+- Regras personalizadas
+- Execução programada de ações
 
 ---
 
-Dashboard e Analytics
+## Dashboard e Analytics
 
-volume de atendimentos
+Métricas para tomada de decisão.
 
-tempo médio de resposta
-
-tempo médio de resolução
-
-desempenho por agente
-
-produtividade da equipe
-
-indicadores operacionais
-
-
+- Volume de atendimentos
+- Tempo médio de resposta
+- Tempo médio de resolução
+- Desempenho por agente
+- Produtividade da equipe
+- Indicadores operacionais
+- Análise de performance
 
 ---
 
-Gestão de Agentes
+## Gestão de Agentes
 
-múltiplos usuários
+Controle completo da equipe.
 
-permissões e níveis de acesso
-
-monitoramento de desempenho
-
-controle de atividade
-
-
+- Múltiplos usuários
+- Permissões e níveis de acesso
+- Monitoramento de desempenho
+- Controle de atividade
+- Organização por equipes
 
 ---
 
-Arquitetura
+# Arquitetura
 
-Projetado para ser:
+O ChatBook-Desk foi projetado para ser:
 
-modular
+- Modular
+- Escalável
+- Previsível
+- Fácil de manter
+- Preparado para expansão futura
 
-escalável
+## Stack Principal
 
-previsível
+### Backend
 
-fácil de manter
+- Node.js
+- TypeScript
+- API REST
+- PostgreSQL
+- Redis
 
-preparado para expansão
+### Frontend
 
+- TypeScript
+- SPA moderna
+- Componentes reutilizáveis
+- Interface otimizada para produtividade
 
-Stack principal:
+### Infraestrutura
 
-Backend
-
-Node.js
-
-TypeScript
-
-API REST
-
-PostgreSQL
-
-Redis
-
-
-Frontend
-
-TypeScript
-
-SPA moderna
-
-componentes reutilizáveis
-
-interface otimizada para produtividade
-
-
-Infraestrutura
-
-Docker
-
-Docker Compose
-
-
+- Docker
+- Docker Compose
+- Ambiente padronizado
+- Fácil deploy
 
 ---
 
-Roadmap
+# Casos de Uso
 
-novos canais de comunicação
+O ChatBook-Desk pode ser utilizado para:
 
-automações avançadas
-
-relatórios inteligentes
-
-integrações adicionais
-
-melhorias de UX
-
-integração com IA
-
-
+- Atendimento ao cliente
+- Suporte técnico
+- Pré-vendas
+- Pós-vendas
+- SAC
+- Helpdesk interno
+- Central de relacionamento
+- Operações de vendas
 
 ---
 
-Aviso
+# Roadmap
+
+Evoluções planejadas:
+
+- Novos canais de comunicação
+- Automações avançadas
+- Relatórios inteligentes
+- Integrações adicionais
+- Melhorias de UX
+- Integração com IA
+- Expansão de funcionalidades omnichannel
+
+---
+
+# Segurança
+
+Boas práticas aplicadas:
+
+- Autenticação segura
+- Isolamento por empresa
+- Controle de permissões
+- Variáveis sensíveis via ambiente
+- Containers isolados
+- Preparado para HTTPS
+
+---
+
+# Aviso
 
 Este projeto não possui vínculo com:
 
-Meta
+- Meta
+- WhatsApp
+- Facebook
+- Qualquer empresa terceirizada
 
-WhatsApp
-
-Facebook
-
-qualquer empresa terceirizada
-
-
+O uso da API WhatsApp deve respeitar os termos da plataforma utilizada.
 
 ---
 
-Licença
+# Licença
 
-Definir conforme estratégia do projeto:
+Definir conforme estratégia do projeto.
 
-MIT AGPL Apache 2.0 Proprietária
+Opções comuns:
+
+- MIT
+- AGPL
+- Apache 2.0
+- Licença Proprietária
+
+---
+
+# Contribuição
+
+Sugestões e melhorias são bem-vindas.
+
+Abra uma issue ou pull request com descrição clara da proposta.
+
+---
+
+# ChatBook-Desk
+
+Plataforma moderna para atendimento eficiente, organizado e escalável.
