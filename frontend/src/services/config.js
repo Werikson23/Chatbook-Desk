@@ -1,4 +1,9 @@
 import { loadJSON } from "../helpers/loadJSON";
+import {
+  adaptConfigForLanAccess,
+  getLanFallbackConfig,
+  isRemoteStyleHost
+} from "../helpers/lanConfig";
 
 function trimUrl(u) {
   return u ? String(u).replace(/\/$/, "") : "";
@@ -23,6 +28,11 @@ if (!config && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
   }
 }
 
+// Acesso pela rede / nome do PC: mesmo host da página, API na 8080
+if (!config && isRemoteStyleHost(window.location.hostname)) {
+  config = getLanFallbackConfig();
+}
+
 if (!config && !envBackendUrl) {
   throw new Error("Config not found");
 }
@@ -30,6 +40,8 @@ if (!config && !envBackendUrl) {
 if (!config) {
   config = {};
 }
+
+config = adaptConfigForLanAccess(config) || config;
 
 export function getBackendURL() {
   if (envBackendUrl) {

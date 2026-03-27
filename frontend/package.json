@@ -58,19 +58,20 @@
     "socket.io-client": "^4.7.5",
     "styled-components": "^5.3.5",
     "text-mask-addons": "^3.8.0",
+    "chatbook-desk": "file:..",
     "use-debounce": "^7.0.0",
     "use-sound": "^2.0.1",
     "uuid": "^9.0.1",
     "validations-br": "^1.4.0",
     "vcard-parser": "^1.0.0",
-    "wavoip-api": "https://github.com/ticketz-oss/wavoip-api#nossl-error",
+    "wavoip-api": "file:../vendor/wavoip-api",
     "yet-another-react-lightbox": "^3.29.1",
     "yup": "^1.4.0"
   },
   "scripts": {
     "start": "react-scripts start",
     "legacy": "react-scripts start",
-    "build": "GENERATE_SOURCEMAP=false react-scripts build",
+    "build": "cross-env CI=false GENERATE_SOURCEMAP=false react-scripts build",
     "builddev": "react-scripts build",
     "winBuild": "set \"GENERATE_SOURCEMAP=false\" && react-scripts build",
     "test": "react-scripts test",
@@ -97,6 +98,7 @@
     "@testing-library/react": "^11.0.4",
     "@testing-library/user-event": "^12.1.7",
     "@types/react": "^17.0.82",
+    "cross-env": "^10.1.0",
     "react-scripts": "^5.0.1",
     "typescript": "^4.9.5"
   }

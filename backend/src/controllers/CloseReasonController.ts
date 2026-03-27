@@ -3,12 +3,18 @@ import Queue from "../models/Queue";
 import CloseReason from "../models/CloseReason";
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
-  const { companyId } = req.user;
+  const { companyId, profile, isSuper } = req.user;
   const queueId = Number(req.query.queueId || 0);
+  const listAll = String(req.query.all || "") === "true";
+  const canManage =
+    profile === "admin" || profile === "supervisor" || isSuper === true;
 
   const reasons = await CloseReason.findAll({
-    where: { companyId, isActive: true },
-    include: [{ model: Queue, as: "queues", attributes: ["id"], through: { attributes: [] } }],
+    where: {
+      companyId,
+      ...(listAll && canManage ? {} : { isActive: true })
+    },
+    include: [{ model: Queue, as: "queues", attributes: ["id", "name"], through: { attributes: [] } }],
     order: [["name", "ASC"]]
   });
 

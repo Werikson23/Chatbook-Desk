@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Ticketz development ports",
+  "type": "object",
+  "required": ["frontend", "backend"],
+  "properties": {
+    "frontend": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 65535,
+      "description": "CRA dev server (npm run dev na raiz)"
+    },
+    "backend": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 65535,
+      "description": "API + WebSocket"
+    },
+    "lanHost": {
+      "type": "string",
+      "description": "IP ou hostname na LAN para CORS/API_FRONTEND_URL; vazio omite o host extra"
+    }
+  },
+  "additionalProperties": false
+}

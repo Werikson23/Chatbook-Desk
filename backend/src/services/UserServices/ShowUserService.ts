@@ -16,6 +16,10 @@ const ShowUserService = async (
       "companyId",
       "profile",
       "super",
+      "signatureEnabled",
+      "signatureTemplate",
+      "signatureChannels",
+      "signatureAutoMode",
       "tokenVersion"
     ],
     include: [

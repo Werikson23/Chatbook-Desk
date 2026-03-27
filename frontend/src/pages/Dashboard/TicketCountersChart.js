@@ -1,4 +1,5 @@
 import { useTheme } from "@material-ui/core";
+import { alpha } from "@material-ui/core/styles";
 import React, { useEffect, useState } from "react";
 import { i18n } from "../../translate/i18n";
 import {
@@ -161,25 +162,25 @@ export function TicketCountersChart({ ticketCounters, start, end, hour_start, ho
 						tickLine={false}
 						axisLine={false}
 					/>
-					<CartesianGrid vertical={false} strokeDasharray="4" opacity={0.3} />
+					<CartesianGrid vertical={false} strokeDasharray="3 4" stroke={alpha(theme.palette.divider, 0.9)} opacity={0.6} />
 					<Tooltip content={<CustomTooltip i18nBase="dashboard.ticketCountersLabels"/>} cursor={true} />
 					<Area
 						type="monotone"
 						dataKey="created"
-						stroke="blue"
-						strokeWidth={1}
-						fillOpacity={0.5}
-						fill="lightblue"
-						activeDot={{ r: 8 }}
+						stroke={theme.palette.primary.main}
+						strokeWidth={2}
+						fillOpacity={0.2}
+						fill={theme.palette.primary.main}
+						activeDot={{ r: 6, strokeWidth: 0, fill: theme.palette.primary.main }}
 					/>
           <Area
             type="monotone"
             dataKey="closed"
-            stroke="green"
-            strokeWidth={1}
-            fillOpacity={0.5}
-            fill="lightgreen"
-            activeDot={{ r: 8 }}
+            stroke={theme.palette.success.main}
+            strokeWidth={2}
+            fillOpacity={0.16}
+            fill={theme.palette.success.main}
+            activeDot={{ r: 6, strokeWidth: 0, fill: theme.palette.success.main }}
           />
 				</AreaChart>
 			</ResponsiveContainer>

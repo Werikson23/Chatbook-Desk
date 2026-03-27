@@ -8,7 +8,6 @@ import {
   Avatar,
   Button,
   CircularProgress,
-  Divider,
   IconButton,
   makeStyles,
   Tooltip,
@@ -38,8 +37,6 @@ import {
 import WhatsMarked from "react-whatsmarked";
 import PdfPreview from "../PdfPreview";
 import MessageOptionsMenu from "../MessageOptionsMenu";
-import whatsBackground from "../../assets/wa-background.png";
-import whatsBackgroundDark from "../../assets/wa-background-dark.png";
 import MediaGalleryLightbox, { buildMediaGalleryData } from "../MediaGalleryLightbox";
 
 import api from "../../services/api";
@@ -51,6 +48,7 @@ import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import { downloadFile } from "../../helpers/downloadFile";
 import { Mutex } from "async-mutex";
+import { getBackendURL } from "../../services/config";
 
 const loadPageMutex = new Mutex();
 
@@ -70,7 +68,7 @@ const useStyles = makeStyles((theme) => ({
   },
   
   stickedMessages: {
-    backgroundImage: theme.mode === 'light' ? `url(${whatsBackground})` : `url(${whatsBackgroundDark})`,
+    background: theme.palette.background.default,
     flexDirection: "column",
     flexGrow: 1,
     padding: "5px 20px 20px 20px",
@@ -85,6 +83,11 @@ const useStyles = makeStyles((theme) => ({
     borderTop: `1px solid ${theme.palette.divider}`,
   },
 
+  stickedMessagesChatwoot: {
+    background: "#1a1a1c",
+    borderTop: "1px solid #2a2a2e",
+  },
+
   messagesListWrapper: {
     overflow: "hidden",
     position: "relative",
@@ -96,14 +99,23 @@ const useStyles = makeStyles((theme) => ({
     minHeight: 150,
   },
 
+  messagesListWrapperChatwoot: {
+    background: "#121212",
+  },
+
   messagesList: {
-    backgroundImage: theme.mode === 'light' ? `url(${whatsBackground})` : `url(${whatsBackgroundDark})`,
+    background: theme.palette.background.default,
     display: "flex",
     flexDirection: "column",
     flexGrow: 1,
     padding: "20px 20px 20px 20px",
     overflowY: "scroll",
     ...theme.scrollbarStyles,
+  },
+
+  messagesListChatwoot: {
+    background: "#151718",
+    color: "#e8e8ec",
   },
 
   circleLoading: {
@@ -205,6 +217,41 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: 0,
     boxShadow: theme.mode === 'light' ? "0 1px 1px #b3b3b3" : "0 1px 1px #000000",
     transition: 'background-color 0.5s ease-in-out',
+  },
+
+  messageBubbleIncomingChatwoot: {
+    backgroundColor: "#1c1e21",
+    border: "1px solid #2b2e33",
+    borderTopLeftRadius: 2,
+    color: "#ececf1",
+    boxShadow: "0 1px 0 rgba(0,0,0,0.35)",
+  },
+
+  messageBubbleOutgoingChatwoot: {
+    backgroundColor: "#1c64f2",
+    borderTopRightRadius: 2,
+    color: "#ffffff",
+    boxShadow: "0 1px 0 rgba(0,0,0,0.35)",
+  },
+
+  internalNoteTitle: {
+    fontSize: 12,
+    fontWeight: 700,
+    marginBottom: 4,
+    color: "#eab308",
+  },
+
+  internalNoteBubble: {
+    // Match "Private Note" composer colors.
+    backgroundColor: "#2d2417",
+    border: "1px solid #524021",
+    borderTopRightRadius: 2,
+    color: "#f8f4e4",
+    boxShadow: "0 1px 0 rgba(0,0,0,0.35)",
+  },
+
+  quotedContainerChatwoot: {
+    backgroundColor: "#3a3a42",
   },
 
   quotedContainerRight: {
@@ -664,7 +711,15 @@ const reducer = (state, action) => {
   }
 };
 
-const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
+const MessagesList = ({
+  ticket,
+  ticketId,
+  isGroup,
+  markAsRead,
+  readOnly,
+  chatwootUI,
+  internalNotes = [],
+}) => {
   const classes = useStyles();
 
   const [messagesList, dispatch] = useReducer(reducer, []);
@@ -683,9 +738,31 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const messageOptionsMenuOpen = Boolean(anchorEl);
   const currentTicketId = useRef(ticketId);
+  const loadDataRef = useRef(null);
   const [contactPresence, setContactPresence] = useState("available");
 
   const socketManager = useContext(SocketContext);
+
+  const resolveMediaUrl = (url) => {
+    if (!url) return "";
+    const raw = String(url).trim();
+    if (!raw) return "";
+    const backend = getBackendURL();
+    if (/^(blob:|data:)/i.test(raw)) return raw;
+    if (/^https?:/i.test(raw)) {
+      try {
+        const parsed = new URL(raw);
+        if (parsed.pathname.startsWith("/public/")) {
+          return `${backend}${parsed.pathname}${parsed.search || ""}`;
+        }
+      } catch {
+        // keep original absolute URL when parsing fails
+      }
+      return raw;
+    }
+    if (raw.startsWith("/")) return `${backend}${raw}`;
+    return `${backend}/${raw}`;
+  };
 
   function loadData(incrementPage = false) {
     setLoading(true);
@@ -720,15 +797,31 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     };
   }
 
-  useEffect(async () => {
+  useEffect(() => {
+    loadDataRef.current = loadData;
+  });
+
+  useEffect(() => {
     dispatch({ type: "RESET" });
     setContactPresence("available");
 
     currentTicketId.current = ticketId;
-    
-    await loadPageMutex.runExclusive(async () => {
-      loadData();
-    });
+
+    let clearPendingLoad;
+
+    const runInitialLoad = async () => {
+      await loadPageMutex.runExclusive(async () => {
+        clearPendingLoad = loadDataRef.current?.();
+      });
+    };
+
+    runInitialLoad();
+
+    return () => {
+      if (typeof clearPendingLoad === "function") {
+        clearPendingLoad();
+      }
+    };
   }, [ticketId]);
 
   useEffect(() => {
@@ -753,7 +846,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           const message = data.message;
           const { scrollTop, clientHeight, scrollHeight } = scrollRef.current;
           const isAtBottom = scrollTop + clientHeight >= (scrollHeight - clientHeight / 4);
-          message.bottomStick = !isAtBottom && !message.fromMe || undefined;
+          message.bottomStick = (!isAtBottom && !message.fromMe) || undefined;
           dispatch({ type: "ADD_MESSAGE", payload: message });
           if ((isAtBottom || data.message.fromMe) && data.message.mediaType !== "reactionMessage") {
             scrollToBottom();
@@ -850,9 +943,63 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     return buildMediaGalleryData(messagesList);
   }, [messagesList]);
 
+  // Merge WhatsApp messages + internal ticket notes into a single ordered timeline.
+  // Notes must appear as "sent" (right side) like Chatwoot's private note.
+  const timeline = useMemo(() => {
+    const toMs = (entry) => {
+      const t = new Date(entry?.createdAt).getTime();
+      return Number.isFinite(t) ? t : 0;
+    };
+
+    const notes = (internalNotes || []).map((n) => {
+      const createdAtRaw = n?.createdAt;
+      const createdAt =
+        createdAtRaw instanceof Date
+          ? createdAtRaw.toISOString()
+          : createdAtRaw;
+
+      return {
+        id: `note-${n?.id}`,
+        fromMe: true,
+        body: n?.note || "",
+        createdAt,
+        replies: [],
+        mediaUrl: "",
+        mediaType: "ticketNote",
+        dataJson: JSON.stringify({ message: {} }),
+        isDeleted: false,
+        isEdited: false,
+        isInternalNote: true,
+      };
+    });
+
+    const merged = [...messagesList, ...notes];
+    merged.sort((a, b) => toMs(a) - toMs(b));
+    return merged;
+  }, [messagesList, internalNotes]);
+
+  // When new internal notes are added, keep the user at the bottom (like normal incoming messages).
+  useEffect(() => {
+    if (!internalNotes || internalNotes.length === 0) return;
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const { scrollTop, clientHeight, scrollHeight } = el;
+    const nearBottom = scrollTop + clientHeight >= scrollHeight - clientHeight / 4;
+    if (!nearBottom) return;
+
+    // Defer to let React paint the new timeline entries.
+    setTimeout(() => scrollToBottom(), 0);
+  }, [internalNotes?.length]);
+
   const openLightboxForMessage = (messageId) => {
     const index = lightboxMedia.byMessageId[messageId];
     if (index === undefined) {
+      const message = messagesList.find((item) => `${item?.id}` === `${messageId}`);
+      const mediaUrl = resolveMediaUrl(message?.mediaUrl);
+      if (mediaUrl) {
+        window.open(mediaUrl, "_blank", "noopener,noreferrer");
+      }
       return;
     }
 
@@ -912,7 +1059,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
             className={clsx(classes.messageMedia, classes.messageMediaClickable, {
               [classes.messageMediaDeleted]: message.isDeleted,
             })}
-            src={message.mediaUrl}
+            src={resolveMediaUrl(message.mediaUrl)}
             alt="midia da mensagem"
             onClick={() => openLightboxForMessage(message.id)}
           />
@@ -937,7 +1084,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
 
       return (
         <>
-          <audio className={classes.audioBottom} controls src={message.mediaUrl} />
+          <audio className={classes.audioBottom} controls src={resolveMediaUrl(message.mediaUrl)} />
           {
             message.body &&
             !["🔊","Áudio"].includes(message.body) &&
@@ -966,7 +1113,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                 }
               }}
               className={classes.videoPreviewMedia}
-              src={message.mediaUrl}
+              src={resolveMediaUrl(message.mediaUrl)}
               preload="metadata"
               playsInline
               onPlay={() => {
@@ -1028,12 +1175,12 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       const isPdf =
         fileName.toLowerCase().endsWith(".pdf") ||
         (document?.mimetype || "").toLowerCase().includes("pdf") ||
-        (message.mediaUrl || "").toLowerCase().includes(".pdf");
+            (resolveMediaUrl(message.mediaUrl) || "").toLowerCase().includes(".pdf");
       return (
         <>
           {isPdf && message.mediaUrl && (
             <PdfPreview
-              url={message.mediaUrl}
+              url={resolveMediaUrl(message.mediaUrl)}
               fileName={fileName}
             />
           )}
@@ -1043,7 +1190,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               endIcon={<GetApp />}
               color="primary"
               variant="outlined"
-              onClick={() => downloadFile(message.mediaUrl)}
+              onClick={() => downloadFile(resolveMediaUrl(message.mediaUrl))}
             >
              { document?.fileName || message.body}
             </Button>
@@ -1090,14 +1237,14 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           key={`timestamp-${message.id}`}
         >
           <div className={classes.dailyTimestampText}>
-            {format(parseISO(messagesList[index].createdAt), "dd/MM/yyyy")}
+            {format(parseISO(timeline[index].createdAt), "dd/MM/yyyy")}
           </div>
         </span>
       );
     }
-    if (index < messagesList.length) {
-      let messageDay = parseISO(messagesList[index].createdAt);
-      let previousMessageDay = parseISO(messagesList[index - 1].createdAt);
+    if (index < timeline.length) {
+      let messageDay = parseISO(timeline[index].createdAt);
+      let previousMessageDay = parseISO(timeline[index - 1].createdAt);
 
       if (!isSameDay(messageDay, previousMessageDay)) {
         return (
@@ -1106,7 +1253,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
             key={`timestamp-${message.id}`}
           >
             <div className={classes.dailyTimestampText}>
-              {format(parseISO(messagesList[index].createdAt), "dd/MM/yyyy")}
+              {format(parseISO(timeline[index].createdAt), "dd/MM/yyyy")}
             </div>
           </span>
         );
@@ -1115,9 +1262,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   };
 
   const renderMessageDivider = (message, index) => {
-    if (index < messagesList.length && index > 0) {
-      let messageUser = messagesList[index].fromMe;
-      let previousMessageUser = messagesList[index - 1].fromMe;
+    if (index < timeline.length && index > 0) {
+      let messageUser = timeline[index].fromMe;
+      let previousMessageUser = timeline[index - 1].fromMe;
 
       if (messageUser !== previousMessageUser) {
         return (
@@ -1159,12 +1306,13 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     const data = JSON.parse(message.quotedMsg.dataJson);
     
     const thumbnail = data?.message?.imageMessage?.jpegThumbnail;
-    const mediaUrl = message.quotedMsg?.mediaType === "image" ? message.quotedMsg.mediaUrl : null;
+    const mediaUrl = message.quotedMsg?.mediaType === "image" ? resolveMediaUrl(message.quotedMsg.mediaUrl) : null;
     const imageUrl = thumbnail ? "data:image/png;base64, " + thumbnail : mediaUrl;
     return (
       <div
         className={clsx(classes.quotedContainerLeft, {
           [classes.quotedContainerRight]: message.fromMe,
+          [classes.quotedContainerChatwoot]: chatwootUI,
         })}
         onClick={() => scrollToMessage(message.quotedMsg.id)}
       >
@@ -1182,7 +1330,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           <WhatsMarked>{getQuotedMessageText(message.quotedMsg)}</WhatsMarked>
         </div>
         {imageUrl && (
-          <img className={classes.quotedThumbnail} src={imageUrl} />
+          <img className={classes.quotedThumbnail} src={imageUrl} alt="mídia citada" />
         )}
       </div>
     );
@@ -1237,10 +1385,11 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
     const thumbnail = data?.message?.extendedTextMessage?.jpegThumbnail;
     const imageUrl = thumbnail ? "data:image/png;base64, " + thumbnail : "";
     return (
-      <a href={canonicalUrl} className={classes.linkPreviewAnchor} target="_blank">
+      <a href={canonicalUrl} className={classes.linkPreviewAnchor} target="_blank" rel="noreferrer">
         <div
           className={clsx(classes.quotedContainerLeft, {
             [classes.quotedContainerRight]: message.fromMe,
+            [classes.quotedContainerChatwoot]: chatwootUI,
           })}
         >
           <div className={classes.quotedMsg}>
@@ -1261,7 +1410,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
             }
           </div>
           {!message.thumbnailUrl && imageUrl && (
-            <img className={classes.quotedThumbnail} src={imageUrl} />
+            <img className={classes.quotedThumbnail} src={imageUrl} alt="miniatura do link" />
           )}
         </div>
       </a>
@@ -1306,7 +1455,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       color="primary"
       startIcon={displayText === 'Facebook' ? <Facebook /> : displayText === 'Instagram' ? <Instagram /> : <Launch />}
     >
-      <a href={url} target="_blank" style={{ textDecoration: 'none', color: 'inherit' }}>
+      <a href={url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
         {displayText}
       </a>
     </Button>
@@ -1492,7 +1641,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       } className={[clsx(classes.textContentItem, classes.messageLocation)]}>
         <div>
         { location?.jpegThumbnail ? 
-        <img src={`data:image/png;base64, ${location.jpegThumbnail}`} className={classes.imageLocation} />
+        <img src={`data:image/png;base64, ${location.jpegThumbnail}`} className={classes.imageLocation} alt="miniatura da localização" />
         :
         <LocationOn className={classes.imageLocation} fontSize="large" color="red" />
         }
@@ -1537,9 +1686,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         
   const renderMessages = () => {
     const stickedMessages = [];
-    const viewMessagesList = messagesList.map((message, index) => {
+    const viewMessagesList = timeline.map((message, index) => {
       if (message.mediaType === "reactionMessage") {
-        return;
+        return null;
       }
       
       const data = JSON.parse(message.dataJson);
@@ -1553,19 +1702,22 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
             <div id={message.id}
               className={[clsx(classes.messageContainer, classes.messageLeft, {
                 [classes.messageMediaSticker]: isSticker,
+                [classes.messageBubbleIncomingChatwoot]: chatwootUI,
               })]}
               title={message.queueId && message.queue?.name}
             >
-              { readOnly || <IconButton
-                variant="contained"
-                size="small"
-                id={`messageActionsButton-${message.id}`}
-                disabled={message.isDeleted}
-                className={classes.messageActionsButton}
-                onClick={(e) => handleOpenMessageOptionsMenu(e, message, data)}
-              >
-                <ExpandMore />
-              </IconButton> }
+              {(readOnly || message.isInternalNote) ? null : (
+                <IconButton
+                  variant="contained"
+                  size="small"
+                  id={`messageActionsButton-${message.id}`}
+                  disabled={message.isDeleted}
+                  className={classes.messageActionsButton}
+                  onClick={(e) => handleOpenMessageOptionsMenu(e, message, data)}
+                >
+                  <ExpandMore />
+                </IconButton>
+              )}
               { dataContext?.isForwarded && (
                 <span className={classes.forwardedMessage}>
                   <Forward fontSize="small" className={classes.forwardedIcon}/> {i18n.t("message.forwarded")}
@@ -1584,7 +1736,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               )}
 
               {message.thumbnailUrl && !message.mediaUrl && (
-                <img className={classes.previewThumbnail} src={message.thumbnailUrl} />
+                <img className={classes.previewThumbnail} src={resolveMediaUrl(message.thumbnailUrl)} alt="miniatura da mídia" />
               )}
 
               {data?.message?.locationMessage ? messageLocation(data, message.createdAt)
@@ -1648,19 +1800,23 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
             <div id={message.id}
               className={[clsx(classes.messageContainer, classes.messageRight, {
                 [classes.messageMediaSticker]: isSticker,
+                [classes.messageBubbleOutgoingChatwoot]: chatwootUI,
+                [classes.internalNoteBubble]: message.isInternalNote,
               })]}
               title={message.queueId && message.queue?.name}
             >
-              { readOnly || <IconButton
-                variant="contained"
-                size="small"
-                id={`messageActionsButton-${message.id}`}
-                disabled={message.isDeleted}
-                className={classes.messageActionsButton}
-                onClick={(e) => handleOpenMessageOptionsMenu(e, message, data)}
-              >
-                <ExpandMore />
-              </IconButton> }
+              {(readOnly || message.isInternalNote) ? null : (
+                <IconButton
+                  variant="contained"
+                  size="small"
+                  id={`messageActionsButton-${message.id}`}
+                  disabled={message.isDeleted}
+                  className={classes.messageActionsButton}
+                  onClick={(e) => handleOpenMessageOptionsMenu(e, message, data)}
+                >
+                  <ExpandMore />
+                </IconButton>
+              )}
 
               { dataContext?.isForwarded && (
                 <span className={classes.forwardedMessage}>
@@ -1669,7 +1825,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
               )}
 
               {message.thumbnailUrl && !message.mediaUrl && (
-                <img className={classes.previewThumbnail} src={message.thumbnailUrl} />
+                <img className={classes.previewThumbnail} src={resolveMediaUrl(message.thumbnailUrl)} alt="miniatura da mídia" />
               )}                                
 
               <div
@@ -1697,7 +1853,16 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
                     message.quotedMsg && renderQuotedMessage(message)}
                 {renderLinkPreview(message)}
                 {!isSticker && (
-                  message.mediaUrl ? "" : <WhatsMarked>{message.body}</WhatsMarked>
+                  message.mediaUrl ? (
+                    ""
+                  ) : message.isInternalNote ? (
+                    <>
+                      <div className={classes.internalNoteTitle}>Private note</div>
+                      <WhatsMarked>{message.body}</WhatsMarked>
+                    </>
+                  ) : (
+                    <WhatsMarked>{message.body}</WhatsMarked>
+                  )
                 )
                 }
                 <span className={[clsx(classes.timestamp, {
@@ -1720,7 +1885,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
         {viewMessagesList}
         <div
           ref={stickedRef}
-          className={classes.stickedMessages}
+          className={clsx(classes.stickedMessages, {
+            [classes.stickedMessagesChatwoot]: chatwootUI,
+          })}
           style={{ display: stickedMessages.length > 0 ? 'flex' : 'none' }}
         >
           {stickedMessages}
@@ -1730,7 +1897,11 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
   };
 
   return (
-    <div className={classes.messagesListWrapper}>
+    <div
+      className={clsx(classes.messagesListWrapper, {
+        [classes.messagesListWrapperChatwoot]: chatwootUI,
+      })}
+    >
       <MessageOptionsMenu
         message={selectedMessage}
         data={selectedMessageData}
@@ -1740,11 +1911,13 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
       />
       <div
         id="messagesList"
-        className={classes.messagesList}
+        className={clsx(classes.messagesList, {
+          [classes.messagesListChatwoot]: chatwootUI,
+        })}
         onScroll={handleScroll}
         ref={scrollRef}
       >
-        {messagesList.length > 0 ? renderMessages() : []}
+        {timeline.length > 0 ? renderMessages() : []}
         {contactPresence === "composing" && (
           <div className={classes.messageLeft}>
             <div className={classes.wave}>
@@ -1766,7 +1939,7 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           </div>
         )}
       </div>
-      {ticket?.channel !== "whatsapp" || ticket.channel === undefined && (
+      {(ticket?.channel !== "whatsapp" || ticket?.channel === undefined) && (
         <div
           style={{
             width: "100%",
@@ -1777,9 +1950,9 @@ const MessagesList = ({ ticket, ticketId, isGroup, markAsRead, readOnly }) => {
           }}
         >
           {ticket?.channel === "facebook" ? (
-            <Facebook small />
+            <Facebook fontSize="small" />
           ) : (
-            <Instagram small />
+            <Instagram fontSize="small" />
           )}
 
           <span>

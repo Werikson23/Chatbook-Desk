@@ -7,17 +7,12 @@ import cookieParser from "cookie-parser";
 import * as Sentry from "@sentry/node";
 
 import sequelize from "./database";
-import path from "path";
 import uploadConfig from "./config/upload";
 import AppError from "./errors/AppError";
 import routes from "./routes";
 import { logger } from "./utils/logger";
 import { messageQueue, sendScheduledMessages } from "./queues";
 import { corsOrigin } from "./helpers/corsOrigin";
-
-class SystemError extends Error {
-  code?: string;
-}
 
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
@@ -55,27 +50,19 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use(Sentry.Handlers.requestHandler());
-app.get("/public/*", (req, res) => {
-  const filePath = path.join(uploadConfig.directory, req.params[0]);
-
-  if (filePath.endsWith(".aac")) {
-    res.setHeader("Content-Type", "audio/aac");
-  }
-
-  res.download(filePath, (err: SystemError) => {
-    if (err) {
-      if (err.code === "ENOENT") {
-        res.status(404).end();
-      } else {
-        logger.debug(
-          { err },
-          `Error downloading file ${req.params[0]}: ${err.message}`
-        );
-        res.status(500).end();
+app.use(
+  "/public",
+  express.static(uploadConfig.directory, {
+    fallthrough: false,
+    setHeaders: (res, filePath) => {
+      // Keep media inline so browser previews (image/video/audio/pdf) work.
+      res.setHeader("Content-Disposition", "inline");
+      if (filePath.endsWith(".aac")) {
+        res.setHeader("Content-Type", "audio/aac");
       }
     }
-  });
-});
+  })
+);
 
 app.use((req, _res, next) => {
   const { method, url, query, body, headers } = req;

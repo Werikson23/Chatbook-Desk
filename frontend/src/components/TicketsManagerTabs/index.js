@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
+import clsx from "clsx";
 
 import { makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
@@ -106,15 +107,77 @@ const useStyles = makeStyles((theme) => ({
     width: 24,
     height: 24,
   },
+
+  chatwootSurface: {
+    backgroundColor: "#16161a !important",
+    borderColor: "#2a2a2e !important",
+    color: "rgba(255,255,255,0.87)",
+  },
+  chatwootTabsHeader: {
+    backgroundColor: "#1c1c22 !important",
+    borderBottom: "1px solid #2a2a2e",
+    "& .MuiTab-root": {
+      color: "rgba(255,255,255,0.45)",
+    },
+    "& .MuiTab-textColorPrimary.Mui-selected": {
+      color: theme.palette.primary.light,
+    },
+  },
+  chatwootOptionsBox: {
+    backgroundColor: "#16161a !important",
+    borderBottom: "1px solid #2a2a2e",
+    "& .MuiFormControlLabel-label": {
+      color: "rgba(255,255,255,0.7)",
+    },
+  },
+  chatwootSearchWrap: {
+    backgroundColor: "#25252c",
+    border: "1px solid #2a2a2e",
+    borderRadius: 8,
+  },
+  chatwootSearchIcon: {
+    color: "rgba(255,255,255,0.4)",
+  },
+  chatwootTabPanel: {
+    flex: 1,
+    minHeight: 0,
+    display: "flex",
+    flexDirection: "column",
+    backgroundColor: "#121212",
+    overflow: "hidden",
+  },
+  chatwootListPaper: {
+    backgroundColor: "#121212 !important",
+    flex: 1,
+    minHeight: 0,
+    display: "flex",
+    flexDirection: "column",
+  },
+  chatwootSubTabs: {
+    backgroundColor: "#121212",
+    borderBottom: "1px solid #2a2a2e",
+    "& .MuiTab-root": {
+      color: "rgba(255,255,255,0.5)",
+      minHeight: 44,
+    },
+    "& .MuiTab-textColorPrimary.Mui-selected": {
+      color: theme.palette.primary.light,
+    },
+  },
 }));
 
-const TicketsManagerTabs = () => {
+const TicketsManagerTabs = ({
+  preset = {},
+  onCountsChange,
+  onPresetChange,
+  chatwootUI = false,
+}) => {
   const classes = useStyles();
   const history = useHistory();
 
-  const [searchParam, setSearchParam] = useState("");
-  const [tab, setTab] = useState("open");
-  const [tabOpen, setTabOpen] = useState("open");
+  const [searchParam, setSearchParam] = useState(preset.searchParam || "");
+  const [tab, setTab] = useState(preset.tab || "open");
+  const [tabOpen, setTabOpen] = useState(preset.tabOpen || "open");
   const [newTicketModalOpen, setNewTicketModalOpen] = useState(false);
   const [showAllTickets, setShowAllTickets] = useState(false);
   const searchInputRef = useRef();
@@ -127,8 +190,12 @@ const TicketsManagerTabs = () => {
   const userQueueIds = user.queues.map((q) => q.id);
   const [selectedQueueIds, setSelectedQueueIds] = useState(userQueueIds || []);
   const [selectedContact, setSelectedContact] = useState(null);
-  const [selectedTags, setSelectedTags] = useState([]);
+  const [localTagIds, setLocalTagIds] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
+
+  const selectedTagIds = Array.isArray(preset.tagIds)
+    ? preset.tagIds
+    : localTagIds;
 
   const { getSetting } = useSettings();
   const [showTabGroups, setShowTabGroups] = useState(false);
@@ -140,7 +207,7 @@ const TicketsManagerTabs = () => {
     ]).then(([ignoreGroups, groupsTab]) => {
       setShowTabGroups(ignoreGroups === "disabled" && groupsTab === "enabled");
     });
-  }, []);
+  }, [getSetting]);
 
   useEffect(() => {
     if (user.profile.toUpperCase() === "ADMIN") {
@@ -150,10 +217,38 @@ const TicketsManagerTabs = () => {
   }, []);
 
   useEffect(() => {
+    if (preset.railKey === "mine") {
+      setShowAllTickets(false);
+      return;
+    }
+    if (preset.railKey === "inbox" && user.profile?.toUpperCase() === "ADMIN") {
+      setShowAllTickets(true);
+    }
+  }, [preset.railKey, user.profile]);
+
+  useEffect(() => {
     if (tab === "search") {
       searchInputRef.current.focus();
     }
   }, [tab]);
+
+  useEffect(() => {
+    if (preset.tab) {
+      setTab(preset.tab);
+    }
+    if (preset.tabOpen) {
+      setTabOpen(preset.tabOpen);
+    }
+    if (typeof preset.searchParam === "string") {
+      setSearchParam(preset.searchParam);
+    }
+  }, [preset.tab, preset.tabOpen, preset.searchParam]);
+
+  useEffect(() => {
+    if (typeof onCountsChange === "function") {
+      onCountsChange({ openCount, pendingCount });
+    }
+  }, [openCount, pendingCount, onCountsChange]);
 
   let searchTimeout;
 
@@ -188,9 +283,13 @@ const TicketsManagerTabs = () => {
     }
   };
 
-  const handleSelectedTags = (selecteds) => {
-    const tags = selecteds.map((t) => t.id);
-    setSelectedTags(tags);
+  const handleSelectedTags = (selectedObjects) => {
+    const ids = (selectedObjects || []).map((t) => t.id);
+    if (typeof onPresetChange === "function") {
+      onPresetChange({ tagIds: ids });
+    } else {
+      setLocalTagIds(ids);
+    }
   };
 
   const handleSelectedUsers = (selecteds) => {
@@ -199,7 +298,11 @@ const TicketsManagerTabs = () => {
   };
 
   return (
-    <Paper elevation={0} variant="outlined" className={classes.ticketsWrapper}>
+    <Paper
+      elevation={0}
+      variant="outlined"
+      className={clsx(classes.ticketsWrapper, chatwootUI && classes.chatwootSurface)}
+    >
       <NewTicketModal
         modalOpen={newTicketModalOpen}
         onClose={(ticket) => {
@@ -207,7 +310,11 @@ const TicketsManagerTabs = () => {
           handleCloseOrOpenTicket(ticket);
         }}
       />
-      <Paper elevation={0} square className={classes.tabsHeader}>
+      <Paper
+        elevation={0}
+        square
+        className={clsx(classes.tabsHeader, chatwootUI && classes.chatwootTabsHeader)}
+      >
         <Tabs
           value={tab}
           onChange={handleChangeTab}
@@ -247,15 +354,27 @@ const TicketsManagerTabs = () => {
           />
         </Tabs>
       </Paper>
-      <Paper square elevation={0} className={classes.ticketOptionsBox}>
+      <Paper
+        square
+        elevation={0}
+        className={clsx(classes.ticketOptionsBox, chatwootUI && classes.chatwootOptionsBox)}
+      >
         {tab === "search" ? (
-          <div className={classes.serachInputWrapper}>
-            <SearchIcon className={classes.searchIcon} />
+          <div
+            className={clsx(
+              classes.serachInputWrapper,
+              chatwootUI && classes.chatwootSearchWrap
+            )}
+          >
+            <SearchIcon
+              className={clsx(classes.searchIcon, chatwootUI && classes.chatwootSearchIcon)}
+            />
             <InputBase
               className={classes.searchInput}
               inputRef={searchInputRef}
               placeholder={i18n.t("tickets.search.placeholder")}
               type="search"
+              defaultValue={searchParam}
               onChange={handleSearch}
             />
           </div>
@@ -300,13 +419,18 @@ const TicketsManagerTabs = () => {
           onChange={(values) => setSelectedQueueIds(values)}
         />
       </Paper>
-      <TabPanel value={tab} name="open" className={classes.ticketsWrapper}>
+      <TabPanel
+        value={tab}
+        name="open"
+        className={clsx(classes.ticketsWrapper, chatwootUI && classes.chatwootTabPanel)}
+      >
         <Tabs
           value={tabOpen}
           onChange={handleChangeTabOpen}
           indicatorColor="primary"
           textColor="primary"
           variant="fullWidth"
+          className={clsx(chatwootUI && classes.chatwootSubTabs)}
         >
           <Tab
             label={
@@ -335,49 +459,72 @@ const TicketsManagerTabs = () => {
             value={"pending"}
           />
         </Tabs>
-        <Paper className={classes.ticketsWrapper}>
+        <Paper className={clsx(classes.ticketsWrapper, chatwootUI && classes.chatwootListPaper)}>
           <TicketsList
             status="open"
             showAll={showAllTickets}
             selectedQueueIds={selectedQueueIds}
+            tags={selectedTagIds}
             updateCount={(val) => setOpenCount(val)}
             style={applyPanelStyle("open")}
             setTabOpen={setTabOpen}
             showTabGroups={showTabGroups}
+            chatwootUI={chatwootUI}
           />
           <TicketsList
             status="pending"
             selectedQueueIds={selectedQueueIds}
+            tags={selectedTagIds}
             updateCount={(val) => setPendingCount(val)}
             style={applyPanelStyle("pending")}
             setTabOpen={setTabOpen}
             showTabGroups={showTabGroups}
+            chatwootUI={chatwootUI}
           />
         </Paper>
       </TabPanel>
-      <TabPanel value={tab} name="closed" className={classes.ticketsWrapper}>
+      <TabPanel
+        value={tab}
+        name="closed"
+        className={clsx(classes.ticketsWrapper, chatwootUI && classes.chatwootTabPanel)}
+      >
         <TicketsList
           status="closed"
           showAll={true}
           selectedQueueIds={selectedQueueIds}
+          tags={selectedTagIds}
           showTabGroups={showTabGroups}
+          chatwootUI={chatwootUI}
           />
       </TabPanel>
-      <TabPanel value={tab} name="groups" className={classes.ticketsWrapper}>
+      <TabPanel
+        value={tab}
+        name="groups"
+        className={clsx(classes.ticketsWrapper, chatwootUI && classes.chatwootTabPanel)}
+      >
         <TicketsList
           groups={true}
           showAll={true}
           selectedQueueIds={selectedQueueIds}
+          tags={selectedTagIds}
           showTabGroups={showTabGroups}
+          chatwootUI={chatwootUI}
         />
       </TabPanel>
-      <TabPanel value={tab} name="search" className={classes.ticketsWrapper}>
+      <TabPanel
+        value={tab}
+        name="search"
+        className={clsx(classes.ticketsWrapper, chatwootUI && classes.chatwootTabPanel)}
+      >
         <Box style={{ paddingRight: 10, paddingLeft: 10 }}>
         <ContactSelect onSelected={(contactId) => {
           setSelectedContact(contactId);
         }} allowCreate={false} />
         </Box>
-        <TagsFilter onFiltered={handleSelectedTags} />
+        <TagsFilter
+          valueIds={selectedTagIds}
+          onFiltered={handleSelectedTags}
+        />
         {profile === "admin" && (
           <UsersFilter onFiltered={handleSelectedUsers} />
         )}
@@ -386,10 +533,11 @@ const TicketsManagerTabs = () => {
           searchParam={searchParam}
           showAll={true}
           contactId={selectedContact}
-          tags={selectedTags}
+          tags={selectedTagIds}
           users={selectedUsers}
           selectedQueueIds={selectedQueueIds}
           showTabGroups={showTabGroups}
+          chatwootUI={chatwootUI}
         />
       </TabPanel>
     </Paper>

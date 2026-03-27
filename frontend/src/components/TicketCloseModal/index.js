@@ -19,6 +19,7 @@ const TicketCloseModal = ({ open, onClose, onConfirm, ticket, loading }) => {
   const [selectedReasonId, setSelectedReasonId] = useState("");
   const [selectedFarewellTemplateId, setSelectedFarewellTemplateId] = useState("");
   const [hasValidationError, setHasValidationError] = useState(false);
+  const [requireCloseReason, setRequireCloseReason] = useState(true);
 
   useEffect(() => {
     if (!open || !ticket?.id) {
@@ -27,14 +28,17 @@ const TicketCloseModal = ({ open, onClose, onConfirm, ticket, loading }) => {
 
     const loadData = async () => {
       try {
-        const [{ data: reasons }, { data: templates }] = await Promise.all([
+        const [reasonsRes, templatesRes, policyRes] = await Promise.all([
           api.get("/close-reasons", {
             params: { queueId: ticket.queueId || undefined }
           }),
-          api.get("/farewell-templates")
+          api.get("/farewell-templates"),
+          api.get("/settings/requireCloseReason").catch(() => ({ data: "enabled" }))
         ]);
-        setCloseReasons(reasons || []);
-        setFarewellTemplates(templates || []);
+        setCloseReasons(reasonsRes.data || []);
+        setFarewellTemplates(templatesRes.data || []);
+        const raw = policyRes?.data;
+        setRequireCloseReason(raw !== "disabled" && raw !== "false");
       } catch (err) {
         toastError(err);
       }
@@ -51,13 +55,13 @@ const TicketCloseModal = ({ open, onClose, onConfirm, ticket, loading }) => {
   };
 
   const handleConfirm = () => {
-    if (!selectedReasonId) {
+    if (requireCloseReason && !selectedReasonId) {
       setHasValidationError(true);
       return;
     }
 
     onConfirm({
-      closeReasonId: Number(selectedReasonId),
+      closeReasonId: selectedReasonId ? Number(selectedReasonId) : null,
       farewellTemplateId: selectedFarewellTemplateId
         ? Number(selectedFarewellTemplateId)
         : null
@@ -72,9 +76,11 @@ const TicketCloseModal = ({ open, onClose, onConfirm, ticket, loading }) => {
           fullWidth
           variant="outlined"
           margin="dense"
-          error={hasValidationError && !selectedReasonId}
+          error={hasValidationError && requireCloseReason && !selectedReasonId}
         >
-          <InputLabel id="close-reason-label">Motivo de encerramento *</InputLabel>
+          <InputLabel id="close-reason-label">
+            Motivo de encerramento{requireCloseReason ? " *" : ""}
+          </InputLabel>
           <Select
             labelId="close-reason-label"
             value={selectedReasonId}
@@ -82,17 +88,22 @@ const TicketCloseModal = ({ open, onClose, onConfirm, ticket, loading }) => {
               setSelectedReasonId(event.target.value);
               setHasValidationError(false);
             }}
-            label="Motivo de encerramento *"
+            label={`Motivo de encerramento${requireCloseReason ? " *" : ""}`}
           >
+            {!requireCloseReason ? (
+              <MenuItem value="">
+                <em>Sem motivo</em>
+              </MenuItem>
+            ) : null}
             {closeReasons.map(reason => (
               <MenuItem key={reason.id} value={reason.id}>
                 {reason.name}
               </MenuItem>
             ))}
           </Select>
-          {hasValidationError && !selectedReasonId && (
+          {hasValidationError && requireCloseReason && !selectedReasonId ? (
             <FormHelperText>Selecione um motivo para encerrar.</FormHelperText>
-          )}
+          ) : null}
         </FormControl>
 
         <FormControl fullWidth variant="outlined" margin="dense">

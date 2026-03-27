@@ -2,18 +2,14 @@ import React from "react";
 
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
-import whatsBackground from "../../assets/wa-background.png"
-import whatsBackgroundDark from "../../assets/wa-background-dark.png";
 
 const useStyles = makeStyles(theme => ({
 	mainContainer: {
 		flex: 1,
-		padding: theme.spacing(2),
+		padding: 0,
 		height: `calc(100% - 48px)`,
-	    backgroundImage: theme.mode === 'light' ? `url(${whatsBackground})` : `url(${whatsBackgroundDark})`,
-		backgroundPosition: 'center', 
-		backgroundSize: 'cover', 
-		backgroundRepeat: 'no-repeat',
+		background: theme.palette.background.default,
+		maxWidth: "100% !important",
 	},
 
 	contentWrapper: {
@@ -28,7 +24,7 @@ const MainContainer = ({ children }) => {
 	const classes = useStyles();
 
 	return (
-		<Container className={classes.mainContainer}>
+		<Container className={classes.mainContainer} maxWidth={false} disableGutters>
 			<div className={classes.contentWrapper}>{children}</div>
 		</Container>
 	);

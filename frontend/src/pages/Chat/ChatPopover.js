@@ -150,17 +150,17 @@ export default function ChatPopover() {
     const socket = socketManager.GetSocket(companyId);
 
     const onCompanyChatPopover = (data) => {
+      if (!mountedRef.current) return;
       if (data.action === "new-message") {
         dispatch({ type: "CHANGE_CHAT", payload: data });
         if (data.newMessage.senderId !== user.id) {
-        
           soundAlertRef.current();
         }
       }
       if (data.action === "update") {
         dispatch({ type: "CHANGE_CHAT", payload: data });
       }
-    }
+    };
 
     socket.on(`company-${companyId}-chat`, onCompanyChatPopover);
 
@@ -171,6 +171,7 @@ export default function ChatPopover() {
   }, [socketManager]);
 
   useEffect(() => {
+    if (!mountedRef.current) return;
     let unreadsCount = 0;
     if (chats.length > 0) {
       for (let chat of chats) {
@@ -181,6 +182,7 @@ export default function ChatPopover() {
         }
       }
     }
+    if (!mountedRef.current) return;
     if (unreadsCount > 0) {
       setInvisible(false);
     } else {

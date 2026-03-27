@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
+import React, { useState, useEffect, useContext, useCallback, useMemo } from "react";
 
 import Paper from "@material-ui/core/Paper";
 import Container from "@material-ui/core/Container";
 import Grid from "@material-ui/core/Grid";
+import Box from "@material-ui/core/Box";
+import Chip from "@material-ui/core/Chip";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
@@ -10,14 +12,7 @@ import Select from "@material-ui/core/Select";
 import TextField from "@material-ui/core/TextField";
 import Typography from "@material-ui/core/Typography";
 
-// ICONS
-import GroupAddIcon from "@material-ui/icons/GroupAdd";
-import HourglassEmptyIcon from "@material-ui/icons/HourglassEmpty";
-import CheckCircleIcon from "@material-ui/icons/CheckCircle";
-import TimerIcon from '@material-ui/icons/Timer';
-
 import { makeStyles } from "@material-ui/core/styles";
-import { grey, blue } from "@material-ui/core/colors";
 import { toast } from "react-toastify";
 
 import TableAttendantsStatus from "../../components/Dashboard/TableAttendantsStatus";
@@ -25,90 +20,57 @@ import TableAttendantsStatus from "../../components/Dashboard/TableAttendantsSta
 import { isEmpty } from "lodash";
 import moment from "moment";
 import { i18n } from "../../translate/i18n";
-import OnlyForSuperUser from "../../components/OnlyForSuperUser";
 import useAuth from "../../hooks/useAuth.js";
-import clsx from "clsx";
-import { loadJSON } from "../../helpers/loadJSON";
 
-import { SmallPie } from "./SmallPie";
 import { TicketCountersChart } from "./TicketCountersChart";
+import { useDashboardStyles } from "./dashboardStyles";
+import { fetchDashboardExtras } from "./dashboardExtrasMock";
+import { mergeAuraKpis, mergeLiveTicketStatusBars } from "./auraMerge";
+import DashboardAppearanceToggle from "./DashboardAppearanceToggle";
+import AuraHubHeader from "./AuraHubHeader";
+import AuraKpiGrid from "./AuraKpiGrid";
+import AuraVolumeResolvedChart from "./AuraVolumeResolvedChart";
+import AuraClientWaitChart from "./AuraClientWaitChart";
+import AuraOriginDonutChart from "./AuraOriginDonutChart";
+import AuraStatusBarChart from "./AuraStatusBarChart";
+import AuraPanelsGrid from "./AuraPanelsGrid";
+import AuraGradientInsight from "./AuraGradientInsight";
+import DashboardGeoPanel from "./DashboardGeoPanel";
+import DashboardTagsSection from "./DashboardTagsSection";
+import { buildVolumeLiveFromTickets } from "./dashboardVolumeLive";
 import { getTimezoneOffset } from "../../helpers/getTimezoneOffset.js";
 
-import TicketzRegistry from "../../components/TicketzRegistry";
-import { copyToClipboard } from "../../helpers/copyToClipboard.js";
 import api from "../../services/api.js";
 import { SocketContext } from "../../context/Socket/SocketContext.js";
 import { formatTimeInterval } from "../../helpers/formatTimeInterval.js";
 
-const gitinfo = loadJSON('/gitinfo.json');
+function buildQueuesFromTicketsSummary(summary) {
+  if (!summary?.length) return null;
+  const map = {};
+  summary.forEach((row) => {
+    const q = row.queue;
+    const id = row.queueId ?? q?.id;
+    if (id == null) return;
+    if (!map[id]) {
+      map[id] = {
+        name: q?.name || `Fila ${id}`,
+        waiting: 0,
+        agents: "—",
+        waitingHighlight: false,
+      };
+    }
+    const c = Number(row.count ?? 0);
+    if (row.status === "pending") {
+      map[id].waiting += c;
+      if (c > 0) map[id].waitingHighlight = true;
+    }
+  });
+  return Object.values(map);
+}
 
-const useStyles = makeStyles((theme) => ({
-  container: {
-    paddingTop: theme.spacing(4),
-    paddingBottom: theme.spacing(4),
-  },
-  fixedHeightPaper: {
-    padding: theme.spacing(2),
-    display: "flex",
-    flexDirection: "column",
-    height: 240,
-    overflowY: "auto",
-    ...theme.scrollbarStyles,
-  },
-  pixkey: {
-    fontSize: "9pt",
-  },
-  paymentimg: {
-    maxWidth: "75%",
-    marginTop: 10,
-  },
-  paymentpix: {
-    maxWidth: "100%",
-    maxHeight: 130,
-    padding: "5px",
-    backgroundColor: "white",
-    borderColor: "black",
-    borderStyle: "solid",
-    borderWidth: "2px",
-  },
-  supportPaper: {
-    padding: theme.spacing(2),
-    display: "flex",
-    flexDirection: "column",
-    overflowY: "clip",
-    height: 300,
-    backgroundColor: theme.palette.secondary.main,
-    color: theme.palette.secondary.contrastText,
-    ...theme.scrollbarStyles,
-  },
-  supportBox: {
-    backgroundColor: theme.palette.secondary.light,
-    borderRadius: "10px",
-    textAlign: "center",
-    borderColor: theme.palette.secondary.main,
-    borderWidth: "3px",
-    borderStyle: "solid",
-    transition: "max-height 0.5s ease",
-    overflow: "clip"
-  },
-  cardAvatar: {
-    fontSize: "55px",
-    color: grey[500],
-    backgroundColor: "#ffffff",
-    width: theme.spacing(7),
-    height: theme.spacing(7),
-  },
-  cardTitle: {
-    fontSize: "18px",
-    color: blue[700],
-  },
-  cardSubtitle: {
-    color: grey[600],
-    fontSize: "14px",
-  },
-  alignRight: {
-    textAlign: "right",
-  },
+const DONUT_COLORS = ["#34c759", "#ff2d55", "#007aff", "#8e8e93", "#32ade6", "#af52de", "#ff9500"];
+
+const useStyles = makeStyles(() => ({
   fullWidth: {
     width: "100%",
   },
@@ -116,154 +78,11 @@ const useStyles = makeStyles((theme) => ({
     width: "100%",
     textAlign: "left",
   },
-  cardSolid: {
-    padding: theme.spacing(2),
-    display: "flex",
-    overflow: "hidden",
-    flexDirection: "row",
-    height: "100%",
-    backgroundColor: theme.palette.primary.main,
-    color: theme.palette.primary.contrastText,
-  },
-  cardGray: {
-    padding: theme.spacing(2),
-    display: "flex",
-    overflow: "hidden",
-    flexDirection: "row",
-    height: "100%",
-    color: theme.palette.primary.main,
-  },
-  cardData: {
-    display: "block",
-    width: "100%",
-    zIndex: 1,
-  },
-  cardIcon: {
-    width: 100,
-    color: theme.palette.primary.light,
-    position: "sticky",
-    opacity: 0.4,
-    right: 0,
-  },
-  cardRingGraph: {
-    width: 100,
-    position: "sticky",
-    right: 0,
-  },
-  ticketzProPaper: {
-    padding: theme.spacing(2),
-    display: "flex",
-    flexDirection: "column",
-    overflowY: "auto",
-    minHeight: 300,
-    backgroundColor: theme.palette.ticketzproad.main,
-    color: theme.palette.ticketzproad.contrastText,
-    ...theme.scrollbarStyles,
-  },
-  ticketzRegistryPaper: {
-    padding: theme.spacing(2),
-    display: "flex",
-    flexDirection: "column",
-    overflowY: "auto",
-    backgroundColor: theme.palette.background.main,
-    color: theme.palette.background.contrastText,
-    borderColor: theme.palette.primary.main,
-    borderWidth: "3px",
-    borderStyle: "solid",
-    marginBottom: "1em",
-    ...theme.scrollbarStyles,
-  },
-  ticketzProBox: {
-    textAlign: "center",
-    alignContent: "center"
-  },
-  ticketzProTitle: {
-    fontWeight: "bold"
-  },
-  ticketzProScreen: {
-    maxHeight: "300px",
-    maxWidth: "100%"
-  },
-  ticketzProFeatures: {
-    padding: 0,
-    listStyleType: "none"
-  },
-  ticketzProCommand: {
-    fontFamily: "monospace",
-    backgroundColor: "#00000080"
-  },
-  clickpointer: {
-    cursor: "pointer"
-  }
 }));
-
-const InfoCard = ({ title, value, icon }) => {
-  const classes = useStyles();
-  
-  return (
-    <Grid item xs={12} sm={6} md={3}>
-      <Paper
-        className={classes.cardGray}
-        elevation={6}
-      >
-        <div className={classes.cardData}>
-          <Typography
-            component="h3"
-            variant="h6"
-            paragraph
-          >
-            {title}
-          </Typography>
-          <Typography
-            component="h1"
-            variant="h4"
-          >
-            {value}
-          </Typography>
-        </div>
-        <div className={classes.cardIcon}>
-          {icon}
-        </div>
-      </Paper>
-    </Grid>
-  )
-}
-
-const InfoRingCard = ({ title, value, graph }) => {
-  const classes = useStyles();
-  return (
-    <Grid item xs={12} sm={4}>
-      <Paper
-        className={classes.cardSolid}
-        elevation={4}
-      >
-        <div className={classes.cardData}>
-          <Typography
-            component="h3"
-            variant="h6"
-            paragraph
-          >
-            {title}
-          </Typography>
-          <Typography
-            component="h1"
-            variant="h4"
-          >
-            {value}
-          </Typography>
-        </div>
-        <div className={classes.cardRingGraph}>
-          <div style={{ width: "100px", height: "100px" }}>
-            {graph}
-          </div>
-        </div>
-      </Paper>
-    </Grid>
-  )
-};
 
 const Dashboard = () => {
   const classes = useStyles();
+  const dash = useDashboardStyles();
   const [period, setPeriod] = useState(0);
   const [currentUser, setCurrentUser] = useState({});
   const [authReady, setAuthReady] = useState(false);
@@ -272,75 +91,145 @@ const Dashboard = () => {
   );
   const [dateTo, setDateTo] = useState(moment().format("YYYY-MM-DDTHH") + ":59");
   const { getCurrentUserInfo } = useAuth();
-    
-  const [supportPix, setSupportPix] = useState(false);
-  const [supportIsBr, setSupportIsBr] = useState(false);
-  const [registered, setRegistered] = useState(false);
-  const [proInstructionsOpen, setProInstructionsOpen] = useState(false);
-  
+
   const [usersOnlineTotal, setUsersOnlineTotal] = useState(0);
   const [usersOfflineTotal, setUsersOfflineTotal] = useState(0);
-  const [usersStatusChartData, setUsersStatusChartData] = useState([]);
   const [pendingTotal, setPendingTotal] = useState(0);
-  const [pendingChartData, setPendingChartData] = useState([]);
   const [openedTotal, setOpenedTotal] = useState(0);
-  const [openedChartData, setOpenedChartData] = useState([]);
-  
+  const [ticketsStatusSummary, setTicketsStatusSummary] = useState([]);
+  const [channelBreakdown, setChannelBreakdown] = useState([]);
+
   const [ticketsData, setTicketsData] = useState({});
-  const [usersData, setUsersData] = useState([]);
+  const [usersData, setUsersData] = useState({});
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [closeReasons, setCloseReasons] = useState([]);
+  const [closeReasonStats, setCloseReasonStats] = useState(null);
   const [selectedCloseReasonId, setSelectedCloseReasonId] = useState("");
+  const [dashboardExtras, setDashboardExtras] = useState(null);
+  const [auraQuickFilter, setAuraQuickFilter] = useState("custom");
+  const [auraChannel, setAuraChannel] = useState("all");
+  const [auraQueueId, setAuraQueueId] = useState("all");
+  const [queueList, setQueueList] = useState([]);
+  const [tagsForDash, setTagsForDash] = useState([]);
+  const [geoByDdd, setGeoByDdd] = useState(null);
   const companyId = localStorage.getItem("companyId");
 
-  const socketManager = useContext(SocketContext);
-    
-  async function showProInstructions() {
-    if (gitinfo.commitHash) {
-      setProInstructionsOpen(true);
-      return;
+  const geoForPanel = geoByDdd != null ? geoByDdd : dashboardExtras?.geo;
+
+  const handleAuraQuickFilter = useCallback((v) => {
+    setAuraQuickFilter(v);
+    if (v === "today") {
+      setPeriod(0);
+      setDateFrom(moment().startOf("day").format("YYYY-MM-DDTHH") + ":00");
+      setDateTo(moment().endOf("day").format("YYYY-MM-DDTHH") + ":59");
+    } else if (v === 7) {
+      setPeriod(7);
+    } else if (v === 30) {
+      setPeriod(30);
+    } else if (v === "custom") {
+      setPeriod(0);
     }
-    
-    window.open("https://pro.ticke.tz", "_blank");
-  }
-  
-  useEffect(() => {
-    fetch('https://ipapi.co/json/')
-      .then(async (res) => {
-        if (!res.ok) {
-          return null;
-        }
-        const raw = await res.text();
-        try {
-          return JSON.parse(raw);
-        } catch (_) {
-          return null;
-        }
-      })
-      .then(data => {
-        if (data?.country === 'BR') {
-          setSupportPix(true);
-          setSupportIsBr(true);
-        }
-      })
-      .catch(() => {});
   }, []);
-  
-  useEffect(() => {
-    if (!companyId) {
-      return undefined;
+
+  const auraStatusBars = useMemo(() => {
+    if (!dashboardExtras?.aura?.statusBars) return null;
+    return mergeLiveTicketStatusBars(
+      dashboardExtras.aura.statusBars,
+      openedTotal,
+      pendingTotal
+    );
+  }, [dashboardExtras, openedTotal, pendingTotal]);
+
+  const auraKpis = useMemo(() => {
+    if (!dashboardExtras?.aura?.kpis) return [];
+    return mergeAuraKpis(dashboardExtras.aura.kpis, {
+      openedTotal,
+      pendingTotal,
+      newContacts: ticketsData.ticketStatistics?.newContacts,
+      avgServiceTimeFormatted: formatTimeInterval(
+        ticketsData.ticketStatistics?.avgServiceTime
+      ),
+      avgWaitTimeFormatted: formatTimeInterval(
+        ticketsData.ticketStatistics?.avgWaitTime
+      ),
+    });
+  }, [
+    dashboardExtras,
+    openedTotal,
+    pendingTotal,
+    ticketsData.ticketStatistics?.newContacts,
+    ticketsData.ticketStatistics?.avgServiceTime,
+    ticketsData.ticketStatistics?.avgWaitTime,
+  ]);
+
+  const liveVolume = useMemo(
+    () => buildVolumeLiveFromTickets(ticketsData.ticketCounters),
+    [ticketsData.ticketCounters]
+  );
+
+  const liveChannelsForDonut = useMemo(() => {
+    if (!channelBreakdown?.length) return null;
+    return channelBreakdown.map((row, i) => ({
+      label: row.channel || "—",
+      channel: row.channel,
+      value: Number(row.count ?? 0),
+      color: DONUT_COLORS[i % DONUT_COLORS.length],
+    }));
+  }, [channelBreakdown]);
+
+  const auraQueuesDisplay = useMemo(() => {
+    const live = buildQueuesFromTicketsSummary(ticketsStatusSummary);
+    if (live?.length) return live;
+    return dashboardExtras?.aura?.queues || [];
+  }, [ticketsStatusSummary, dashboardExtras]);
+
+  const liveAgents = useMemo(() => {
+    const list = usersData?.userReport;
+    if (!list?.length) return null;
+    return list.map((u) => ({
+      name: u.name,
+      tickets: Number(u.openTickets ?? 0),
+      csat: u.averageRating != null ? Number(u.averageRating).toFixed(1) : "—",
+      status: u.online ? "online" : "offline",
+    }));
+  }, [usersData]);
+
+  const auraAgentsDisplay = useMemo(() => {
+    if (liveAgents?.length) return liveAgents;
+    return dashboardExtras?.aura?.agents || [];
+  }, [liveAgents, dashboardExtras]);
+
+  const auraRealtime = useMemo(
+    () => ({
+      ...dashboardExtras?.aura?.realtime,
+      queueWaiting: String(pendingTotal),
+      agentsOnline: String(usersOnlineTotal),
+      busyPause: `${usersOnlineTotal} / ${usersOfflineTotal}`,
+      avgWait:
+        ticketsData.ticketStatistics?.avgWaitTime != null
+          ? formatTimeInterval(ticketsData.ticketStatistics.avgWaitTime)
+          : dashboardExtras?.aura?.realtime?.avgWait,
+    }),
+    [
+      dashboardExtras,
+      pendingTotal,
+      usersOnlineTotal,
+      usersOfflineTotal,
+      ticketsData.ticketStatistics?.avgWaitTime,
+    ]
+  );
+
+  const socketManager = useContext(SocketContext);
+
+  const loadTags = useCallback(async () => {
+    try {
+      const { data } = await api.get("/tags/list");
+      setTagsForDash(Array.isArray(data) ? data : []);
+    } catch (_) {
+      setTagsForDash([]);
     }
+  }, []);
 
-    const socket = socketManager.GetSocket(companyId);
-    
-    socket.on("userOnlineChange", updateStatus);
-    socket.on("counter", updateStatus);
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [socketManager, companyId]);
-  
   useEffect(() => {
     const loadCurrentUser = async () => {
       try {
@@ -360,16 +249,50 @@ const Dashboard = () => {
   }, [getCurrentUserInfo]);
 
   useEffect(() => {
-    const loadRegistry = async () => {
+    const loadQueues = async () => {
       try {
-        const registry = await api.get("/ticketz/registry");
-        setRegistered(registry?.data?.disabled || !!registry?.data?.whatsapp);
-      } catch (_) {}
+        const { data } = await api.get("/queue");
+        setQueueList(Array.isArray(data) ? data : []);
+      } catch (_) {
+        setQueueList([]);
+      }
     };
     if (authReady && currentUser?.profile === "admin") {
-      loadRegistry();
+      loadQueues();
     }
   }, [authReady, currentUser?.profile]);
+
+  useEffect(() => {
+    if (authReady && currentUser?.profile === "admin") {
+      loadTags();
+    }
+  }, [authReady, currentUser?.profile, loadTags]);
+
+  useEffect(() => {
+    if (!authReady || currentUser?.profile !== "admin") {
+      return;
+    }
+    api
+      .get("/dashboard/geo-by-ddd")
+      .then((res) => {
+        if (res?.data) {
+          setGeoByDdd(res.data);
+        }
+      })
+      .catch(() => {
+        setGeoByDdd(null);
+      });
+  }, [authReady, currentUser?.profile]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchDashboardExtras().then((data) => {
+      if (!cancelled) setDashboardExtras(data);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const loadCloseReasons = async () => {
@@ -396,6 +319,9 @@ const Dashboard = () => {
 
         if (!data) return;
 
+        setTicketsStatusSummary(data.ticketsStatusSummary || []);
+        setChannelBreakdown(data.channelBreakdown || []);
+
         let usersOnlineTotal = 0;
         let usersOfflineTotal = 0;
         data.usersStatusSummary.forEach((item) => {
@@ -406,66 +332,59 @@ const Dashboard = () => {
           }
         });
 
-        setUsersStatusChartData([
-          {
-            name: "Online",
-            value: usersOnlineTotal,
-            color: "#00ff00"
-          },
-          {
-            name: "Offline",
-            value: usersOfflineTotal,
-            color: "#ff0000"
-          }
-        ]);
-
         setUsersOnlineTotal(usersOnlineTotal);
         setUsersOfflineTotal(usersOfflineTotal);
 
         let pendingTotal = 0;
         let openedTotal = 0;
-        const pendingChartData = [];
-        const openedChartData = [];
         data.ticketsStatusSummary.forEach((item) => {
           if (item.status === "pending") {
             pendingTotal += Number(item.count);
-            pendingChartData.push({
-              name: item.queue?.name || i18n.t("common.noqueue"),
-              value: Number(item.count),
-              color: item.queue?.color || "#888"
-            });
             return;
           }
           if (item.status === "open") {
             openedTotal += Number(item.count);
-            openedChartData.push({
-              name: item.queue?.name || i18n.t("common.noqueue"),
-              value: Number(item.count),
-              color: item.queue?.color || "#888"
-            });
           }
         });
         setPendingTotal(pendingTotal);
-        setPendingChartData(pendingChartData);
         setOpenedTotal(openedTotal);
-        setOpenedChartData(openedChartData);
       }
     ).catch(() => {});
   }, [authReady, currentUser?.profile]);
+
+  useEffect(() => {
+    if (!companyId) {
+      return undefined;
+    }
+
+    const socket = socketManager.GetSocket(companyId);
+
+    socket.on("userOnlineChange", updateStatus);
+    socket.on("counter", updateStatus);
+    socket.on("tag", loadTags);
+
+    return () => {
+      socket.off("userOnlineChange", updateStatus);
+      socket.off("counter", updateStatus);
+      socket.off("tag", loadTags);
+    };
+  }, [socketManager, companyId, updateStatus, loadTags]);
   
   const fetchData = useCallback(async () => {
     if (!authReady || currentUser?.profile !== "admin") {
       return;
     }
 
-    let params = { tz: getTimezoneOffset() };
-    
+    const tz = getTimezoneOffset();
+    let params = { tz };
+
     const days = Number(period);
 
     if (days) {
       params = {
+        ...params,
         date_from: moment().subtract(days, "days").format("YYYY-MM-DD"),
-        date_to: moment().format("YYYY-MM-DD")
+        date_to: moment().format("YYYY-MM-DD"),
       };
     }
 
@@ -473,7 +392,7 @@ const Dashboard = () => {
       params = {
         ...params,
         date_from: moment(dateFrom).format("YYYY-MM-DD"),
-        hour_from: moment(dateFrom).format("HH:mm:ss")
+        hour_from: moment(dateFrom).format("HH:mm:ss"),
       };
     }
 
@@ -481,11 +400,11 @@ const Dashboard = () => {
       params = {
         ...params,
         date_to: moment(dateTo).format("YYYY-MM-DD"),
-        hour_to: moment(dateTo).format("HH:mm:ss")
+        hour_to: moment(dateTo).format("HH:mm:ss"),
       };
     }
 
-    if (Object.keys(params).length === 0) {
+    if (!params.date_from || !params.date_to) {
       toast.error(i18n.t("dashboard.filter.invalid"));
       return;
     }
@@ -493,23 +412,53 @@ const Dashboard = () => {
     if (selectedCloseReasonId) {
       params.closeReasonId = selectedCloseReasonId;
     }
+    if (auraQueueId && auraQueueId !== "all") {
+      params.queueId = auraQueueId;
+    }
+    if (auraChannel && auraChannel !== "all") {
+      params.channel = auraChannel;
+    }
 
-    api.get("/dashboard/tickets", { params }).then(
-      result => {
+    api
+      .get("/dashboard/tickets", { params })
+      .then((result) => {
         if (result?.data) {
           setTicketsData(result.data);
         }
-      }).catch(() => {});
+      })
+      .catch(() => {});
+
+    api
+      .get("/dashboard/close-reasons-stats", { params })
+      .then((result) => {
+        setCloseReasonStats(Array.isArray(result?.data) ? result.data : []);
+      })
+      .catch(() => {
+        setCloseReasonStats([]);
+      });
 
     setLoadingUsers(true);
-    api.get("/dashboard/users", { params }).then(
-      result => {
+    api
+      .get("/dashboard/users", { params })
+      .then((result) => {
         if (result?.data) {
           setUsersData(result.data);
-          setLoadingUsers(false);
         }
-      }).catch(() => {});
-  }, [period, dateFrom, dateTo, selectedCloseReasonId, authReady, currentUser?.profile]);
+        setLoadingUsers(false);
+      })
+      .catch(() => {
+        setLoadingUsers(false);
+      });
+  }, [
+    period,
+    dateFrom,
+    dateTo,
+    selectedCloseReasonId,
+    auraQueueId,
+    auraChannel,
+    authReady,
+    currentUser?.profile,
+  ]);
 
   useEffect(() => {
     fetchData();
@@ -517,11 +466,11 @@ const Dashboard = () => {
 
   useEffect(() => {
     updateStatus();
-  }, [])
+  }, [updateStatus]);
 
   function renderFilters() {
       return (
-        <>
+        <Grid container spacing={2} alignItems="flex-end">
           <Grid item xs={12} sm={6} md={3}>
             <FormControl className={classes.selectContainer}>
               <InputLabel id="period-selector-label">{i18n.t("dashboard.filter.period")}</InputLabel>
@@ -540,7 +489,7 @@ const Dashboard = () => {
               </Select>
             </FormControl>
           </Grid>
-          {!period &&
+          {!period && (
             <>
               <Grid item xs={12} sm={6} md={3}>
                 <TextField
@@ -569,18 +518,17 @@ const Dashboard = () => {
                 />
               </Grid>
             </>
-          }
-          <Grid item xs={12} sm={6} md={period ? 9 : 3} />
+          )}
           <Grid item xs={12} sm={6} md={3}>
             <FormControl className={classes.selectContainer}>
-              <InputLabel id="close-reason-selector-label">Motivo de encerramento</InputLabel>
+              <InputLabel id="close-reason-selector-label">{i18n.t("dashboard.filter.closeReason")}</InputLabel>
               <Select
                 labelId="close-reason-selector-label"
                 id="close-reason-selector"
                 value={selectedCloseReasonId}
                 onChange={(e) => setSelectedCloseReasonId(e.target.value)}
               >
-                <MenuItem value="">Todos</MenuItem>
+                <MenuItem value="">{i18n.t("dashboard.filter.closeReasonAll")}</MenuItem>
                 {closeReasons.map(reason => (
                   <MenuItem key={reason.id} value={reason.id}>
                     {reason.name}
@@ -589,7 +537,7 @@ const Dashboard = () => {
               </Select>
             </FormControl>
           </Grid>
-        </>
+        </Grid>
       );
   }
 
@@ -601,235 +549,119 @@ const Dashboard = () => {
   }
       
   return (
-    <div>
-      <Container maxWidth="lg" className={classes.container}>
+    <div className={dash.pageRoot}>
+      <Container maxWidth={false} className={dash.container}>
         <Grid container spacing={3} justifyContent="flex-start">
-
-          { !localStorage.getItem("hideAds") && <OnlyForSuperUser
-            user={currentUser}
-            yes={() => (
-              <>
-              <Grid item xs={12}>
-                {!registered &&
-                  <Paper className={classes.ticketzRegistryPaper}>
-                    <TicketzRegistry onRegister={setRegistered} />
-                  </Paper>
-                }
-              </Grid>
-              <Grid item xs={12} md={8}>
-                <Paper className={clsx(classes.ticketzProPaper, {
-                  [classes.clickpointer]: !proInstructionsOpen,
-                })} onClick={() => showProInstructions()}>
-                  <Grid container justifyContent="flex-end">
-                    <Grid className={classes.ticketzProBox} item xs={12} sm={4}>
-                      <div>
-                        <img className={classes.ticketzProScreen} src="https://pro.ticke.tz/images/0/7/3/0/b/0730b234af7b4b0dac72d09828863bb7cb9193ea-ticketz-computador.png" alt="Ticketz Pro preview" />
-                      </div>
-                    </Grid>
-                    { !proInstructionsOpen &&
-                    <Grid className={classes.ticketzProBox} item xs={12} sm={8}>
-                      <Typography className={classes.ticketzProTitle} component="h3" variant="h5" gutterBottom>
-                        Ticketz PRO
-                      </Typography>
-                      <Typography component="div" variant="body2" gutterBottom>
-                      <ul className={classes.ticketzProFeatures}>
-                        <li>Whatsapp Oficial - Instagram - Messenger e outros</li>
-                        <li>Features exclusivas</li>
-                        <li>Suporte Avançado</li>
-                        <li>Migração Facilitada</li>
-                      </ul>
-                      </Typography>
-                      <Typography component="h3" variant="h5">
-                        Assine por R$ 199/mês
-                      </Typography>
-                      <Typography component="div" variant="body2" gutterBottom>
-                        direto dentro do sistema
-                      </Typography>
-                      { gitinfo.commitHash && 
-                      <Typography component="h4" variant="h6">
-                        Clique para instruções de Upgrade
-                      </Typography>
-                      }
-                      { !gitinfo.commitHash && 
-                      <Typography component="h3" variant="h5">
-                        Clique para visitar o site!
-                      </Typography>
-                      }
-                    </Grid>
-                    }
-                    { proInstructionsOpen &&
-                    <Grid className={classes.ticketzProBox} item xs={12} sm={8}>
-                      <Typography className={classes.ticketzProTitle} component="h3" variant="h5" gutterBottom>
-                        Instruções de Upgrade
-                      </Typography>
-                      <Typography paragraph>
-                        Se você instalou as imagens disponibilizadas pelo projeto em um
-                        servidor ou VPS utilizando as instruções facilitadas tudo o que
-                        você precisa fazer é acessar seu servidor e digitar o comando abaixo:
-                      </Typography>
-                      <Typography className={classes.ticketzProCommand} paragraph>
-                        curl -sSL update.ticke.tz | sudo bash -s pro
-                      </Typography>
-                      <Typography paragraph>
-                        Em instantes o Ticketz PRO estará instalado com todos os teus dados,
-                        agora só precisa ir até o menu de usuário, clicar em "Assinatura do
-                        Ticketz PRO" e fazer a sua assinatura.
-                      </Typography>
-                      <Typography paragraph>
-                        Se a tua instalação for diferente ou acredita que precisa
-                        de auxílio para instalar o Ticketz
-                        Pro, <a href="https://wa.me/554935670707"> entre
-                        em contato</a> que nós ajudamos!
-                      </Typography>
-                    </Grid>
-                    }
-                  </Grid>
-                </Paper>
-              </Grid>
-              </>
-            )} />
-          }
-
-          { !localStorage.getItem("hideAds") && <OnlyForSuperUser
-            user={currentUser}
-            yes={() => (
-              <Grid item xs={12} md={4}>
-                <Paper className={classes.supportPaper}>
-                  <Typography style={{ overflow: "hidden" }} component="h2" variant="h6" gutterBottom>
-                    {i18n.t("ticketz.support.title")}
-                  </Typography>
-                    <Grid container justifyContent="flex-end">
-                      <Grid className={classes.supportBox} style={{maxHeight: supportPix ? 300 : 35} } item xs={12}>
-                        <Typography
-                          className={classes.clickpointer}
-                          component="h3" variant="h6"
-                          gutterBottom onClick={() => setSupportPix(true)}>
-                          PIX
-                        </Typography>
-                        <div
-                          className={classes.clickpointer}
-                          onClick={() => {
-                            copyToClipboard("1ab11506-9480-4303-8e1e-988e7c49ed4d");
-                            toast.success("Chave PIX copiada");
-                          }
-                          }>
-                          <div>
-                            <img className={classes.paymentpix} src="/ticketzpix.png" alt="QR code PIX Ticketz" />
-                          </div>
-                          <Typography className={classes.pixkey} component="p" variant="body2" paragraph>
-                            Clique para copiar a chave PIX
-                          </Typography>
-                        </div>
-                      </Grid>
-                      <Grid className={classes.supportBox}  style={{maxHeight: supportPix ? 35 : 300 }} item xs={12} onClick={() => setSupportPix(false)}>
-                        <Typography
-                          className={classes.clickpointer}
-                          component="h3" variant="h6"
-                          gutterBottom onClick={() => setSupportPix(true)}>
-                          {i18n.t("ticketz.support.mercadopagotitle")}
-                        </Typography>
-                        { supportPix || <> 
-                        {supportIsBr && <>
-                          <Typography component="p" variant="body2" paragraph>
-                            {i18n.t("ticketz.support.recurringbrl")}
-                          </Typography>
-                          <div><a href="https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2c9380848f1b8ed1018f2b011f90061f" target="_blank" rel="noreferrer noopener">
-                            <img className={classes.paymentimg} src="/mercadopago.png" alt="Mercado Pago" />
-                          </a></div>
-                        </>}
-                        {!supportIsBr && <>
-                          <Typography component="p" variant="body2" paragraph>
-                            {i18n.t("ticketz.support.international")}
-                          </Typography>
-                          <div><a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=X6XHVCPMRQEL4" target="_blank" rel="noreferrer noopener">
-                            <img className={classes.paymentimg} src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" alt="PayPal donate" />
-                          </a></div>
-                        </>}
-                        </> }
-                      </Grid>
-                    </Grid>
-                </Paper>
-              </Grid>
-            )} /> }
-
-          {/* USUARIOS ONLINE */}
-          <InfoRingCard
-            title={i18n.t("dashboard.usersOnline")}
-            value={`${usersOnlineTotal}/${usersOnlineTotal + usersOfflineTotal}`}
-            graph={
-              <SmallPie chartData={usersStatusChartData} />
-            }
-          />
-
-          {/* ATENDIMENTOS PENDENTES */}
-          <InfoRingCard
-            title={i18n.t("dashboard.ticketsWaiting")}
-            value={pendingTotal}
-            graph={
-              <SmallPie chartData={pendingChartData} />
-            }
-          />
-
-          {/* ATENDIMENTOS ACONTECENDO */}
-          <InfoRingCard
-            title={i18n.t("dashboard.ticketsOpen")}
-            value={openedTotal}
-            graph={
-              <SmallPie chartData={openedChartData} />
-            }
-          />
-
-          {/* FILTROS */}
-          {renderFilters()}
-
-          {/* ATENDIMENTOS REALIZADOS */}
-          <InfoCard
-            title={i18n.t("dashboard.ticketsDone")}
-            value={ticketsData.ticketStatistics?.totalClosed || 0}
-            icon={<CheckCircleIcon style={{ fontSize: 100 }} />}
-          />
-
-          {/* NOVOS CONTATOS */}
-          <InfoCard
-            title={i18n.t("dashboard.newContacts")}
-            value={ticketsData.ticketStatistics?.newContacts || 0}
-            icon={<GroupAddIcon style={{ fontSize: 100 }} />}
-          />
-
-          {/* T.M. DE ATENDIMENTO */}
-          <InfoCard
-            title={i18n.t("dashboard.avgServiceTime")}
-            value={formatTimeInterval(ticketsData.ticketStatistics?.avgServiceTime)}
-            icon={<TimerIcon style={{ fontSize: 100 }} />}
-          />
-
-          {/* T.M. DE ESPERA */}
-          <InfoCard
-            title={i18n.t("dashboard.avgWaitTime")}
-            value={formatTimeInterval(ticketsData.ticketStatistics?.avgWaitTime)}
-            icon={<HourglassEmptyIcon style={{ fontSize: 100 }} />}
-          />
-
-          {/* DASHBOARD ATENDIMENTOS NO PERÍODO */}
           <Grid item xs={12}>
-            <Paper className={classes.fixedHeightPaper}>
+            <Box
+              display="flex"
+              flexWrap="wrap"
+              justifyContent="flex-end"
+              alignItems="center"
+              style={{ gap: 8 }}
+            >
+              {dashboardExtras?._mock ? (
+                <Chip
+                  size="small"
+                  label={i18n.t("dashboard.extras.mockBadge")}
+                  className={dash.mockChip}
+                />
+              ) : null}
+              <DashboardAppearanceToggle />
+            </Box>
+          </Grid>
+
+          {dashboardExtras?.aura ? (
+            <>
+              <Grid item xs={12}>
+                <AuraHubHeader
+                  quickFilter={auraQuickFilter}
+                  onQuickFilter={handleAuraQuickFilter}
+                  channelFilter={auraChannel}
+                  onChannelFilter={setAuraChannel}
+                  queueFilter={auraQueueId}
+                  onQueueFilter={setAuraQueueId}
+                  queueOptions={queueList}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <AuraKpiGrid kpis={auraKpis} />
+              </Grid>
+              <Grid item xs={12}>
+                <DashboardTagsSection tags={tagsForDash} />
+              </Grid>
+              <Grid item xs={12} lg={8}>
+                <AuraVolumeResolvedChart
+                  volumeLine={dashboardExtras.aura.volumeLine}
+                  liveVolume={liveVolume}
+                />
+              </Grid>
+              <Grid item xs={12} lg={4}>
+                <AuraClientWaitChart responseTimeLine={dashboardExtras.aura.responseTimeLine} />
+              </Grid>
+              <Grid item xs={12} lg={geoForPanel ? 6 : 4}>
+                <AuraOriginDonutChart
+                  originDonut={dashboardExtras.aura.originDonut}
+                  liveChannels={liveChannelsForDonut}
+                />
+              </Grid>
+              {geoForPanel ? (
+                <Grid item xs={12} lg={6}>
+                  <DashboardGeoPanel geo={geoForPanel} />
+                </Grid>
+              ) : null}
+              <Grid item xs={12} lg={geoForPanel ? 12 : 8}>
+                {auraStatusBars ? (
+                  <AuraStatusBarChart statusBars={auraStatusBars} />
+                ) : null}
+              </Grid>
+              <Grid item xs={12}>
+                <AuraPanelsGrid
+                  realtime={auraRealtime}
+                  slaAlerts={dashboardExtras.aura.slaAlerts}
+                  queues={auraQueuesDisplay}
+                  agents={auraAgentsDisplay}
+                  closeReasons={dashboardExtras.aura.closeReasons}
+                  closeReasonsLive={closeReasonStats}
+                  followup={dashboardExtras.aura.followup}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <AuraGradientInsight
+                  titleKey={dashboardExtras.aura.aiInsight.titleKey}
+                  bodyKey={dashboardExtras.aura.aiInsight.bodyKey}
+                />
+              </Grid>
+            </>
+          ) : null}
+
+          <Grid item xs={12}>
+            <Typography className={dash.sectionLabel} component="p" variant="body2" style={{ marginTop: 0 }}>
+              {i18n.t("dashboard.filter.heading")}
+            </Typography>
+            <Paper className={dash.filterPanel} elevation={0}>
+              {renderFilters()}
+            </Paper>
+          </Grid>
+
+          <Grid item xs={12}>
+            <Paper className={dash.chartPanel} elevation={0}>
               <TicketCountersChart
                 ticketCounters={ticketsData.ticketCounters}
                 start={ticketsData.start}
                 end={ticketsData.end}
                 hour_start={ticketsData.hour_start}
                 hour_end={ticketsData.hour_end}
-               />
+              />
             </Paper>
           </Grid>
 
-
-          {/* USER REPORT */}
           <Grid item xs={12}>
             {usersData.userReport?.length ? (
               <TableAttendantsStatus
                 attendants={usersData.userReport}
                 loading={loadingUsers}
+                tableContainerClassName={dash.attendantsPanel}
               />
             ) : null}
           </Grid>

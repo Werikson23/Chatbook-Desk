@@ -903,7 +903,15 @@ const messages = {
         header: "Kontaktdaten",
         buttons: {
           edit: "Kontakt bearbeiten",
+          editShort: "Bearbeiten",
         },
+        sections: {
+          tags: "Tags",
+          details: "Kontaktdetails",
+          notes: "Notizen",
+          integration: "Integration",
+        },
+        emptyDetails: "Keine zusätzlichen Felder für diesen Kontakt.",
         extraInfo: "Weitere Informationen",
       },
       ticketOptionsMenu: {

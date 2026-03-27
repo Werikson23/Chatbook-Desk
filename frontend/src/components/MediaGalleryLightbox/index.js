@@ -8,6 +8,7 @@ import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/plugins/captions.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import "yet-another-react-lightbox/styles.css";
+import { getBackendURL } from "../../services/config";
 
 const RotateLeftIcon = (props) => (
   <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -56,6 +57,27 @@ const extractFileName = (url, fallback) => {
   }
 };
 
+const resolveMediaUrl = (url) => {
+  if (!url) return "";
+  const raw = String(url).trim();
+  if (!raw) return "";
+  const backend = getBackendURL();
+  if (/^(blob:|data:)/i.test(raw)) return raw;
+  if (/^https?:/i.test(raw)) {
+    try {
+      const parsed = new URL(raw);
+      if (parsed.pathname.startsWith("/public/")) {
+        return `${backend}${parsed.pathname}${parsed.search || ""}`;
+      }
+    } catch {
+      // keep original absolute URL on parse failures
+    }
+    return raw;
+  }
+  if (raw.startsWith("/")) return `${backend}${raw}`;
+  return `${backend}/${raw}`;
+};
+
 const VIDEO_THUMBNAIL_FALLBACK = `data:image/svg+xml,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180"><rect width="320" height="180" fill="#0f172a"/><circle cx="160" cy="90" r="42" fill="#ffffff" fill-opacity="0.92"/><polygon points="148,68 148,112 186,90" fill="#0f172a"/></svg>'
 )}`;
@@ -77,7 +99,8 @@ export const buildMediaGalleryData = (
     (acc, message) => {
       const messageId = getId(message);
       const mediaType = getMediaType(message);
-      const mediaUrl = getMediaUrl(message);
+      const mediaUrl = resolveMediaUrl(getMediaUrl(message));
+      const originalMediaUrl = getMediaUrl(message);
 
       if (!mediaUrl || !["image", "video"].includes(mediaType)) {
         return acc;
@@ -96,7 +119,7 @@ export const buildMediaGalleryData = (
         return acc;
       }
 
-      const thumbnailUrl = getThumbnailUrl(message);
+      const thumbnailUrl = resolveMediaUrl(getThumbnailUrl(message)) || mediaUrl;
       const description = getDescription(message) || undefined;
       const cacheSeed = getUpdatedAt(message) || getCreatedAt(message) || messageId;
       const downloadUrl = buildCacheBustedUrl(mediaUrl, cacheSeed);
@@ -116,7 +139,7 @@ export const buildMediaGalleryData = (
           poster: thumbnailUrl || mediaUrl,
           download: {
             url: downloadUrl,
-            filename: extractFileName(mediaUrl, `video-${messageId}`),
+            filename: extractFileName(originalMediaUrl || mediaUrl, `video-${messageId}`),
           },
           sources: [{ src: mediaUrl }],
         });
@@ -128,7 +151,7 @@ export const buildMediaGalleryData = (
           description,
           download: {
             url: downloadUrl,
-            filename: extractFileName(mediaUrl, `image-${messageId}`),
+            filename: extractFileName(originalMediaUrl || mediaUrl, `image-${messageId}`),
           },
         });
       }

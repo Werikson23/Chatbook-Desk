@@ -17,6 +17,9 @@ import Select from "@material-ui/core/Select";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import FormControl from "@material-ui/core/FormControl";
+import FormHelperText from "@material-ui/core/FormHelperText";
+import Switch from "@material-ui/core/Switch";
+import FormControlLabel from "@material-ui/core/FormControlLabel";
 
 import { i18n } from "../../translate/i18n";
 
@@ -25,6 +28,7 @@ import toastError from "../../errors/toastError";
 import QueueSelect from "../QueueSelect";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../Can";
+import useSettings from "../../hooks/useSettings";
 
 const useStyles = makeStyles(theme => ({
 	root: {
@@ -73,12 +77,29 @@ const UserModal = ({ open, onClose, userId }) => {
 		email: "",
 		password: "",
 		profile: "user",
+		signatureEnabled: true,
+		signatureTemplate: "",
+		signatureChannels: "whatsapp,email,facebook,instagram",
+		signatureAutoMode: "always",
 	};
 
 	const { user: loggedInUser } = useContext(AuthContext);
 
 	const [user, setUser] = useState(initialState);
 	const [selectedQueueIds, setSelectedQueueIds] = useState([]);
+	const [signatureMode, setSignatureMode] = useState("optional");
+	const { getSetting } = useSettings();
+
+	useEffect(() => {
+		if (!open) return;
+		getSetting("message_signature_mode", "optional")
+			.then((mode) => {
+				setSignatureMode(mode || "optional");
+			})
+			.catch(() => {
+				setSignatureMode("optional");
+			});
+	}, [getSetting, open]);
 
 	useEffect(() => {
 		const fetchUser = async () => {
@@ -143,7 +164,7 @@ const UserModal = ({ open, onClose, userId }) => {
 						}, 400);
 					}}
 				>
-					{({ touched, errors, isSubmitting }) => (
+					{({ touched, errors, isSubmitting, values, setFieldValue }) => (
 						<Form>
 							<DialogContent dividers>
 								<div className={classes.multFieldLine}>
@@ -226,6 +247,60 @@ const UserModal = ({ open, onClose, userId }) => {
 										/>
 									)}
 								/>
+								{signatureMode === "optional" && (
+									<FormControlLabel
+										control={
+											<Switch
+												color="primary"
+												checked={values.signatureEnabled !== false}
+												onChange={(e) => setFieldValue("signatureEnabled", e.target.checked)}
+											/>
+										}
+										label="Assinatura de mensagens"
+									/>
+								)}
+								<Field
+									as={TextField}
+									label="Template da assinatura"
+									name="signatureTemplate"
+									variant="outlined"
+									margin="dense"
+									fullWidth
+									placeholder="Ex: *{{user}}:*"
+									helperText="Use {{user}} para nome do agente. Vazio usa padrão."
+								/>
+								<div className={classes.multFieldLine}>
+									<FormControl
+										variant="outlined"
+										margin="dense"
+										fullWidth
+									>
+										<InputLabel id="signature-auto-mode-label">
+											Modo automático da assinatura
+										</InputLabel>
+										<Field
+											as={Select}
+											label="Modo automático da assinatura"
+											name="signatureAutoMode"
+											labelId="signature-auto-mode-label"
+										>
+											<MenuItem value="always">Sempre</MenuItem>
+											<MenuItem value="first_message">Somente primeira mensagem</MenuItem>
+										</Field>
+									</FormControl>
+								</div>
+								<Field
+									as={TextField}
+									label="Canais da assinatura"
+									name="signatureChannels"
+									variant="outlined"
+									margin="dense"
+									fullWidth
+									placeholder="whatsapp,email,facebook,instagram"
+								/>
+								<FormHelperText>
+									Informe os canais separados por virgula.
+								</FormHelperText>
 							</DialogContent>
 							<DialogActions>
 								<Button

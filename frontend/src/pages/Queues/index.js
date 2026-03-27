@@ -13,11 +13,8 @@ import {
   Typography,
 } from "@material-ui/core";
 
-import MainContainer from "../../components/MainContainer";
-import MainHeader from "../../components/MainHeader";
-import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
+import SettingsModuleLayout from "../../components/SettingsModuleLayout";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
-import Title from "../../components/Title";
 import { i18nToast } from "../../helpers/i18nToast";
 import { i18n } from "../../translate/i18n";
 import toastError from "../../errors/toastError";
@@ -30,9 +27,21 @@ import { SocketContext } from "../../context/Socket/SocketContext";
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
     flex: 1,
-    padding: theme.spacing(1),
+    padding: theme.spacing(2),
     overflowY: "scroll",
+    borderRadius: 12,
+    border: "1px solid #e8e8e8",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
     ...theme.scrollbarStyles,
+  },
+  hint: {
+    fontSize: 14,
+    lineHeight: 1.5,
+    color: "#666",
+    background: "#fafafa",
+    border: "1px solid #ececec",
+    borderRadius: 12,
+    padding: theme.spacing(2),
   },
   customTableCell: {
     display: "flex",
@@ -163,7 +172,22 @@ const Queues = () => {
   };
 
   return (
-    <MainContainer>
+    <SettingsModuleLayout
+      embedded
+      title={i18n.t("queues.title")}
+      description="Defina filas de atendimento, mensagens de boas-vindas e horários por fila quando o modo de agenda estiver em nível de fila. Usuários são vinculados às filas no cadastro de cada agente."
+      actions={
+        <Button variant="contained" color="primary" onClick={handleOpenQueueModal}>
+          {i18n.t("queues.buttons.add")}
+        </Button>
+      }
+    >
+      <div className={classes.hint}>
+        <strong>Distribuição e SLA:</strong> a rotação de agentes segue as regras do sistema e das filas
+        configuradas. Para SLA e janelas de horário globais ou por empresa, use{" "}
+        <strong>Configurações → SLA / Horários</strong> ou abra uma fila e utilize a aba de horários quando
+        aplicável.
+      </div>
       <ConfirmationModal
         title={
           selectedQueue &&
@@ -182,19 +206,7 @@ const Queues = () => {
         onClose={handleCloseQueueModal}
         queueId={selectedQueue?.id}
       />
-      <MainHeader>
-        <Title>{i18n.t("queues.title")}</Title>
-        <MainHeaderButtonsWrapper>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleOpenQueueModal}
-          >
-            {i18n.t("queues.buttons.add")}
-          </Button>
-        </MainHeaderButtonsWrapper>
-      </MainHeader>
-      <Paper className={classes.mainPaper} variant="outlined">
+      <Paper className={classes.mainPaper} elevation={0}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -269,7 +281,7 @@ const Queues = () => {
           </TableBody>
         </Table>
       </Paper>
-    </MainContainer>
+    </SettingsModuleLayout>
   );
 };
 

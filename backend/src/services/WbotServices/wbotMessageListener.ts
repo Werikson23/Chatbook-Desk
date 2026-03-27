@@ -1953,9 +1953,21 @@ const handleMessage = async (
       await handleChartbot(ticket, msg, wbot, dontReadTheFirstQuestion);
     }
   } catch (err) {
-    console.log(err);
     Sentry.captureException(err);
-    logger.error(`Error handling whatsapp message: Err: ${err}`);
+    logger.error(
+      {
+        event: "wbot.handle_message_error",
+        companyId,
+        whatsappId: wbot?.id,
+        errorName: (err as any)?.name,
+        errorMessage: (err as any)?.message,
+        errorCode: (err as any)?.parent?.code || (err as any)?.code,
+        constraint: (err as any)?.parent?.constraint || (err as any)?.constraint,
+        remoteJid: msg?.key?.remoteJid,
+        messageId: msg?.key?.id
+      },
+      "Error handling whatsapp message"
+    );
   }
 };
 

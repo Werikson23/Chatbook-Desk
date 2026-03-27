@@ -53,6 +53,21 @@ class User extends Model<User> {
   @Column
   super: boolean;
 
+  @Default(true)
+  @Column
+  signatureEnabled: boolean;
+
+  @Column(DataType.TEXT)
+  signatureTemplate: string;
+
+  @Default("whatsapp,email,facebook,instagram")
+  @Column
+  signatureChannels: string;
+
+  @Default("always")
+  @Column
+  signatureAutoMode: string;
+
   @CreatedAt
   createdAt: Date;
 

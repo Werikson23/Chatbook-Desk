@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import TextField from '@material-ui/core/TextField';
 import IconButton from '@material-ui/core/IconButton';
 import SaveIcon from '@material-ui/icons/Save';
@@ -15,6 +15,12 @@ import useTicketNotes from '../../hooks/useTicketNotes';
 import { Grid } from '@material-ui/core';
 
 const useStyles = makeStyles((theme) => ({
+  rootCompact: {
+    '& .MuiTextField-root': {
+      margin: theme.spacing(0),
+      width: '100%',
+    },
+  },
   root: {
     '& .MuiTextField-root': {
       margin: theme.spacing(1),
@@ -25,6 +31,13 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
     maxWidth: '350px',
     maxHeight: '200px',
+    backgroundColor: theme.palette.background.paper,
+    overflow: 'auto'
+  },
+  listCompact: {
+    width: '100%',
+    maxWidth: '100%',
+    maxHeight: '220px',
     backgroundColor: theme.palette.background.paper,
     overflow: 'auto'
   },
@@ -56,7 +69,7 @@ const NoteSchema = Yup.object().shape({
     .required("Required")
 });
 
-export function TicketNotes({ ticket }) {
+export function TicketNotes({ ticket, compact = false }) {
   const { id: ticketId, contactId } = ticket;
   const classes = useStyles();
   const [loading, setLoading] = useState(false);
@@ -64,14 +77,31 @@ export function TicketNotes({ ticket }) {
   const [selectedNote, setSelectedNote] = useState({});
   const [notes, setNotes] = useState([]);
   const { saveNote, deleteNote, listNotes } = useTicketNotes();
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    async function openAndFetchData() {
-      setLoading(false);
-      await loadNotes();
-    }
-    openAndFetchData();
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
   }, []);
+
+  const loadNotes = useCallback(async () => {
+    setLoading(true);
+    try {
+      const notes = await listNotes({ ticketId, contactId });
+      if (!mountedRef.current) return;
+      setNotes(notes);
+    } catch (e) {
+      toast.error(e);
+    }
+    if (!mountedRef.current) return;
+    setLoading(false);
+  }, [listNotes, ticketId, contactId]);
+
+  useEffect(() => {
+    loadNotes();
+  }, [loadNotes]);
 
   const handleSave = async (note, resetForm) => {
     setLoading(true);
@@ -108,17 +138,6 @@ export function TicketNotes({ ticket }) {
     setLoading(false);
   };
 
-  const loadNotes = async () => {
-    setLoading(true);
-    try {
-      const notes = await listNotes({ ticketId, contactId });
-      setNotes(notes);
-    } catch (e) {
-      toast.error(e);
-    }
-    setLoading(false);
-  };
-
   const renderNoteList = () => {
     return notes.map((note) => {
       return <TicketNotesItem
@@ -136,66 +155,69 @@ export function TicketNotes({ ticket }) {
         open={showOnDeleteDialog}
         onClose={setShowOnDeleteDialog}
         onConfirm={handleDelete} />
-      <Formik
-        initialValues={{ note: "" }}
-        enableReinitialize={false}
-        validationSchema={NoteSchema}
-        onSubmit={(values, { resetForm }) => handleSave(values.note, resetForm)}
-      >
-        {({ values, handleChange, handleBlur, resetForm, submitForm }) => (
-          <Grid container spacing={2}>
-            {notes.length > 0 && (
+      <div className={compact ? classes.rootCompact : undefined}>
+        <Formik
+          initialValues={{ note: "" }}
+          enableReinitialize={false}
+          validationSchema={NoteSchema}
+          onSubmit={(values, { resetForm }) => handleSave(values.note, resetForm)}
+        >
+          {({ values, handleChange, handleBlur, resetForm, submitForm }) => (
+            <Grid container spacing={compact ? 1 : 2}>
+              {notes.length > 0 && (
+                <Grid xs={12} item>
+                  <List className={compact ? classes.listCompact : classes.list}>
+                    {renderNoteList()}
+                  </List>
+                </Grid>
+              )}
               <Grid xs={12} item>
-                <List className={classes.list}>
-                  {renderNoteList()}
-                </List>
+                <div className={classes.textFieldWrapper}>
+                  <TextField
+                    name="note"
+                    minRows={compact ? 2 : 3}
+                    label={i18n.t("ticketOptionsMenu.appointmentsModal.textarea")}
+                    placeholder={i18n.t("ticketOptionsMenu.appointmentsModal.placeholder")}
+                    multiline
+                    value={values.note}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    variant="outlined"
+                    fullWidth
+                    size={compact ? "small" : "medium"}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        submitForm();
+                      }
+                    }}
+                  />
+                  {values.note && (
+                    <div className={classes.adornment}>
+                      <IconButton
+                        aria-label="save"
+                        onClick={submitForm}
+                        disabled={loading}
+                        size="small"
+                      >
+                        <SaveIcon className={classes.smallIcon} />
+                      </IconButton>
+                      <IconButton
+                        aria-label="clear"
+                        onClick={() => resetForm()}
+                        disabled={loading}
+                        size="small"
+                      >
+                        <ClearIcon className={classes.smallIcon} />
+                      </IconButton>
+                    </div>
+                  )}
+                </div>
               </Grid>
-            )}
-            <Grid xs={12} item>
-              <div className={classes.textFieldWrapper}>
-                <TextField
-                  name="note"
-                  minRows={3}
-                  label={i18n.t("ticketOptionsMenu.appointmentsModal.textarea")}
-                  placeholder={i18n.t("ticketOptionsMenu.appointmentsModal.placeholder")}
-                  multiline
-                  value={values.note}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  variant="outlined"
-                  fullWidth
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      submitForm();
-                    }
-                  }}
-                />
-                {values.note && (
-                  <div className={classes.adornment}>
-                    <IconButton
-                      aria-label="save"
-                      onClick={submitForm}
-                      disabled={loading}
-                      size="small"
-                    >
-                      <SaveIcon className={classes.smallIcon} />
-                    </IconButton>
-                    <IconButton
-                      aria-label="clear"
-                      onClick={() => resetForm()}
-                      disabled={loading}
-                      size="small"
-                    >
-                      <ClearIcon className={classes.smallIcon} />
-                    </IconButton>
-                  </div>
-                )}
-              </div>
             </Grid>
-          </Grid>
-        )}
-      </Formik>
+          )}
+        </Formik>
+      </div>
     </>
   );
 }

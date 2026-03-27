@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 
 import "react-toastify/dist/ReactToastify.css";
 import { QueryClient, QueryClientProvider } from "react-query";
 
 import { ptBR } from "@material-ui/core/locale";
 import { createTheme, ThemeProvider } from "@material-ui/core/styles";
-import { useMediaQuery } from "@material-ui/core";
 import ColorModeContext from "./layout/themeContext";
 import { PhoneCallProvider } from "./context/PhoneCall/PhoneCallContext";
 import { SocketContext, socketManager } from './context/Socket/SocketContext';
@@ -86,18 +85,18 @@ const App = () => {
     []
   );
 
-  const calculatedLogoDark = () => {
+  const calculatedLogoDark = useCallback(() => {
     if (appLogoDark === defaultLogoDark && appLogoLight !== defaultLogoLight) {
       return appLogoLight;
     }
     return appLogoDark;
-  };
-  const calculatedLogoLight = () => {
+  }, [appLogoDark, appLogoLight]);
+  const calculatedLogoLight = useCallback(() => {
     if (appLogoDark !== defaultLogoDark && appLogoLight === defaultLogoLight) {
       return appLogoDark;
     }
     return appLogoLight;
-  };
+  }, [appLogoDark, appLogoLight]);
 
   const theme = useMemo(() => createTheme(
     {
@@ -177,7 +176,7 @@ const App = () => {
       }
     },
     locale
-  ), [appLogoLight, appLogoDark, appLogoFavicon, appName, locale, mode, primaryColorDark, primaryColorLight]);
+  ), [appLogoLight, appLogoDark, appLogoFavicon, appName, calculatedLogoDark, calculatedLogoLight, locale, mode, primaryColorDark, primaryColorLight]);
 
   useEffect(() => {
     const i18nlocale = localStorage.getItem("language");

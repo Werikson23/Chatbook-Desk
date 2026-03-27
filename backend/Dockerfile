@@ -10,9 +10,22 @@ RUN --mount=type=cache,target=/root/.npm \
     npm ci && npm run generate:i18nkeys && npm run build
 
 # Stage 2: Create the final image without source files
-FROM ghcr.io/ticketz-oss/node
+FROM node:20-bookworm-slim
 
 ARG TICKETZ_REGISTRY_URL
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates curl \
+  && ARCH=$(dpkg --print-architecture) \
+  && case "$ARCH" in \
+       amd64) DOCKERIZE_ARCH=amd64 ;; \
+       arm64) DOCKERIZE_ARCH=arm64 ;; \
+       *) echo "Unsupported arch: $ARCH" && exit 1 ;; \
+     esac \
+  && curl -fsSL "https://github.com/jwilder/dockerize/releases/download/v0.9.0/dockerize-linux-${DOCKERIZE_ARCH}-v0.9.0.tar.gz" | tar -xz -C /usr/local/bin \
+  && apt-get purge -y curl \
+  && apt-get autoremove -y \
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
 

@@ -17,10 +17,7 @@ import {
 import { DeleteOutline, Edit } from "@material-ui/icons";
 import { toast } from "react-toastify";
 
-import MainContainer from "../../components/MainContainer";
-import MainHeader from "../../components/MainHeader";
-import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
-import Title from "../../components/Title";
+import SettingsModuleLayout from "../../components/SettingsModuleLayout";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
@@ -121,7 +118,16 @@ const FarewellTemplates = () => {
   };
 
   return (
-    <MainContainer>
+    <SettingsModuleLayout
+      embedded
+      title="Automação · Mensagens de despedida"
+      description="Modelos exibidos ao encerrar atendimento. Personalização por fila/canal pode ser associada ao fluxo de fechamento do ticket; use variáveis no conteúdo conforme suportado pelo envio de mensagens."
+      actions={
+        <Button variant="contained" color="primary" onClick={handleOpenCreate}>
+          Adicionar mensagem
+        </Button>
+      }
+    >
       <ConfirmationModal
         title="Excluir mensagem de despedida"
         open={confirmOpen}
@@ -180,16 +186,16 @@ const FarewellTemplates = () => {
         </DialogActions>
       </Dialog>
 
-      <MainHeader>
-        <Title>Mensagens de Despedida</Title>
-        <MainHeaderButtonsWrapper>
-          <Button variant="contained" color="primary" onClick={handleOpenCreate}>
-            Adicionar mensagem
-          </Button>
-        </MainHeaderButtonsWrapper>
-      </MainHeader>
-
-      <Paper variant="outlined" style={{ padding: 8, overflowY: "auto" }}>
+      <Paper
+        elevation={0}
+        style={{
+          padding: 16,
+          overflowY: "auto",
+          borderRadius: 12,
+          border: "1px solid #e8e8e8",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
+        }}
+      >
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -233,7 +239,7 @@ const FarewellTemplates = () => {
           </TableBody>
         </Table>
       </Paper>
-    </MainContainer>
+    </SettingsModuleLayout>
   );
 };
 

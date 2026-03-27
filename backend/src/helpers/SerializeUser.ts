@@ -11,6 +11,10 @@ interface SerializedUser {
   companyId: number;
   company: Company | null;
   super: boolean;
+  signatureEnabled: boolean;
+  signatureTemplate: string;
+  signatureChannels: string;
+  signatureAutoMode: string;
   queues: Queue[];
 }
 
@@ -23,6 +27,10 @@ export const SerializeUser = async (user: User): Promise<SerializedUser> => {
     companyId: user.companyId,
     company: user.company,
     super: user.super,
+    signatureEnabled: user.signatureEnabled,
+    signatureTemplate: user.signatureTemplate,
+    signatureChannels: user.signatureChannels,
+    signatureAutoMode: user.signatureAutoMode,
     queues: user.queues
   };
 };

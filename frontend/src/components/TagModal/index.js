@@ -21,7 +21,7 @@ import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import { IconButton, InputAdornment, FormControl } from "@material-ui/core";
+import { IconButton, InputAdornment } from "@material-ui/core";
 
 
 const useStyles = makeStyles(theme => ({
@@ -30,16 +30,16 @@ const useStyles = makeStyles(theme => ({
 		flexWrap: "wrap",
 	},
 	multFieldLine: {
-		display: "flex",
+    	display: 'flex',
+    	flexDirection: 'row',
+    	alignItems: 'center',
 		"& > *:not(:last-child)": {
 			marginRight: theme.spacing(1),
 		},
-	},
-
+  	},
 	btnWrapper: {
 		position: "relative",
 	},
-
 	buttonProgress: {
 		color: green[500],
 		position: "absolute",
@@ -56,11 +56,6 @@ const useStyles = makeStyles(theme => ({
 		width: 20,
 		height: 20,
 	},
-    multFieldLine: {
-    	display: 'flex',
-    	flexDirection: 'row',
-    	alignItems: 'center',
-  	},
 }));
 
 const TagSchema = Yup.object().shape({

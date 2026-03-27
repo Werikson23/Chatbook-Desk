@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useReducer, useContext } from "react";
+import clsx from "clsx";
 
 import { makeStyles } from "@material-ui/core/styles";
 import List from "@material-ui/core/List";
@@ -69,6 +70,22 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
+  },
+
+  chatwootListWrapper: {
+    backgroundColor: "#121212 !important",
+    borderColor: "#2a2a2e !important",
+  },
+  chatwootList: {
+    backgroundColor: "#121212",
+    borderTop: "1px solid #2a2a2e",
+    ...theme.scrollbarStyles,
+  },
+  chatwootNoTicketsTitle: {
+    color: "rgba(255,255,255,0.9)",
+  },
+  chatwootNoTicketsText: {
+    color: "rgba(255,255,255,0.5)",
   },
 }));
 
@@ -177,7 +194,8 @@ const TicketsListCustom = (props) => {
     updateCount,
     style,
     setTabOpen,
-    showTabGroups
+    showTabGroups,
+    chatwootUI = false,
   } = props;
   const classes = useStyles();
   const [pageNumber, setPageNumber] = useState(1);
@@ -369,21 +387,34 @@ const TicketsListCustom = (props) => {
   };
 
   return (
-    <Paper className={classes.ticketsListWrapper} style={style}>
+    <Paper
+      className={clsx(classes.ticketsListWrapper, chatwootUI && classes.chatwootListWrapper)}
+      style={style}
+    >
       <Paper
         square
         name="closed"
         elevation={0}
-        className={classes.ticketsList}
+        className={clsx(classes.ticketsList, chatwootUI && classes.chatwootList)}
         onScroll={handleScroll}
       >
         <List style={{ paddingTop: 0 }}>
           {ticketsList.length === 0 && !loading ? (
             <div className={classes.noTicketsDiv}>
-              <span className={classes.noTicketsTitle}>
+              <span
+                className={clsx(
+                  classes.noTicketsTitle,
+                  chatwootUI && classes.chatwootNoTicketsTitle
+                )}
+              >
                 {i18n.t("ticketsList.noTicketsTitle")}
               </span>
-              <p className={classes.noTicketsText}>
+              <p
+                className={clsx(
+                  classes.noTicketsText,
+                  chatwootUI && classes.chatwootNoTicketsText
+                )}
+              >
                 {i18n.t("ticketsList.noTicketsMessage")}
               </p>
             </div>
@@ -395,6 +426,7 @@ const TicketsListCustom = (props) => {
                   setTabOpen={setTabOpen}
                   key={ticket.id}
                   groupActionButtons={!groups && !showTabGroups}
+                  chatwootUI={chatwootUI}
                 />
               ))}
             </>

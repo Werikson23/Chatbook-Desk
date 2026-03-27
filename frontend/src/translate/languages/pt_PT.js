@@ -964,7 +964,15 @@ const messages = {
         header: "Dados do contacto",
         buttons: {
           edit: "Editar contacto",
+          editShort: "Editar",
         },
+        sections: {
+          tags: "Etiquetas",
+          details: "Detalhes do contacto",
+          notes: "Notas",
+          integration: "Integração",
+        },
+        emptyDetails: "Sem campos adicionais neste contacto.",
         extraInfo: "Outras informações",
       },
       ticketOptionsMenu: {

@@ -21,7 +21,6 @@ import alertSound from "../../assets/sound.mp3";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import Favicon from "react-favicon";
-import { getBackendURL } from "../../services/config";
 import useSettings from "../../hooks/useSettings";
 
 const defaultLogoFavicon = "/vector/favicon.svg";
@@ -108,7 +107,7 @@ const NotificationsPopOver = (props) => {
     ]).then(([ignoreGroups, groupsTab]) => {
       setShowTabGroups(ignoreGroups === "disabled" && groupsTab === "enabled");
     });
-  }, []);
+  }, [getSetting]);
 
 	useEffect(() => {
 		soundAlertRef.current = play;
@@ -191,7 +190,7 @@ const NotificationsPopOver = (props) => {
     return () => {
       socket.disconnect();
     };
-  }, [user, profile, queues, soundGroupNotifications, socketManager]);
+  }, [user, profile, queueIds, soundGroupNotifications, socketManager]);
 
   const handleNotifications = (data) => {
     const { message, contact, ticket } = data;

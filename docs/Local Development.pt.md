@@ -39,7 +39,7 @@ npm -v
 Você precisa clonar este repositório no seu computador antes de realizar qualquer outro passo:
 
 ```bash
-git clone https://github.com/ticketz-oss/ticketz
+git clone https://github.com/Werikson23/Chatbook-Desk.git
 ```
 
 Qualquer comando a seguir deverá ser executado dentro do diretório clonado, a menos que especificado de outra forma:
@@ -145,7 +145,7 @@ npm ci
 npm run start
 ```
 
-Após alguns minutos, a janela do frontend será aberta em `http://localhost:3000`.
+Após alguns minutos, a janela do frontend será aberta em `http://localhost:2303`.
 
 Deixe o comando rodando. Ele monitorará alterações nos arquivos e recarregará conforme necessário.
 
@@ -186,14 +186,10 @@ Por padrão, estas são as portas utilizadas neste guia:
 - Redis: 6379
 - PgAdmin: 8081
 - Backend do Ticketz: 8080
-- Frontend do Ticketz: 3000
+- Frontend do Ticketz: 2303
 
 Você pode alterar as portas de `postgres`, `redis` e `pgadmin` editando o arquivo `docker/docker-compose.dev.yml`.
 
-Para alterar a porta do backend do Ticketz, edite o arquivo `.env` e também crie o arquivo `config-dev.json` em `frontend/public`, usando como base o `frontend/public/config-dev-example.json`.
+Para alterar as portas do **backend** e do **frontend** em dev, edite apenas `env/development.ports.json` na raiz (`frontend`, `backend`, opcional `lanHost`). Reinicie `npm run dev`. Para conferir: `npm run ports:show`. Se mudar a porta da API, atualize também `frontend/public/config-dev.json` (ou `REACT_APP_BACKEND_URL`).
 
-Para alterar a porta do frontend do Ticketz, crie um arquivo `.env` na pasta `frontend` configurando a porta desejada:
-
-```bash
-PORT=3001
-```
+Alternativa (só frontend, sem a raiz): `frontend/.env.development` com `PORT=...`.

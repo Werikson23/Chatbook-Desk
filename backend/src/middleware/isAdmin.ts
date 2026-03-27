@@ -7,8 +7,9 @@ const isAdmin = async (
   res: Response,
   next: NextFunction
 ): Promise<any> => {
-  const { profile } = await User.findByPk(req.user.id);
-  if (profile !== "admin") {
+  const { profile, super: isSuperUser } = await User.findByPk(req.user.id);
+  // Superadmin (SaaS) também precisa acessar rotas "admin" como /settings.
+  if (profile !== "admin" && !isSuperUser) {
     throw new AppError("Acesso não permitido", 403);
   }
 

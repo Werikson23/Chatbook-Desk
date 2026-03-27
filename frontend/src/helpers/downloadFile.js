@@ -1,7 +1,27 @@
 import axios from "axios";
+import { getBackendURL } from "../services/config";
 
 export async function downloadFile(fileurl) {
-  const url = new URL(fileurl);
+  const raw = String(fileurl || "").trim();
+  if (!raw) return;
+  let absolute = raw;
+  if (/^(blob:|data:)/i.test(raw)) {
+    absolute = raw;
+  } else if (/^https?:/i.test(raw)) {
+    try {
+      const parsed = new URL(raw);
+      absolute = parsed.pathname.startsWith("/public/")
+        ? `${getBackendURL()}${parsed.pathname}${parsed.search || ""}`
+        : raw;
+    } catch {
+      absolute = raw;
+    }
+  } else {
+    absolute = raw.startsWith("/")
+      ? `${getBackendURL()}${raw}`
+      : `${getBackendURL()}/${raw}`;
+  }
+  const url = new URL(absolute, window.location.origin);
   const filename = url.pathname.substring(url.pathname.lastIndexOf("/") + 1);
 
   url.searchParams.append("_cb", Date.now()); // cache busting

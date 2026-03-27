@@ -22,6 +22,7 @@ import WhatsMarked from "react-whatsmarked";
 import { Tooltip } from "@material-ui/core";
 import { AuthContext } from "../../context/Auth/AuthContext";
 import toastError from "../../errors/toastError";
+import FullscreenImageDialog from "../FullscreenImageDialog";
 
 const useStyles = makeStyles((theme) => ({
   ticket: {
@@ -105,6 +106,7 @@ const TicketListItem = ({ ticket, groupActionButtons }) => {
   const classes = useStyles();
   const history = useHistory();
   const [loading, setLoading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { ticketId } = useParams();
   const isMounted = useRef(true);
   const { user } = useContext(AuthContext);
@@ -161,7 +163,14 @@ const TicketListItem = ({ ticket, groupActionButtons }) => {
           ></span>
         </Tooltip>
         <ListItemAvatar>
-          <Avatar src={ticket?.contact?.profilePicUrl} />
+          <Avatar
+            src={ticket?.contact?.profilePicUrl}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (ticket?.contact?.profilePicUrl) setPreviewOpen(true);
+            }}
+            style={{ cursor: ticket?.contact?.profilePicUrl ? "pointer" : "default" }}
+          />
         </ListItemAvatar>
         <ListItemText
           disableTypography
@@ -243,6 +252,12 @@ const TicketListItem = ({ ticket, groupActionButtons }) => {
           </ButtonWithSpinner>
         )}
       </ListItem>
+      <FullscreenImageDialog
+        open={previewOpen}
+        imageUrl={ticket?.contact?.profilePicUrl}
+        onClose={() => setPreviewOpen(false)}
+        alt="ticket-contact-avatar-fullscreen"
+      />
       <Divider variant="inset" component="li" />
     </React.Fragment>
   );

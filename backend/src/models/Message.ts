@@ -55,9 +55,18 @@ class Message extends Model {
   get mediaUrl(): string | null {
     const value = this.getDataValue("mediaUrl");
     if (value) {
-      return value.match(/^https?:\/\//)
-        ? URLCharEncoder(value)
-        : `${process.env.BACKEND_URL}/public/${URLCharEncoder(value)}`;
+      if (value.match(/^https?:\/\//)) {
+        try {
+          const parsed = new URL(value);
+          if (parsed.pathname.startsWith("/public/")) {
+            return `${parsed.pathname}${parsed.search || ""}`;
+          }
+        } catch {
+          // keep original URL when parsing fails
+        }
+        return URLCharEncoder(value);
+      }
+      return `/public/${URLCharEncoder(value)}`;
     }
     return null;
   }
@@ -66,9 +75,18 @@ class Message extends Model {
   get thumbnailUrl(): string | null {
     const value = this.getDataValue("thumbnailUrl");
     if (value) {
-      return value.match(/^https?:\/\//)
-        ? URLCharEncoder(value)
-        : `${process.env.BACKEND_URL}/public/${URLCharEncoder(value)}`;
+      if (value.match(/^https?:\/\//)) {
+        try {
+          const parsed = new URL(value);
+          if (parsed.pathname.startsWith("/public/")) {
+            return `${parsed.pathname}${parsed.search || ""}`;
+          }
+        } catch {
+          // keep original URL when parsing fails
+        }
+        return URLCharEncoder(value);
+      }
+      return `/public/${URLCharEncoder(value)}`;
     }
     return null;
   }

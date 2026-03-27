@@ -10,6 +10,7 @@ import {
   FormatListNumbered,
   FormatListBulleted,
   FormatQuote,
+  Link as LinkIcon,
 } from "@material-ui/icons";
 
 import { makeStyles } from "@material-ui/core/styles";
@@ -27,7 +28,7 @@ import MicIcon from "@material-ui/icons/Mic";
 import CheckCircleOutlineIcon from "@material-ui/icons/CheckCircleOutline";
 import HighlightOffIcon from "@material-ui/icons/HighlightOff";
 import CameraAltIcon from "@material-ui/icons/CameraAlt";
-import { FormControlLabel, Switch, Tooltip, InputAdornment, Typography, Popper } from "@material-ui/core";
+import { InputAdornment, Typography, Popper, TextField, Button } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import { isString, isEmpty, isObject, has } from "lodash";
 
@@ -36,8 +37,9 @@ import api from "../../services/api";
 import RecordingTimer from "./RecordingTimer";
 import { ReplyMessageContext } from "../../context/ReplyingMessage/ReplyingMessageContext";
 import { AuthContext } from "../../context/Auth/AuthContext";
-import { useLocalStorage } from "../../hooks/useLocalStorage";
 import toastError from "../../errors/toastError";
+import { toast } from "react-toastify";
+import useTicketNotes from "../../hooks/useTicketNotes";
 import { EditMessageContext } from "../../context/EditingMessage/EditingMessageContext";
 
 import useQuickMessages from "../../hooks/useQuickMessages";
@@ -45,10 +47,9 @@ import useQuickMessages from "../../hooks/useQuickMessages";
 import Compressor from 'compressorjs';
 import LinearWithValueLabel from "./ProgressBarCustom";
 import WhatsMarked from "react-whatsmarked";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSignature } from '@fortawesome/free-solid-svg-icons';
 import { isMobile } from "../../helpers/isMobile";
 import { SocketContext } from "../../context/Socket/SocketContext";
+import useSettings from "../../hooks/useSettings";
 
 const Mp3Recorder = new MicRecorder({ bitRate: 128 });
 
@@ -201,6 +202,181 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
   },
+
+  cwMainWrapper: {
+    background: "#1c1e21",
+    border: "1px solid #2b2e33",
+    borderRadius: 8,
+    margin: "0 16px 16px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "stretch",
+    // Prevent cutting footer icons when textarea area changes.
+    overflow: "visible",
+  },
+  cwMainWrapperNote: {
+    background: "#2d2417",
+    borderColor: "#524021",
+  },
+  cwTabs: {
+    display: "flex",
+    gap: 8,
+    padding: "12px 16px 0",
+    background: "#1c1e21",
+  },
+  cwTabsNote: {
+    background: "#2d2417",
+    borderBottom: "1px solid #524021",
+  },
+  cwTab: {
+    padding: "6px 12px",
+    borderRadius: 20,
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 500,
+    border: "none",
+    background: "transparent",
+    color: "#9b9ba8",
+    fontFamily: "inherit",
+  },
+  cwTabActive: {
+    background: "#2b3035",
+    color: "#f8f9fa",
+    fontWeight: 600,
+  },
+  cwTabActiveNote: {
+    background: "rgba(234, 179, 8, 0.2)",
+    color: "#eab308",
+  },
+  cwScheduleRow: {
+    padding: "6px 12px",
+    background: "#16161a",
+    borderBottom: "1px solid #2a2a2e",
+  },
+  cwScheduleField: {
+    width: "100%",
+    maxWidth: 320,
+  },
+  cwComposerRow: {
+    display: "flex",
+    padding: 0,
+    width: "100%",
+    minHeight: 0,
+    flex: "1 1 auto",
+  },
+  cwMessageInputWrapper: {
+    flex: 1,
+    margin: 0,
+    borderRadius: 0,
+    background: "transparent",
+    border: "none",
+    padding: 0,
+  },
+  cwInputNote: {
+    background: "#2d2417 !important",
+    borderColor: "#524021 !important",
+    color: "#f8f4e4 !important",
+  },
+  cwInputBase: {
+    color: "#e8e8ec",
+    width: "100%",
+    fontSize: 14,
+    lineHeight: 1.45,
+    minHeight: 80,
+    padding: "16px",
+    // Prevent textarea growth from pushing/clipping footer icons.
+    maxHeight: 110,
+    overflowY: "auto",
+    "& textarea": {
+      maxHeight: 110,
+      overflowY: "auto",
+      resize: "none",
+    },
+  },
+  cwToolbar: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "8px 16px",
+    borderBottom: "1px solid #2b2e33",
+    background: "#1c1e21",
+    flex: "none",
+    flexShrink: 0,
+  },
+  cwToolbarNote: {
+    background: "#2d2417",
+    borderBottom: "1px solid #524021",
+  },
+  cwToolbarLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+  },
+  cwToolBtn: {
+    padding: 0,
+    color: "#b8b8c0",
+    borderRadius: 6,
+  },
+  cwAiBtn: {
+    padding: 6,
+    color: "#9ca3af",
+  },
+  cwFooter: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "12px 16px",
+    borderTop: "none",
+    background: "#1c1e21",
+    flex: "none",
+    flexShrink: 0,
+  },
+  cwFooterNote: {
+    background: "#2d2417",
+    borderTop: "1px solid #524021",
+  },
+  cwFooterActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    "& .MuiIconButton-root": {
+      color: "#9ca3af",
+      padding: 0,
+    },
+    "& .MuiSvgIcon-root": {
+      fontSize: 20,
+    },
+  },
+  cwSendBtn: {
+    background: "#1c64f2",
+    color: "#fff",
+    textTransform: "none",
+    borderRadius: 6,
+    padding: "4px 12px",
+    fontWeight: 600,
+    fontSize: 13,
+    minWidth: 96,
+    height: 34,
+    boxShadow: "none",
+    "&:hover": {
+      background: "#1a56db",
+    },
+  },
+  cwHint: {
+    fontSize: 11,
+    color: "#6c6c78",
+    padding: "0 16px 10px",
+    lineHeight: 1.4,
+    display: "none",
+  },
+  cwPendingBanner: {
+    background: "rgba(234, 179, 8, 0.12)",
+    borderTop: "1px solid #524021",
+    color: "#facc15",
+    fontSize: 12,
+    fontWeight: 600,
+    padding: "8px 16px",
+  },
 }));
 
 const EmojiOptions = (props) => {
@@ -227,36 +403,6 @@ const EmojiOptions = (props) => {
         </div>
       ) : null}
     </>
-  );
-};
-
-const SignSwitch = (props) => {
-  const { setSignMessage, signMessage } = props;
-  const classes = useStyles({ signMessage });
-
-  return (
-    <IconButton
-      onClick={() => setSignMessage(!signMessage)}
-      className={classes.signatureIcon}
-    >
-      <FontAwesomeIcon icon={faSignature} />
-    </IconButton>
-  );
-};
-
-const IconSwitch = (props) => {
-  const { setter, value, icon, tooltip } = props;
-  const classes = useStyles({ value });
-
-  return (
-    <Tooltip title={tooltip}>
-      <IconButton
-        onClick={() => setter(!value)}
-        className={classes.iconSwitch}
-      >
-        <FontAwesomeIcon icon={icon} />
-      </IconButton>
-    </Tooltip>
   );
 };
 
@@ -297,9 +443,13 @@ const ActionButtons = (props) => {
     handleUploadAudio,
     handleStartRecording,
     disableOption,
+    suppressSendButton,
   } = props;
   const classes = useStyles();
   if (inputMessage) {
+    if (suppressSendButton) {
+      return null;
+    }
     return (
       <IconButton
         aria-label="sendMessage"
@@ -379,6 +529,8 @@ const CustomInput = (props) => {
     handleChangeMedias,
     handlePresenceUpdate,
     disableOption,
+    chatwoot = false,
+    composerMode = "reply",
   } = props;
   const classes = useStyles();
   const [quickMessages, setQuickMessages] = useState([]);
@@ -455,6 +607,15 @@ const CustomInput = (props) => {
   };
 
   const renderPlaceholder = () => {
+    if (ticketStatus === "pending") {
+      return "Conversa aguardando atendimento. Clique em Aceitar para responder.";
+    }
+    if (chatwoot) {
+      if (composerMode === "note") {
+        return "Write a private note...";
+      }
+      return "Shift + enter for new line. Start with '/' to select a Canned Response.";
+    }
     if (ticketStatus === "open") {
       return i18n.t("messagesInput.placeholderOpen");
     }
@@ -555,7 +716,7 @@ const CustomInput = (props) => {
       }, 0);
     }
   };
-          
+
   const formatListNumbered = () => {
     const { lines, textBefore, textAfter } = splitSelectionLines();
     if (lines.length > 0) {
@@ -614,7 +775,11 @@ const CustomInput = (props) => {
   };
 
   return (
-    <div className={classes.messageInputWrapper}>
+    <div
+      className={clsx(classes.messageInputWrapper, {
+        [classes.cwMessageInputWrapper]: chatwoot,
+      })}
+    >
       <Autocomplete
         disabled={disableOption}
         freeSolo
@@ -658,8 +823,11 @@ const CustomInput = (props) => {
               inputRef={(input) => setInputRef(input)}
               placeholder={renderPlaceholder()}
               multiline
-              className={classes.messageInput}
-              maxRows={5}
+              className={clsx(classes.messageInput, {
+                [classes.cwInputBase]: chatwoot,
+                [classes.cwInputNote]: chatwoot && composerMode === "note",
+              })}
+              maxRows={chatwoot ? 4 : 5}
               endAdornment={
                 isMobile() &&
                 <InputAdornment position="end">
@@ -783,7 +951,7 @@ const CustomInput = (props) => {
 };
 
 const MessageInputCustom = (props) => {
-  const { ticket, showTabGroups } = props;
+  const { ticket, showTabGroups, chatwoot = false, onNoteSaved } = props;
   const { status: ticketStatus, id: ticketId } = ticket;
   const classes = useStyles();
 
@@ -793,21 +961,33 @@ const MessageInputCustom = (props) => {
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [percentLoading, setPercentLoading] = useState(0);
+  const [composerMode, setComposerMode] = useState("reply");
+  const [scheduleAt, setScheduleAt] = useState("");
 
   const inputRef = useRef();
+  const { saveNote } = useTicketNotes();
   const { setReplyingMessage, replyingMessage } =
     useContext(ReplyMessageContext);
   const { setEditingMessage, editingMessage } = useContext(
 		EditMessageContext
 	);  
   const { user } = useContext(AuthContext);
-
-  const [signMessage, setSignMessage] = useLocalStorage("signOption", true);
+  const { getSetting } = useSettings();
+  const [messageSignatureMode, setMessageSignatureMode] = useState("optional");
 
   const socketManager = useContext(SocketContext);
   const [socket, setSocket] = useState(null);
   const [currentPresence, setCurrentPresence] = useState(null);
   const [presenceTimeout, setPresenceTimeout] = useState(null);
+  const shouldSignMessages =
+    messageSignatureMode === "required" ||
+    (messageSignatureMode === "optional" && user?.signatureEnabled !== false);
+
+  useEffect(() => {
+    getSetting("message_signature_mode", "optional")
+      .then((mode) => setMessageSignatureMode(mode || "optional"))
+      .catch(() => setMessageSignatureMode("optional"));
+  }, [getSetting]);
 
   useEffect(() => {
     if (!inputMessage) {
@@ -836,7 +1016,7 @@ const MessageInputCustom = (props) => {
 
   useEffect(() => {
     if (editingMessage) {
-      if (signMessage && editingMessage.body.startsWith(`*${user.name}:*\n`)) {
+      if (editingMessage.body.startsWith(`*${user.name}:*\n`)) {
         setInputMessage(editingMessage.body.substr(editingMessage.body.indexOf("\n")+1));
       } else {
         setInputMessage(editingMessage.body);
@@ -847,8 +1027,14 @@ const MessageInputCustom = (props) => {
       inputRef.current.focus();
     }
     
-  }, [replyingMessage, editingMessage, signMessage, user.name]);
-  
+  }, [replyingMessage, editingMessage, user.name]);
+
+  useEffect(() => {
+    if (replyingMessage || editingMessage) {
+      setComposerMode("reply");
+    }
+  }, [replyingMessage, editingMessage]);
+
   useEffect(() => {
     inputRef.current.focus();
     return () => {
@@ -889,6 +1075,7 @@ const MessageInputCustom = (props) => {
   };
 
   const handleUploadMedia = async (e) => {
+    if (disableOption || disableSend || composerMode === "note") return;
     setLoading(true);
     e.preventDefault();
     const compressIfImage = (file) =>
@@ -968,25 +1155,144 @@ const MessageInputCustom = (props) => {
         }, 5000)
       );
     }
-  }  
+  }
+
+  const applyWrap = (mark) => {
+    const el = inputRef.current;
+    if (!el) return;
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const t = inputMessage;
+    const sel = t.slice(start, end);
+    if (sel) {
+      const next = t.slice(0, start) + mark + sel + mark + t.slice(end);
+      setInputMessage(next);
+      setTimeout(() => {
+        el.focus();
+        const pos = start + mark.length + sel.length + mark.length;
+        el.setSelectionRange(pos, pos);
+      }, 0);
+    } else {
+      const next = t.slice(0, start) + mark + mark + t.slice(end);
+      setInputMessage(next);
+      setTimeout(() => {
+        el.focus();
+        el.setSelectionRange(start + mark.length, start + mark.length);
+      }, 0);
+    }
+  };
+
+  const applyLinePrefix = (prefix, numbered = false) => {
+    const el = inputRef.current;
+    if (!el) return;
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const t = inputMessage;
+    const block = t.slice(start, end) || "";
+    const lines = (block || "").split("\n");
+    const mapped = lines.map((line, idx) =>
+      numbered ? `${idx + 1}. ${line}` : `${prefix}${line}`
+    );
+    const next = t.slice(0, start) + mapped.join("\n") + t.slice(end);
+    setInputMessage(next);
+    setTimeout(() => {
+      el.focus();
+      const pos = start + mapped.join("\n").length;
+      el.setSelectionRange(pos, pos);
+    }, 0);
+  };
+
+  const formatListBulleted = () => applyLinePrefix("* ");
+  const formatListNumbered = () => applyLinePrefix("", true);
+
+  const formatCode = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const t = inputMessage;
+    const sel = t.slice(start, end);
+    if (!sel.includes("\n")) {
+      applyWrap("`");
+      return;
+    }
+    const wrapped = `\`\`\`\n${sel}\n\`\`\``;
+    const next = t.slice(0, start) + wrapped + t.slice(end);
+    setInputMessage(next);
+    setTimeout(() => {
+      el.focus();
+      const pos = start + wrapped.length;
+      el.setSelectionRange(pos, pos);
+    }, 0);
+  };
+
+  const formatLink = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    const start = el.selectionStart ?? 0;
+    const end = el.selectionEnd ?? 0;
+    const t = inputMessage;
+    const sel = t.slice(start, end).trim() || "texto";
+    const wrapped = `[${sel}](https://)`;
+    const next = t.slice(0, start) + wrapped + t.slice(end);
+    setInputMessage(next);
+    setTimeout(() => {
+      el.focus();
+      el.setSelectionRange(start + wrapped.length, start + wrapped.length);
+    }, 0);
+  };
 
   const handleSendMessage = async () => {
+    if (composerMode === "schedule") {
+      toast.info(i18n.t("messagesInput.composer.scheduleSoon"));
+      return;
+    }
+
+    // Block sending while ticket is pending (except Private Note mode).
+    if (disableSend) return;
+
+    if (composerMode === "note") {
+      if (inputMessage.trim() === "") return;
+      setLoading(true);
+      try {
+        const contactId = ticket.contactId ?? ticket.contact?.id ?? 0;
+        await saveNote({
+          note: inputMessage.trim(),
+          ticketId,
+          contactId,
+        });
+        toast.success(i18n.t("messagesInput.composer.noteSaved"));
+        if (typeof onNoteSaved === "function") {
+          await onNoteSaved();
+        }
+        setInputMessage("");
+        setShowEmoji(false);
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      } catch (err) {
+        toastError(err);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     if (inputMessage.trim() === "") return;
-    //if (disableOption) return
     setLoading(true);
 
     const message = {
       read: 1,
       fromMe: true,
       mediaUrl: "",
-      body: signMessage
+      body: shouldSignMessages
         ? `*${user?.name}:*\n${inputMessage.trim()}`
         : inputMessage.trim(),
       quotedMsg: replyingMessage,
     };
 
     handlePresenceUpdate(null);
-    
+
     const url = editingMessage !== null ?
       `/messages/edit/${editingMessage.id}` :
       `/messages/${ticketId}`;
@@ -1003,7 +1309,7 @@ const MessageInputCustom = (props) => {
   };
 
   const handleStartRecording = async () => {
-    if(disableOption)return;
+    if (disableOption || disableSend || composerMode === "note") return;
     setLoading(true);
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1018,6 +1324,7 @@ const MessageInputCustom = (props) => {
   };
 
   const handleUploadAudio = async () => {
+    if (disableOption || disableSend || composerMode === "note") return;
     setLoading(true);
     handlePresenceUpdate(null);
     try {
@@ -1054,7 +1361,10 @@ const MessageInputCustom = (props) => {
   };
 
   const isGroup = showTabGroups && ticket.isGroup;
+  const isPending = ticketStatus === "pending";
+  // While pending we still allow typing and note draft, but we block sending.
   const disableOption = (!isGroup && loading) || ticketStatus === "closed";
+  const disableSend = isPending && composerMode !== "note";
 
   const renderReplyingMessage = (message) => {
     return (
@@ -1129,65 +1439,285 @@ const MessageInputCustom = (props) => {
           aria-label="send-upload"
           component="span"
           onClick={handleUploadMedia}
-          disabled={disableOption}
+          disabled={disableOption || disableSend || composerMode === "note"}
         >
           <SendIcon className={classes.sendMessageIcons} />
         </IconButton>
       </Paper>
     );
   else {
+    const composerTabs = chatwoot
+      ? [
+          { id: "reply", label: "Reply" },
+          { id: "note", label: "Private Note" },
+        ]
+      : [
+          { id: "reply", label: i18n.t("messagesInput.composer.reply") },
+          { id: "note", label: i18n.t("messagesInput.composer.note") },
+          { id: "quick", label: i18n.t("messagesInput.composer.quick") },
+          { id: "schedule", label: i18n.t("messagesInput.composer.schedule") },
+        ];
+
     return (
-      <Paper square elevation={0} className={classes.mainWrapper}>
-        {(replyingMessage && renderReplyingMessage(replyingMessage)) || (editingMessage && renderReplyingMessage(editingMessage))}
-        <div className={classes.newMessageBox}>
-          {
-            isMobile() ||
-            <EmojiOptions
+      <Paper
+        square
+        elevation={0}
+        className={clsx(
+          classes.mainWrapper,
+          chatwoot && classes.cwMainWrapper,
+          chatwoot && composerMode === "note" && classes.cwMainWrapperNote
+        )}
+      >
+        {(replyingMessage && renderReplyingMessage(replyingMessage)) ||
+          (editingMessage && renderReplyingMessage(editingMessage))}
+        {chatwoot && !editingMessage && (
+          <div
+            className={clsx(
+              classes.cwTabs,
+              composerMode === "note" && classes.cwTabsNote
+            )}
+            role="tablist"
+          >
+            {composerTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={composerMode === tab.id}
+                className={clsx(classes.cwTab, {
+                  [classes.cwTabActive]: composerMode === tab.id,
+                  [classes.cwTabActiveNote]:
+                    composerMode === "note" && tab.id === "note",
+                })}
+                disabled={disableOption}
+                onClick={() => setComposerMode(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
+        {chatwoot && composerMode === "schedule" && (
+          <div className={classes.cwScheduleRow}>
+            <TextField
+              type="datetime-local"
+              size="small"
+              fullWidth
+              value={scheduleAt}
+              onChange={(e) => setScheduleAt(e.target.value)}
+              className={classes.cwScheduleField}
+              InputLabelProps={{ shrink: true }}
+              label={i18n.t("messagesInput.composer.schedule")}
               disabled={disableOption}
-              handleAddEmoji={handleAddEmoji}
-              showEmoji={showEmoji}
-              setShowEmoji={setShowEmoji}
             />
-          }
-
-          <FileInput
-            disableOption={disableOption}
-            handleChangeMedias={handleChangeMedias}
-          />
-
-          <IconSwitch
-            setter={setSignMessage}
-            value={signMessage}
-            icon={faSignature}
-            tooltip={i18n.t("messagesInput.signMessage")}
-          />
-
-          <CustomInput
-            loading={loading}
-            inputRef={inputRef}
-            ticketStatus={(isGroup && "open" ) || ticketStatus}
-            inputMessage={inputMessage}
-            setInputMessage={setInputMessage}
-            // handleChangeInput={handleChangeInput}
-            handleSendMessage={handleSendMessage}
-            handleInputPaste={handleInputPaste}
-            handleChangeMedias={handleChangeMedias}
-            handlePresenceUpdate={handlePresenceUpdate}
-            disableOption={disableOption}
-          />
-
-          <ActionButtons
-            inputMessage={inputMessage}
-            loading={loading}
-            recording={recording}
-            ticketStatus={ticketStatus}
-            disableOption={disableOption}
-            handleSendMessage={handleSendMessage}
-            handleCancelAudio={handleCancelAudio}
-            handleUploadAudio={handleUploadAudio}
-            handleStartRecording={handleStartRecording}
-          />
-        </div>
+          </div>
+        )}
+        {chatwoot && (
+          <>
+            {isPending && (
+              <div className={classes.cwPendingBanner}>
+                Conversa aguardando atendimento. Clique em Aceitar para liberar o envio de mensagens.
+              </div>
+            )}
+            <div
+              className={clsx(
+                classes.cwToolbar,
+                composerMode === "note" && classes.cwToolbarNote
+              )}
+            >
+              <div className={classes.cwToolbarLeft}>
+                <IconButton
+                  size="small"
+                  className={classes.cwToolBtn}
+                  onClick={() => applyWrap("*")}
+                  disabled={disableOption}
+                >
+                  <Typography variant="body2" style={{ fontWeight: 700 }}>
+                    B
+                  </Typography>
+                </IconButton>
+                <IconButton
+                  size="small"
+                  className={classes.cwToolBtn}
+                  onClick={() => applyWrap("_")}
+                  disabled={disableOption}
+                >
+                  <Typography variant="body2" style={{ fontStyle: "italic" }}>
+                    I
+                  </Typography>
+                </IconButton>
+                <IconButton
+                  size="small"
+                  className={classes.cwToolBtn}
+                  onClick={() => applyWrap("~")}
+                  disabled={disableOption}
+                >
+                  <Typography
+                    variant="body2"
+                    style={{ textDecoration: "line-through" }}
+                  >
+                    S
+                  </Typography>
+                </IconButton>
+                <IconButton
+                  size="small"
+                  className={classes.cwToolBtn}
+                  onClick={formatLink}
+                  disabled={disableOption}
+                >
+                  <LinkIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  className={classes.cwToolBtn}
+                  onClick={formatListBulleted}
+                  disabled={disableOption}
+                >
+                  <Typography variant="body2">•</Typography>
+                </IconButton>
+                <IconButton
+                  size="small"
+                  className={classes.cwToolBtn}
+                  onClick={formatListNumbered}
+                  disabled={disableOption}
+                >
+                  <Typography variant="body2">1.</Typography>
+                </IconButton>
+                <IconButton
+                  size="small"
+                  className={classes.cwToolBtn}
+                  onClick={formatCode}
+                  disabled={disableOption}
+                >
+                  <Typography variant="body2">&lt;/&gt;</Typography>
+                </IconButton>
+              </div>
+            </div>
+            <div className={classes.cwComposerRow}>
+              <CustomInput
+                loading={loading}
+                inputRef={inputRef}
+                ticketStatus={(isGroup && "open") || ticketStatus}
+                inputMessage={inputMessage}
+                setInputMessage={setInputMessage}
+                handleSendMessage={handleSendMessage}
+                handleInputPaste={handleInputPaste}
+                handleChangeMedias={handleChangeMedias}
+                handlePresenceUpdate={handlePresenceUpdate}
+                disableOption={disableOption}
+                chatwoot={chatwoot}
+                composerMode={composerMode}
+              />
+            </div>
+            <div
+              className={clsx(
+                classes.cwFooter,
+                composerMode === "note" && classes.cwFooterNote
+              )}
+            >
+              <div className={classes.cwFooterActions}>
+                {isMobile() || (
+                  <EmojiOptions
+                    disabled={disableOption}
+                    handleAddEmoji={handleAddEmoji}
+                    showEmoji={showEmoji}
+                    setShowEmoji={setShowEmoji}
+                  />
+                )}
+                {composerMode !== "schedule" && (
+                  <>
+                    <FileInput
+                      disableOption={
+                        disableOption || disableSend || composerMode === "note"
+                      }
+                      handleChangeMedias={handleChangeMedias}
+                    />
+                    <IconButton
+                      size="small"
+                      className={classes.cwAiBtn}
+                      disabled={
+                        disableOption || disableSend || composerMode === "note"
+                      }
+                      onClick={handleStartRecording}
+                    >
+                      <MicIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      className={classes.cwAiBtn}
+                      disabled={disableOption || disableSend}
+                    >
+                      <Code fontSize="small" />
+                    </IconButton>
+                  </>
+                )}
+              </div>
+              <Button
+                variant="contained"
+                className={classes.cwSendBtn}
+                onClick={handleSendMessage}
+                disabled={
+                  disableOption ||
+                  disableSend ||
+                  (composerMode === "note" && !inputMessage.trim()) ||
+                  (composerMode !== "note" &&
+                    composerMode !== "schedule" &&
+                    !inputMessage.trim() &&
+                    !recording)
+                }
+              >
+                Send (↵)
+              </Button>
+            </div>
+          </>
+        )}
+        {!chatwoot && (
+          <div
+            className={clsx({
+              [classes.newMessageBox]: !chatwoot,
+            })}
+          >
+            {isMobile() || (
+              <EmojiOptions
+                disabled={disableOption}
+                handleAddEmoji={handleAddEmoji}
+                showEmoji={showEmoji}
+                setShowEmoji={setShowEmoji}
+              />
+            )}
+            <FileInput
+              disableOption={
+                disableOption || disableSend || composerMode === "note"
+              }
+              handleChangeMedias={handleChangeMedias}
+            />
+            <CustomInput
+              loading={loading}
+              inputRef={inputRef}
+              ticketStatus={(isGroup && "open") || ticketStatus}
+              inputMessage={inputMessage}
+              setInputMessage={setInputMessage}
+              handleSendMessage={handleSendMessage}
+              handleInputPaste={handleInputPaste}
+              handleChangeMedias={handleChangeMedias}
+              handlePresenceUpdate={handlePresenceUpdate}
+              disableOption={disableOption}
+              chatwoot={chatwoot}
+              composerMode={composerMode}
+            />
+            <ActionButtons
+              inputMessage={inputMessage}
+              loading={loading}
+              recording={recording}
+              ticketStatus={ticketStatus}
+              disableOption={disableOption || disableSend}
+              handleSendMessage={handleSendMessage}
+              handleCancelAudio={handleCancelAudio}
+              handleUploadAudio={handleUploadAudio}
+              handleStartRecording={handleStartRecording}
+            />
+          </div>
+        )}
       </Paper>
     );
   }

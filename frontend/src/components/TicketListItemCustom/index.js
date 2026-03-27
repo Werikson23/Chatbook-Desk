@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 
 import { useHistory, useParams } from "react-router-dom";
-import { parseISO, format, isSameDay } from "date-fns";
+import { parseISO } from "date-fns";
 import clsx from "clsx";
 
 import { makeStyles } from "@material-ui/core/styles";
@@ -19,7 +19,6 @@ import Box from "@material-ui/core/Box";
 import { i18n } from "../../translate/i18n";
 
 import api from "../../services/api";
-import ButtonWithSpinner from "../ButtonWithSpinner";
 import WhatsMarked from "react-whatsmarked";
 import { Tooltip } from "@material-ui/core";
 import { AuthContext } from "../../context/Auth/AuthContext";
@@ -27,7 +26,6 @@ import { TicketsContext } from "../../context/Tickets/TicketsContext";
 import toastError from "../../errors/toastError";
 import { v4 as uuidv4 } from "uuid";
 
-import RoomIcon from '@material-ui/icons/Room';
 import WhatsAppIcon from "@material-ui/icons/WhatsApp";
 import AndroidIcon from "@material-ui/icons/Android";
 import VisibilityIcon from "@material-ui/icons/Visibility";
@@ -38,15 +36,20 @@ import { generateColor } from "../../helpers/colorGenerator";
 import { getInitials } from "../../helpers/getInitials";
 import pastRelativeDate from "../../helpers/pastRelativeDate";
 import TagsLine from "../TagsLine";
+import FullscreenImageDialog from "../FullscreenImageDialog";
 
 const useStyles = makeStyles((theme) => ({
+  ticketContainer: {
+    borderBottom: "1px solid #2b2e33",
+  },
   ticket: {
     position: "relative",
-    height: 98,
-    paddingHorizontal: 10,
-    paddingVertical: 0,
-    paddingTop: 0,
-    paddingBottom: 0,
+    minHeight: 90,
+    height: "auto",
+    paddingLeft: 14,
+    paddingRight: 12,
+    paddingTop: 10,
+    paddingBottom: 10,
   },
 
   pendingTicket: {
@@ -79,14 +82,16 @@ const useStyles = makeStyles((theme) => ({
   contactNameWrapper: {
     display: "grid",
     justifyContent: "space-between",
+    width: "100%",
   },
 
   lastMessageTime: {
     justifySelf: "flex-end",
     textAlign: "right",
     position: "relative",
-    top: -23,
-    fontSize: 12
+    top: 0,
+    fontSize: 11,
+    color: "#6b7280",
   },
 
   closedBadge: {
@@ -135,8 +140,8 @@ const useStyles = makeStyles((theme) => ({
 
   ticketInfo1: {
     position: "relative",
-    top: 40,
-    right: 0
+    top: 22,
+    right: -2,
   },
   Radiusdot: {
 
@@ -155,16 +160,148 @@ const useStyles = makeStyles((theme) => ({
   presence: {
     color: theme.mode === 'light' ? "green" : "lightgreen",
     fontWeight: "bold",
-  }
+  },
+
+  ticketChatwoot: {
+    backgroundColor: "#1c1e21",
+    borderRadius: 0,
+    minHeight: 104,
+    height: 104,
+    alignItems: "center",
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingLeft: 14,
+    paddingRight: 14,
+    "&.MuiListItem-button:hover": {
+      backgroundColor: "rgba(255,255,255,0.06)",
+    },
+    "&.Mui-selected": {
+      backgroundColor: "#151718",
+      borderLeft: "3px solid #1c64f2",
+      paddingLeft: 11,
+    },
+  },
+  ticketChatwootTypography: {
+    "& .MuiTypography-colorTextPrimary": {
+      color: "rgba(255,255,255,0.92) !important",
+    },
+    "& .MuiTypography-colorTextSecondary": {
+      color: "rgba(255,255,255,0.55) !important",
+    },
+  },
+  cwAvatarWrap: {
+    width: 48,
+    minWidth: 48,
+    marginRight: 12,
+  },
+  cwAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: "50%",
+    cursor: "zoom-in",
+  },
+  cwInfo: {
+    minWidth: 0,
+    flex: 1,
+    display: "grid",
+    gridTemplateRows: "auto auto auto auto",
+    rowGap: 4,
+  },
+  cwLine1: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    fontSize: 11,
+    color: "rgba(255,255,255,0.55)",
+    minWidth: 0,
+  },
+  cwLine2: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minWidth: 0,
+  },
+  cwName: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: "rgba(255,255,255,0.92)",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    minWidth: 0,
+    paddingRight: 8,
+  },
+  cwTime: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.55)",
+    whiteSpace: "nowrap",
+  },
+  cwLine3: {
+    position: "relative",
+    minWidth: 0,
+    paddingRight: 40,
+  },
+  cwPreview: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 12,
+    lineHeight: "16px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    display: "-webkit-box",
+    WebkitBoxOrient: "vertical",
+    WebkitLineClamp: 1,
+    wordBreak: "break-word",
+  },
+  cwPreviewTwoLines: {
+    WebkitLineClamp: 2,
+  },
+  cwUnreadBadge: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    fontSize: 11,
+    fontWeight: 600,
+    lineHeight: "20px",
+    textAlign: "center",
+    color: "#fff",
+    background: "#25D366",
+    padding: "0 6px",
+  },
+  cwUnreadCritical: {
+    background: "#ef4444",
+  },
+  cwLine4: {
+    minWidth: 0,
+    fontSize: 12,
+    color: "rgba(255,255,255,0.55)",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
+  cwQueueInfo: {
+    color: "rgba(255,255,255,0.58)",
+  },
+  cwSlaDanger: {
+    background: "rgba(239,68,68,0.08)",
+  },
 }));
 
-const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
+const TicketListItemCustom = ({
+  ticket,
+  setTabOpen,
+  groupActionButtons,
+  chatwootUI = false,
+}) => {
   const classes = useStyles();
   const history = useHistory();
   const [ticketUser, setTicketUser] = useState(null);
   const [whatsAppName, setWhatsAppName] = useState(null);
 
   const [openTicketMessageDialog, setOpenTicketMessageDialog] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { ticketId } = useParams();
   const isMounted = useRef(true);
   const { setCurrentTicket } = useContext(TicketsContext);
@@ -209,7 +346,7 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
     }
 
     history.push(`/tickets/${ticket.uuid}`);
-    setTabOpen("open");
+    setTabOpen("attending");
   };
 
   const handleSelectTicket = (ticket) => {
@@ -217,6 +354,22 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
     const { id, uuid } = ticket;
     setCurrentTicket({ id, uuid, code });
   };
+
+  const channelLabel = (ticket?.channel || "").toLowerCase() === "whatsapp"
+    ? "WhatsApp"
+    : (ticket?.channel || "Chat");
+
+  const statusLabel =
+    ticket.status === "pending"
+      ? "Aguardando agente"
+      : ticket.status === "closed"
+        ? "Encerrado"
+        : "Em atendimento";
+
+  const relativeTime = ticket?.updatedAt ? pastRelativeDate(parseISO(ticket.updatedAt)) : "";
+  const unread = Number(ticket?.unreadMessages || 0);
+  const waitingMinutes = Number(ticket?.waitingTime || 0);
+  const hasTags = Boolean(ticket?.tags?.length);
 
   const renderTicketInfo = () => {
     if (ticketUser && ticket.status !== "pending") {
@@ -485,127 +638,194 @@ const TicketListItemCustom = ({ ticket, setTabOpen, groupActionButtons }) => {
       <ListItem
         dense
         button
-        onClick={(e) => {
-          if ((groupActionButtons || !ticket.isGroup) && ticket.status === "pending") return;
+        onClick={() => {
           handleSelectTicket(ticket);
         }}
         selected={ticketId && +ticketId === ticket.id}
         className={clsx(classes.ticket, {
           [classes.pendingTicket]: ticket.status === "pending",
+          [classes.ticketChatwoot]: chatwootUI,
+          [classes.ticketChatwootTypography]: chatwootUI,
         })}
       >
-        <Tooltip
-          arrow
-          placement="right"
-          title={ticket.queue?.name || "Sem fila"}
-        >
+        <Tooltip arrow placement="right" title={ticket.queue?.name || "Sem fila"}>
           <span
             style={{ backgroundColor: ticket.queue?.color || "#7C7C7C" }}
             className={classes.ticketQueueColor}
           ></span>
         </Tooltip>
-        <ListItemAvatar>
-          <Avatar style={{ backgroundColor: generateColor(ticket?.contact?.number), color: "white", fontWeight: "bold" }} src={ticket?.contact?.profilePicUrl}>{ getInitials(ticket?.contact?.name || "") }</Avatar>
-        </ListItemAvatar>
-        <ListItemText
-          style={{ paddingBottom: 10 }}
-          disableTypography
-          primary={
-            <span className={classes.contactNameWrapper}>
-
-              <Typography
-                noWrap
-                component="span"
-                variant="body2"
-                color="textPrimary"
+        {chatwootUI ? (
+          <>
+            <div className={classes.cwAvatarWrap}>
+              <Avatar
+                className={classes.cwAvatar}
+                style={{ backgroundColor: generateColor(ticket?.contact?.number), color: "white", fontWeight: "bold", fontSize: 14 }}
+                src={ticket?.contact?.profilePicUrl}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (ticket?.contact?.profilePicUrl) setPreviewOpen(true);
+                }}
               >
-                {ticket.channel === "whatsapp" && (
-                  <Tooltip title={`Atribuido à ${ticketUser}`}>
-                    <WhatsAppIcon fontSize="inherit" style={{ color: grey[700] }} />
-                  </Tooltip>
-                )}{' '}
-                {ticket.contact.name}
-              </Typography>
-
-            </span>
-          }
-          secondary={
-            <span className={classes.contactNameWrapper}>
-              <Typography
-                className={classes.contactLastMessage}
-                noWrap
-                component="span"
-                variant="body2"
-                color="textSecondary"
-              >
-                {["composing", "recording"].includes(ticket?.presence) ? (
-                  <span className={classes.presence}>
-                    {i18n.t(`presence.${ticket.presence}`)}
-                  </span>
+                {getInitials(ticket?.contact?.name || "")}
+              </Avatar>
+            </div>
+            <div className={clsx(classes.cwInfo, waitingMinutes > 5 && ticket.status === "pending" && classes.cwSlaDanger)}>
+              <div className={classes.cwLine1}>
+                <span>{channelLabel}</span>
+                <span>{statusLabel}</span>
+              </div>
+              <div className={classes.cwLine2}>
+                <div className={classes.cwName}>{ticket?.contact?.name || "-"}</div>
+                <div className={classes.cwTime}>{relativeTime}</div>
+              </div>
+              <div className={classes.cwLine3}>
+                <div className={clsx(classes.cwPreview, !hasTags && classes.cwPreviewTwoLines)}>
+                  {["composing", "recording"].includes(ticket?.presence)
+                    ? i18n.t(`presence.${ticket.presence}`)
+                    : (ticket?.lastMessage?.includes("data:image/png;base64")
+                      ? "Localizacao"
+                      : (ticket?.lastMessage || "").startsWith('{"ticketzvCard"')
+                        ? "🪪"
+                        : (ticket?.lastMessage || "").split("\n")[0])}
+                </div>
+                {unread > 0 ? (
+                  <div className={clsx(classes.cwUnreadBadge, ticket?.seen && classes.cwUnreadCritical)}>
+                    {unread > 9 ? "9+" : unread}
+                  </div>
+                ) : null}
+              </div>
+              <div className={classes.cwLine4}>
+                {ticket.status === "pending" ? (
+                  <span className={classes.cwQueueInfo}>⏱ {waitingMinutes || 0}m • {ticket?.queue?.name || "Sem fila"}</span>
                 ) : (
+                  <TagsLine ticket={ticket} />
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <ListItemAvatar>
+              <Avatar
+                style={{ width: 32, height: 32, backgroundColor: generateColor(ticket?.contact?.number), color: "white", fontWeight: "bold", fontSize: 12 }}
+                src={ticket?.contact?.profilePicUrl}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (ticket?.contact?.profilePicUrl) setPreviewOpen(true);
+                }}
+              >
+                { getInitials(ticket?.contact?.name || "") }
+              </Avatar>
+            </ListItemAvatar>
+            <ListItemText
+              style={{ paddingBottom: 0 }}
+              disableTypography
+              primary={
+                <span className={classes.contactNameWrapper}>
+
+                  <Typography
+                    noWrap
+                    component="span"
+                    variant="body2"
+                    color="textPrimary"
+                  >
+                    {ticket.channel === "whatsapp" && (
+                      <Tooltip title={`Atribuido à ${ticketUser}`}>
+                        <WhatsAppIcon
+                          fontSize="inherit"
+                          style={{ color: chatwootUI ? grey[400] : grey[700] }}
+                        />
+                      </Tooltip>
+                    )}{' '}
+                    {ticket.contact.name}
+                  </Typography>
+
+                </span>
+              }
+              secondary={
+                <span className={classes.contactNameWrapper}>
+                  <Typography
+                    className={classes.contactLastMessage}
+                    noWrap
+                    component="span"
+                    variant="body2"
+                    color="textSecondary"
+                  >
+                    {["composing", "recording"].includes(ticket?.presence) ? (
+                      <span className={classes.presence}>
+                        {i18n.t(`presence.${ticket.presence}`)}
+                      </span>
+                    ) : (
+                    <>
+                      {ticket.lastMessage?.includes('data:image/png;base64') ? <div>Localização</div> : <WhatsMarked oneline>{ticket.lastMessage.startsWith('{"ticketzvCard"') ? "🪪" : ticket.lastMessage.split("\n")[0] }</WhatsMarked>}
+                    </>
+                  )}
+                  </Typography>
+                  <TagsLine ticket={ticket} />
+                  <ListItemSecondaryAction style={{ left: 72 }}>
+                    <Box className={classes.ticketInfo1}>{renderTicketInfo()}</Box>
+                  </ListItemSecondaryAction>
+                </span>
+
+              }
+            />
+            <ListItemSecondaryAction style={{}}>
+              {ticket.status === "closed" && (
+                <Badge
+                  overlap="rectangular"
+                  className={classes.Radiusdot}
+                  badgeContent={i18n.t("common.closed")}
+                  style={{
+                    backgroundColor: ticket.queue?.color || "#ff0000",
+                    height: 18,
+                    padding: 5,
+                    paddingHorizontal: 12,
+                    borderRadius: 7,
+                    color: "white",
+                    top: -28,
+                    marginRight: 5
+
+                  }}
+                />
+              )}
+
+              {ticket.lastMessage && (
                 <>
-                  {ticket.lastMessage?.includes('data:image/png;base64') ? <div>Localização</div> : <WhatsMarked oneline>{ticket.lastMessage.startsWith('{"ticketzvCard"') ? "🪪" : ticket.lastMessage.split("\n")[0] }</WhatsMarked>}
+
+                  <Typography
+                    className={classes.lastMessageTime}
+                    component="span"
+                    variant="body2"
+                    color="textSecondary"
+                  >
+                    {pastRelativeDate(parseISO(ticket.updatedAt))}
+                  </Typography>
+
+                  <Badge
+                    overlap="rectangular"
+                    className={classes.newMessagesCount}
+                    badgeContent={ticket.unreadMessages ? ticket.unreadMessages : null}
+                    classes={{
+                      badge: classes.badgeStyle,
+                    }}
+                  />
+                  <br />
+
                 </>
               )}
-              </Typography>
-              <TagsLine ticket={ticket} />
-              <ListItemSecondaryAction style={{ left: 73 }}>
-                <Box className={classes.ticketInfo1}>{renderTicketInfo()}</Box>
-              </ListItemSecondaryAction>
-            </span>
 
-          }
-        />
-        <ListItemSecondaryAction style={{}}>
-          {ticket.status === "closed" && (
-            <Badge
-              overlap="rectangular"
-              className={classes.Radiusdot}
-              badgeContent={i18n.t("common.closed")}
-              //color="primary"
-              style={{
-                backgroundColor: ticket.queue?.color || "#ff0000",
-                height: 18,
-                padding: 5,
-                paddingHorizontal: 12,
-                borderRadius: 7,
-                color: "white",
-                top: -28,
-                marginRight: 5
-
-              }}
-            />
-          )}
-
-          {ticket.lastMessage && (
-            <>
-
-              <Typography
-                className={classes.lastMessageTime}
-                component="span"
-                variant="body2"
-                color="textSecondary"
-              >
-                {pastRelativeDate(parseISO(ticket.updatedAt))}
-              </Typography>
-
-              <Badge
-                overlap="rectangular"
-                className={classes.newMessagesCount}
-                badgeContent={ticket.unreadMessages ? ticket.unreadMessages : null}
-                classes={{
-                  badge: classes.badgeStyle,
-                }}
-              />
-              <br />
-
-            </>
-          )}
-
-        </ListItemSecondaryAction>
+            </ListItemSecondaryAction>
+          </>
+        )}
 
       </ListItem>
-      <Divider variant="inset" component="li" />
+      <FullscreenImageDialog
+        open={previewOpen}
+        imageUrl={(ticket?.contact?.profilePicUrl || "").replace(/s96x96/gi, "s640x640")}
+        onClose={() => setPreviewOpen(false)}
+        alt="ticket-contact-avatar-fullscreen"
+      />
+      {!chatwootUI && <Divider variant="inset" component="li" />}
     </div>
   );
 };

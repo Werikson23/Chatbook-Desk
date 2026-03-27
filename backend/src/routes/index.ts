@@ -34,6 +34,7 @@ import i18nRoutes from "./i18nRoutes";
 import wavoipRoutes from "./wavoipRoutes";
 import closeReasonRoutes from "./closeReasonRoutes";
 import farewellTemplateRoutes from "./farewellTemplateRoutes";
+import attributeRoutes from "./attributeRoutes";
 
 const routes = Router();
 
@@ -72,5 +73,6 @@ routes.use(i18nRoutes);
 routes.use(wavoipRoutes);
 routes.use(closeReasonRoutes);
 routes.use(farewellTemplateRoutes);
+routes.use(attributeRoutes);
 
 export default routes;

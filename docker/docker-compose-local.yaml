@@ -72,7 +72,7 @@ services:
       - ticketz
 
   sidekick:
-    image: ghcr.io/ticketz-oss/ticketz-sidekick:latest
+    image: ghcr.io/werikson23/chatbook-desk-sidekick:latest
     profiles: ["do-not-start"]
     env_file:
       - ../env/.env-backend-local

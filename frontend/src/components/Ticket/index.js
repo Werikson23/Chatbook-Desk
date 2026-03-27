@@ -20,8 +20,7 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { TagsContainer } from "../TagsContainer";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import useSettings from "../../hooks/useSettings";
-
-const drawerWidth = 320;
+import useTicketNotes from "../../hooks/useTicketNotes";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -68,9 +67,36 @@ const useStyles = makeStyles((theme) => ({
       zIndex: 100,
     },
   },
+  mainWrapperChatwoot: {
+    backgroundColor: "#151718",
+    borderColor: "#2b2e33",
+    borderWidth: 1,
+  },
+  tagsStripChatwoot: {
+    backgroundColor: "#1c1e21",
+    borderBottom: "1px solid #2b2e33",
+  },
+  statusBanner: {
+    padding: "8px 12px",
+    fontSize: 12,
+    fontWeight: 600,
+    borderBottom: "1px solid #2b2e33",
+  },
+  statusOpen: {
+    background: "rgba(16,185,129,0.12)",
+    color: "#34d399",
+  },
+  statusPending: {
+    background: "rgba(234,179,8,0.14)",
+    color: "#facc15",
+  },
+  statusClosed: {
+    background: "rgba(239,68,68,0.12)",
+    color: "#f87171",
+  },
 }));
 
-const Ticket = () => {
+const Ticket = ({ forceContactPanel = false, chatwootLayout = false }) => {
   const { ticketId } = useParams();
   const history = useHistory();
   const classes = useStyles();
@@ -84,6 +110,9 @@ const Ticket = () => {
   const [showTabGroups, setShowTabGroups] = useState(false);
   const [tagsMode, setTagsMode] = useState("ticket");
   const { getSetting } = useSettings();
+  const { listNotes } = useTicketNotes();
+
+  const [internalNotes, setInternalNotes] = useState([]);
 
   const socketManager = useContext(SocketContext);
 
@@ -98,7 +127,23 @@ const Ticket = () => {
     getSetting("tagsMode","ticket").then((tagsMode) => {
       setTagsMode(tagsMode);
     });
-  }, []);
+  }, [getSetting]);
+
+  const loadInternalNotes = async () => {
+    if (!ticket?.id || !contact?.id) return;
+    try {
+      const notes = await listNotes({ ticketId: ticket.id, contactId: contact.id });
+      setInternalNotes(Array.isArray(notes) ? notes : []);
+    } catch (e) {
+      // Avoid crashing the chat; just keep notes empty.
+      setInternalNotes([]);
+    }
+  };
+
+  useEffect(() => {
+    loadInternalNotes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticket?.id, contact?.id]);
 
   useEffect(() => {
     setLoading(true);
@@ -128,6 +173,12 @@ const Ticket = () => {
     }, 500);
     return () => clearTimeout(delayDebounceFn);
   }, [ticketId, user, history]);
+
+  useEffect(() => {
+    if (forceContactPanel) {
+      setDrawerOpen(true);
+    }
+  }, [forceContactPanel, ticketId]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -190,15 +241,41 @@ const Ticket = () => {
   };
 
   const renderMessagesList = () => {
+    const statusText =
+      ticket?.status === "pending"
+        ? "Aguardando: conversa aberta para leitura, aguardando aceite."
+        : ticket?.status === "closed"
+          ? "Resolvido: conversa encerrada."
+          : "Em atendimento: conversa ativa.";
+
     return (
       <>
+        {ticket?.status ? (
+          <div
+            className={clsx(
+              classes.statusBanner,
+              ticket.status === "open" && classes.statusOpen,
+              ticket.status === "pending" && classes.statusPending,
+              ticket.status === "closed" && classes.statusClosed
+            )}
+          >
+            {statusText}
+          </div>
+        ) : null}
         <MessagesList
           ticket={ticket}
           ticketId={ticket.id}
           isGroup={ticket.isGroup}
           markAsRead={true}
+          chatwootUI={chatwootLayout}
+          internalNotes={internalNotes}
         ></MessagesList>
-        <MessageInput ticket={ticket} showTabGroups />
+        <MessageInput
+          ticket={ticket}
+          showTabGroups
+          chatwoot={chatwootLayout}
+          onNoteSaved={loadInternalNotes}
+        />
       </>
     );
   };
@@ -210,21 +287,28 @@ const Ticket = () => {
         elevation={0}
         className={clsx(classes.mainWrapper, {
           [classes.mainWrapperShift]: drawerOpen,
+          [classes.mainWrapperChatwoot]: chatwootLayout,
         })}
       >
         <div className={clsx({
           [classes.drawerShade]: drawerOpen,
         })} onClick={() => setDrawerOpen(false)}></div>
-        <TicketHeader loading={loading}>
+        <TicketHeader loading={loading} chatwootUI={chatwootLayout}>
           {renderTicketInfo()}
-          <TicketActionButtons ticket={ticket} showTabGroups={showTabGroups} />
+          <TicketActionButtons ticket={ticket} showTabGroups={showTabGroups} chatwootUI={chatwootLayout} />
         </TicketHeader>
-        <Paper>
-          <TagsContainer
-            ticket={["ticket","both"].includes(tagsMode) && ticket}
-            contact={tagsMode === "contact" && contact}
-          />
-        </Paper>
+        {!chatwootLayout && (
+          <Paper
+            elevation={0}
+            square
+            className={clsx({ [classes.tagsStripChatwoot]: chatwootLayout })}
+          >
+            <TagsContainer
+              ticket={["ticket","both"].includes(tagsMode) && ticket}
+              contact={tagsMode === "contact" && contact}
+            />
+          </Paper>
+        )}
         <ReplyMessageProvider>
           <EditMessageProvider>
 	        {renderMessagesList()}
@@ -232,11 +316,13 @@ const Ticket = () => {
         </ReplyMessageProvider>
       </Paper>
       <ContactDrawer
-        open={drawerOpen}
+        open={forceContactPanel ? true : drawerOpen}
         handleDrawerClose={handleDrawerClose}
         contact={contact}
         loading={loading}
         ticket={ticket}
+        docked={forceContactPanel}
+        chatwootUI={chatwootLayout}
       />
     </div>
   );

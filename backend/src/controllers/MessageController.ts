@@ -21,6 +21,7 @@ import { MessageData } from "../helpers/SendMessage";
 import Message from "../models/Message";
 import Contact from "../models/Contact";
 import Ticket from "../models/Ticket";
+import Setting from "../models/Setting";
 import ForwardMessageService from "../services/MessageServices/ForwardMessageService";
 import { getWbot } from "../libs/wbot";
 import { verifyMessage } from "../services/WbotServices/wbotMessageListener";
@@ -38,6 +39,69 @@ type ForwardData = {
   ticketId: number;
   messageId: string;
   queueId: number;
+};
+
+type SignatureMode = "required" | "optional" | "disabled";
+
+const getMessageSignatureMode = async (companyId: number): Promise<SignatureMode> => {
+  const setting = await Setting.findOne({
+    where: {
+      key: "message_signature_mode",
+      companyId
+    }
+  });
+
+  const value = setting?.value as SignatureMode | undefined;
+  if (value === "required" || value === "disabled") {
+    return value;
+  }
+
+  return "optional";
+};
+
+const applySignaturePolicy = (
+  body: string,
+  mode: SignatureMode,
+  user: User,
+  channel: string,
+  isFirstOutbound: boolean
+): string => {
+  if (!body) {
+    return body;
+  }
+
+  const rawTemplate = (user?.signatureTemplate || "").trim();
+  const renderedTemplate = rawTemplate
+    .replace(/\{\{\s*user\s*\}\}/gi, user?.name || "")
+    .replace(/\{\{\s*name\s*\}\}/gi, user?.name || "");
+  const signaturePrefix = `${renderedTemplate || `*${user?.name || ""}:*`}\n`;
+  const defaultPrefix = `*${user?.name || ""}:*\n`;
+  const hasPrefix = body.startsWith(signaturePrefix) || body.startsWith(defaultPrefix);
+  const allowedChannels = (user?.signatureChannels || "whatsapp,email,facebook,instagram")
+    .split(",")
+    .map(c => c.trim().toLowerCase())
+    .filter(Boolean);
+  const channelAllowed = allowedChannels.includes((channel || "whatsapp").toLowerCase());
+  const autoMode = (user?.signatureAutoMode || "always").toLowerCase();
+  const shouldSign =
+    (mode === "required" || (mode === "optional" && user?.signatureEnabled !== false)) &&
+    channelAllowed &&
+    (autoMode !== "first_message" || isFirstOutbound);
+
+  if (shouldSign && !hasPrefix) {
+    return `${signaturePrefix}${body}`;
+  }
+
+  if (!shouldSign && hasPrefix) {
+    if (body.startsWith(signaturePrefix)) {
+      return body.slice(signaturePrefix.length);
+    }
+    if (body.startsWith(defaultPrefix)) {
+      return body.slice(defaultPrefix.length);
+    }
+  }
+
+  return body;
 };
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
@@ -71,13 +135,30 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
 
 export const store = async (req: Request, res: Response): Promise<Response> => {
   const { ticketId } = req.params;
-  const { body, quotedMsg }: MessageData = req.body;
+  let { body, quotedMsg }: MessageData = req.body;
   const medias = req.files as Express.Multer.File[];
   const { companyId } = req.user;
   const userId = Number(req.user.id) || null;
+  const user = await User.findByPk(userId);
 
   const ticket = await ShowTicketService(ticketId, companyId);
   const { channel } = ticket;
+  try {
+    const signatureMode = await getMessageSignatureMode(companyId);
+    const outboundCount = await Message.count({
+      where: {
+        ticketId,
+        fromMe: true
+      }
+    });
+    const isFirstOutbound = outboundCount === 0;
+
+    if (user) {
+      body = applySignaturePolicy(body, signatureMode, user, channel, isFirstOutbound);
+    }
+  } catch (error) {
+    logger.warn({ error }, "Signature policy failed; sending original message body");
+  }
   if (channel === "whatsapp") {
     await SetTicketMessagesAsRead(ticket);
     if (!ticket.isGroup) {
@@ -153,7 +234,16 @@ export const edit = async (req: Request, res: Response): Promise<Response> => {
   const { messageId } = req.params;
   const { companyId } = req.user;
   const userId = Number(req.user.id) || null;
-  const { body }: MessageData = req.body;
+  let { body }: MessageData = req.body;
+  const user = await User.findByPk(userId);
+  try {
+    const signatureMode = await getMessageSignatureMode(companyId);
+    if (user) {
+      body = applySignaturePolicy(body, signatureMode, user, "whatsapp", true);
+    }
+  } catch (error) {
+    logger.warn({ error }, "Signature policy failed while editing message");
+  }
 
   const { ticketId, message } = await EditWhatsAppMessage({
     messageId,

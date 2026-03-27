@@ -23,10 +23,7 @@ import InputAdornment from "@material-ui/core/InputAdornment";
 import DeleteOutlineIcon from "@material-ui/icons/DeleteOutline";
 import EditIcon from "@material-ui/icons/Edit";
 
-import MainContainer from "../../components/MainContainer";
-import MainHeader from "../../components/MainHeader";
-import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
-import Title from "../../components/Title";
+import SettingsModuleLayout from "../../components/SettingsModuleLayout";
 
 import api from "../../services/api";
 import { i18n } from "../../translate/i18n";
@@ -92,8 +89,11 @@ const reducer = (state, action) => {
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
     flex: 1,
-    padding: theme.spacing(1),
+    padding: theme.spacing(2),
     overflowY: "scroll",
+    borderRadius: 12,
+    border: "1px solid #e8e8e8",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
     ...theme.scrollbarStyles,
   },
 }));
@@ -235,7 +235,33 @@ const Schedules = () => {
   };
 
   return (
-    <MainContainer>
+    <SettingsModuleLayout
+      embedded
+      title={i18n.t("schedules.title")}
+      description="Agendamento de envios de mensagem para contatos. Em Configurações → Geral você define horários de funcionamento da empresa quando usar agenda corporativa."
+      actions={
+        <>
+          <TextField
+            placeholder={i18n.t("contacts.searchPlaceholder")}
+            type="search"
+            value={searchParam}
+            onChange={handleSearch}
+            variant="outlined"
+            size="small"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon style={{ color: "gray" }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <Button variant="contained" color="primary" onClick={handleOpenScheduleModal}>
+            {i18n.t("schedules.buttons.add")}
+          </Button>
+        </>
+      }
+    >
       <ConfirmationModal
         title={
           deletingSchedule &&
@@ -256,36 +282,7 @@ const Schedules = () => {
         contactId={contactId}
         cleanContact={cleanContact}
       />
-      <MainHeader>
-        <Title>{i18n.t("schedules.title")}</Title>
-        <MainHeaderButtonsWrapper>
-          <TextField
-            placeholder={i18n.t("contacts.searchPlaceholder")}
-            type="search"
-            value={searchParam}
-            onChange={handleSearch}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon style={{ color: "gray" }} />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleOpenScheduleModal}
-          >
-            {i18n.t("schedules.buttons.add")}
-          </Button>
-        </MainHeaderButtonsWrapper>
-      </MainHeader>
-      <Paper
-        className={classes.mainPaper}
-        variant="outlined"
-        onScroll={handleScroll}
-      >
+      <Paper className={classes.mainPaper} elevation={0} onScroll={handleScroll}>
         <Table size="small">
           <TableHead>
             <TableRow>
@@ -345,7 +342,7 @@ const Schedules = () => {
           </TableBody>
         </Table>
       </Paper>
-    </MainContainer>
+    </SettingsModuleLayout>
   );
 };
 

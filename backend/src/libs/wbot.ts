@@ -124,13 +124,6 @@ const waVersionMutex = new Mutex();
 const checkWbotDuplicity = new Mutex();
 
 const getProjectWAVersion = async () => {
-  try {
-    const res = await fetch("https://waversion.ticke.tz");
-    const version = await res.json();
-    return version;
-  } catch (error) {
-    logger.warn("Failed to get current WA Version from project repository");
-  }
   return waVersion;
 };
 

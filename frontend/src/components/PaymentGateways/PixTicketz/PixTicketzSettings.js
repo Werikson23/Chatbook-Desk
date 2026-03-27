@@ -125,8 +125,13 @@ export default function PixTicketzSettings(props) {
   }
 
   async function handleCreateForm(values) {
+    const webhookUrl = process.env.REACT_APP_PIX_TICKETZ_WEBHOOK_URL;
+    if (!webhookUrl) {
+      toast.error("Configure REACT_APP_PIX_TICKETZ_WEBHOOK_URL para enviar o formulário.");
+      return;
+    }
     try {
-      const r = await axios.post("https://n8n.ticke.tz/webhook/8ff6a058-ca7c-453f-87e7-0764974ad510", values, { timeout: 3000 });
+      const r = await axios.post(webhookUrl, values, { timeout: 3000 });
       console.debug("createFormResult", r);
       toast.success(r.data.message);
       setShowCreateForm(false); 

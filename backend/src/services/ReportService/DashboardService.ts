@@ -6,6 +6,10 @@ import User from "../../models/User";
 import TicketTraking from "../../models/TicketTraking";
 import sequelize from "../../database";
 import { listCounterSerie } from "../CounterServices/ListCounterSerie";
+import {
+  regionFromDdd,
+  BrazilRegionId
+} from "../../helpers/brazilDddRegion";
 
 type TicketTrackingStatistics = {
   avgWaitTime: number;
@@ -21,6 +25,8 @@ export type DashboardDateRange = {
   hour_to?: string;
   tz?: string;
   closeReasonId?: string | number;
+  queueId?: string | number;
+  channel?: string;
 };
 
 type TicketsStatisticsData = {
@@ -63,7 +69,9 @@ export async function calculateTicketStatistics(
   companyId: number,
   start: Date,
   end: Date,
-  closeReasonId?: number | null
+  closeReasonId?: number | null,
+  queueId?: number | null,
+  channel?: string | null
 ): Promise<TicketTrackingStatistics> {
   const trackingWhere: WhereOptions<TicketTraking> = {
     companyId,
@@ -75,12 +83,20 @@ export async function calculateTicketStatistics(
     }
   };
 
+  const ticketSubParts = [`"companyId" = ${Number(companyId)}`];
   if (closeReasonId) {
+    ticketSubParts.push(`"closeReasonId" = ${Number(closeReasonId)}`);
+  }
+  if (queueId) {
+    ticketSubParts.push(`"queueId" = ${Number(queueId)}`);
+  }
+  if (channel) {
+    ticketSubParts.push(`"channel" = ${sequelize.escape(channel)}`);
+  }
+  if (ticketSubParts.length > 1) {
     trackingWhere.ticketId = {
       [Op.in]: literal(
-        `(SELECT "id" FROM "Tickets" WHERE "companyId" = ${Number(
-          companyId
-        )} AND "closeReasonId" = ${Number(closeReasonId)})`
+        `(SELECT "id" FROM "Tickets" WHERE ${ticketSubParts.join(" AND ")})`
       )
     };
   }
@@ -119,6 +135,8 @@ export async function calculateTicketStatistics(
         AND (tt."finishedAt" BETWEEN :startDate AND :endDate)
         AND (c."createdAt" BETWEEN :startDate AND :endDate)
         AND (:closeReasonId IS NULL OR t."closeReasonId" = :closeReasonId)
+        AND (:queueId IS NULL OR t."queueId" = :queueId)
+        AND (:channel IS NULL OR t."channel" = :channel)
   ) counters_list GROUP BY "contactId") counters_totals
   `;
 
@@ -127,7 +145,9 @@ export async function calculateTicketStatistics(
       companyId,
       startDate: start,
       endDate: end,
-      closeReasonId: closeReasonId || null
+      closeReasonId: closeReasonId || null,
+      queueId: queueId || null,
+      channel: channel || null
     },
     type: QueryTypes.SELECT
   })) as unknown as [{ count: number }];
@@ -168,6 +188,20 @@ export async function ticketsStatusSummary(companyId: number) {
   return ticketsSummary;
 }
 
+export async function ticketsChannelSummary(companyId: number) {
+  const where: WhereOptions<Ticket> = {
+    companyId,
+    status: { [Op.or]: ["open", "pending"] }
+  };
+  const rows = await Ticket.findAll({
+    attributes: ["channel", [fn("COUNT", "*"), "count"]],
+    where,
+    group: ["channel"],
+    raw: true
+  });
+  return rows as unknown as { channel: string; count: string }[];
+}
+
 export async function usersStatusSummary(companyId) {
   const usersSummary = await User.findAll({
     attributes: [
@@ -205,18 +239,26 @@ export async function usersStatusSummary(companyId) {
 }
 
 export async function userReport(companyId: number, start: Date, end: Date) {
-  return userReportByFilter(companyId, start, end, null);
+  return userReportByFilter(companyId, start, end, null, null, null);
 }
 
 export async function userReportByFilter(
   companyId: number,
   start: Date,
   end: Date,
-  closeReasonId?: number | null
+  closeReasonId?: number | null,
+  queueId?: number | null,
+  channel?: string | null
 ) {
   const ticketFilterWhere: WhereOptions<Ticket> = {};
   if (closeReasonId) {
     ticketFilterWhere.closeReasonId = closeReasonId;
+  }
+  if (queueId) {
+    ticketFilterWhere.queueId = queueId;
+  }
+  if (channel) {
+    ticketFilterWhere.channel = channel;
   }
 
   const result = await User.findAll({
@@ -316,7 +358,8 @@ export async function userReportByFilter(
 export async function statusSummaryService(companyId: number) {
   return {
     ticketsStatusSummary: await ticketsStatusSummary(companyId),
-    usersStatusSummary: await usersStatusSummary(companyId)
+    usersStatusSummary: await usersStatusSummary(companyId),
+    channelBreakdown: await ticketsChannelSummary(companyId)
   };
 }
 
@@ -328,6 +371,8 @@ export async function ticketsStatisticsService(
   let end = new Date();
   const tz = params.tz || "Z";
   const closeReasonId = params.closeReasonId ? Number(params.closeReasonId) : null;
+  const queueId = params.queueId ? Number(params.queueId) : null;
+  const channel = params.channel || null;
 
   if (params.date_from && params.date_to) {
     start = new Date(
@@ -358,9 +403,64 @@ export async function ticketsStatisticsService(
       companyId,
       start,
       end,
-      closeReasonId
+      closeReasonId,
+      queueId,
+      channel
     )
   };
+}
+
+export async function closeReasonsStatsService(
+  companyId: number,
+  params: DashboardDateRange
+): Promise<{ id: number; name: string; count: number }[]> {
+  let start: Date;
+  let end = new Date();
+  const tz = params.tz || "Z";
+  const queueId = params.queueId ? Number(params.queueId) : null;
+  const channel = params.channel || null;
+
+  if (params.date_from && params.date_to) {
+    start = new Date(
+      `${params.date_from}T${params?.hour_from || "00:00:00"}${tz}`
+    );
+    end = new Date(`${params.date_to}T${params?.hour_to || "23:59:59"}${tz}`);
+  } else {
+    throw new Error("Invalid date range");
+  }
+
+  let extra = "";
+  if (queueId) {
+    extra += ` AND t."queueId" = ${queueId}`;
+  }
+  if (channel) {
+    extra += ` AND t."channel" = ${sequelize.escape(channel)}`;
+  }
+
+  const rows = (await sequelize.query(
+    `
+    SELECT cr.id AS "id", cr.name AS "name", COUNT(t.id)::int AS "count"
+    FROM "Tickets" t
+    INNER JOIN "CloseReasons" cr ON t."closeReasonId" = cr.id
+    WHERE t."companyId" = :companyId
+    AND t.status = 'closed'
+    AND t."updatedAt" BETWEEN :startDate AND :endDate
+    AND t."closeReasonId" IS NOT NULL
+    ${extra}
+    GROUP BY cr.id, cr.name
+    ORDER BY COUNT(t.id) DESC
+  `,
+    {
+      replacements: {
+        companyId,
+        startDate: start,
+        endDate: end
+      },
+      type: QueryTypes.SELECT
+    }
+  )) as unknown as { id: number; name: string; count: number }[];
+
+  return rows;
 }
 
 export async function usersReportService(
@@ -371,6 +471,8 @@ export async function usersReportService(
   let end = new Date();
   const tz = params.tz || "Z";
   const closeReasonId = params.closeReasonId ? Number(params.closeReasonId) : null;
+  const queueId = params.queueId ? Number(params.queueId) : null;
+  const channel = params.channel || null;
 
   if (params.date_from && params.date_to) {
     start = new Date(`${params.date_from}T00:00:00${tz}`);
@@ -382,6 +484,181 @@ export async function usersReportService(
   return {
     start: params.date_from,
     end: params.date_to,
-    userReport: await userReportByFilter(companyId, start, end, closeReasonId)
+    userReport: await userReportByFilter(
+      companyId,
+      start,
+      end,
+      closeReasonId,
+      queueId,
+      channel
+    )
+  };
+}
+
+const GEO_REGION_LAYOUT: Record<
+  BrazilRegionId,
+  { leftPct: number; topPct: number; labelKey: string }
+> = {
+  norte: {
+    leftPct: 38,
+    topPct: 28,
+    labelKey: "dashboard.extras.geoRegionNorte"
+  },
+  nordeste: {
+    leftPct: 58,
+    topPct: 38,
+    labelKey: "dashboard.extras.geoRegionNordeste"
+  },
+  centro_oeste: {
+    leftPct: 45,
+    topPct: 50,
+    labelKey: "dashboard.extras.geoRegionCentroOeste"
+  },
+  sudeste: {
+    leftPct: 55,
+    topPct: 60,
+    labelKey: "dashboard.extras.geoRegionSudeste"
+  },
+  sul: { leftPct: 50, topPct: 78, labelKey: "dashboard.extras.geoRegionSul" },
+  desconhecido: {
+    leftPct: 50,
+    topPct: 45,
+    labelKey: "dashboard.extras.geoRegionUnknown"
+  }
+};
+
+export type DashboardGeoByDddPoint = {
+  id: string;
+  labelKey: string;
+  leftPct: number;
+  topPct: number;
+  volume: number;
+};
+
+export type DashboardGeoByDddRegionRow = {
+  regionId: string;
+  labelKey: string;
+  count: number;
+};
+
+export type DashboardGeoByDddDddRow = {
+  ddd: string;
+  regionId: string;
+  count: number;
+};
+
+export type DashboardGeoByDddResponse = {
+  centerLabelKey: string;
+  points: DashboardGeoByDddPoint[];
+  regions: DashboardGeoByDddRegionRow[];
+  ddds: DashboardGeoByDddDddRow[];
+  totalWithDdd: number;
+};
+
+/**
+ * Contatos da empresa: extrai DDD do número (55 + DDD ou DDD local) e agrega por região.
+ * Opcionalmente restringe por data de criação do contato (alinhado ao filtro do dashboard).
+ */
+export async function geoByDddService(
+  companyId: number,
+  params?: Pick<
+    DashboardDateRange,
+    "date_from" | "date_to" | "hour_from" | "hour_to" | "tz"
+  >
+): Promise<DashboardGeoByDddResponse> {
+  const replacements: Record<string, unknown> = { companyId };
+  let dateClause = "";
+
+  if (params?.date_from && params?.date_to) {
+    const tz = params.tz || "Z";
+    replacements.geoStart = new Date(
+      `${params.date_from}T${params?.hour_from || "00:00:00"}${tz}`
+    );
+    replacements.geoEnd = new Date(
+      `${params.date_to}T${params?.hour_to || "23:59:59"}${tz}`
+    );
+    dateClause = ` AND c."createdAt" BETWEEN :geoStart AND :geoEnd `;
+  }
+
+  const rows = (await sequelize.query(
+    `
+    WITH digits AS (
+      SELECT regexp_replace(c."number", '[^0-9]', '', 'g') AS d
+      FROM "Contacts" c
+      WHERE c."companyId" = :companyId
+      ${dateClause}
+    ),
+    parsed AS (
+      SELECT
+        CASE
+          WHEN LENGTH(d) >= 12 AND SUBSTRING(d FROM 1 FOR 2) = '55'
+            THEN SUBSTRING(d FROM 3 FOR 2)
+          WHEN LENGTH(d) IN (10, 11) AND SUBSTRING(d FROM 1 FOR 1) <> '0'
+            THEN SUBSTRING(d FROM 1 FOR 2)
+          ELSE NULL
+        END AS ddd
+      FROM digits
+    )
+    SELECT ddd, COUNT(*)::int AS count
+    FROM parsed
+    WHERE ddd IS NOT NULL
+      AND LENGTH(ddd) = 2
+      AND ddd ~ '^[0-9]{2}$'
+    GROUP BY ddd
+    ORDER BY count DESC
+    `,
+    {
+      replacements,
+      type: QueryTypes.SELECT
+    }
+  )) as { ddd: string; count: number }[];
+
+  const regionTotals: Record<BrazilRegionId, number> = {
+    norte: 0,
+    nordeste: 0,
+    centro_oeste: 0,
+    sudeste: 0,
+    sul: 0,
+    desconhecido: 0
+  };
+
+  const ddds: DashboardGeoByDddDddRow[] = rows.map((row) => {
+    const rid = regionFromDdd(row.ddd);
+    regionTotals[rid] += row.count;
+    return { ddd: row.ddd, regionId: rid, count: row.count };
+  });
+
+  const totalWithDdd = rows.reduce((s, r) => s + r.count, 0);
+
+  const regions: DashboardGeoByDddRegionRow[] = (
+    Object.entries(regionTotals) as [BrazilRegionId, number][]
+  )
+    .filter(([, c]) => c > 0)
+    .map(([regionId, count]) => ({
+      regionId,
+      labelKey: GEO_REGION_LAYOUT[regionId].labelKey,
+      count
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  const points: DashboardGeoByDddPoint[] = regions.map((r) => {
+    const layout =
+      GEO_REGION_LAYOUT[r.regionId as BrazilRegionId] ||
+      GEO_REGION_LAYOUT.desconhecido;
+    return {
+      id: r.regionId,
+      labelKey: layout.labelKey,
+      leftPct: layout.leftPct,
+      topPct: layout.topPct,
+      volume: r.count
+    };
+  });
+
+  return {
+    centerLabelKey: "dashboard.extras.geoCenterLabelReal",
+    points,
+    regions,
+    ddds,
+    totalWithDdd
   };
 }

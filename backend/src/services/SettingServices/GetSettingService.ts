@@ -15,7 +15,10 @@ const safeSettingsKeys = {
   groupsTab: "disabled",
   CheckMsgIsGroup: "disabled",
   soundGroupNotifications: "disabled",
-  tagsMode: "ticket"
+  tagsMode: "ticket",
+  message_signature_mode: "optional",
+  /** Lido no frontend ao fechar ticket (perfis não-admin). */
+  requireCloseReason: "enabled"
 };
 
 export const GetSettingService = async ({

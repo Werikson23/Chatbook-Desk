@@ -13,6 +13,10 @@ interface Request {
   queueIds?: number[];
   companyId?: number;
   profile?: string;
+  signatureEnabled?: boolean;
+  signatureTemplate?: string;
+  signatureChannels?: string;
+  signatureAutoMode?: string;
 }
 
 interface Response {
@@ -28,7 +32,11 @@ const CreateUserService = async ({
   name,
   queueIds = [],
   companyId,
-  profile = "admin"
+  profile = "admin",
+  signatureEnabled = true,
+  signatureTemplate = "",
+  signatureChannels = "whatsapp,email,facebook,instagram",
+  signatureAutoMode = "always"
 }: Request): Promise<Response> => {
   if (companyId !== undefined) {
     const company = await Company.findOne({
@@ -84,7 +92,11 @@ const CreateUserService = async ({
       password,
       name,
       companyId,
-      profile
+      profile,
+      signatureEnabled,
+      signatureTemplate,
+      signatureChannels,
+      signatureAutoMode
     },
     { include: ["queues", "company"] }
   );

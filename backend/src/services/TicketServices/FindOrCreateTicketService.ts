@@ -10,6 +10,7 @@ import sequelize from "../../database";
 import Whatsapp from "../../models/Whatsapp";
 import Queue from "../../models/Queue";
 import { incrementCounter } from "../CounterServices/IncrementCounter";
+import { logger } from "../../utils/logger";
 
 const createTicketMutex = new Mutex();
 
@@ -19,6 +20,32 @@ type FindOrCreateTicketOptions = {
   doNotReopen?: boolean;
   findOnly?: boolean;
   queue?: Queue;
+};
+
+const resolveValidContactId = async (
+  candidate: Contact,
+  companyId: number
+): Promise<number> => {
+  if (!candidate) return null;
+
+  if (candidate.id) {
+    const byId = await Contact.findOne({
+      where: { id: candidate.id, companyId },
+      attributes: ["id"]
+    });
+    if (byId) return byId.id;
+  }
+
+  if (candidate.number) {
+    const byNumber = await Contact.findOne({
+      where: { number: candidate.number, companyId },
+      attributes: ["id"],
+      order: [["id", "DESC"]]
+    });
+    if (byNumber) return byNumber.id;
+  }
+
+  return null;
 };
 
 const internalFindOrCreateTicketService = async (
@@ -32,15 +59,37 @@ const internalFindOrCreateTicketService = async (
     findOnly,
     queue
   }: FindOrCreateTicketOptions = {}
-): Promise<{ ticket: Ticket; justCreated: boolean }> => {
+): Promise<{ ticket: Ticket | null; justCreated: boolean }> => {
   let justCreated = false;
+  const baseContactId = await resolveValidContactId(contact, companyId);
+  const baseGroupContactId = groupContact
+    ? await resolveValidContactId(groupContact, companyId)
+    : null;
+  const effectiveContactId = baseGroupContactId || baseContactId;
+
+  if (!effectiveContactId) {
+    logger.warn(
+      {
+        event: "ticket.contact_not_found",
+        companyId,
+        whatsappId,
+        contactId: contact?.id,
+        contactNumber: contact?.number,
+        groupContactId: groupContact?.id,
+        groupContactNumber: groupContact?.number
+      },
+      "FindOrCreateTicketService skipped because contact reference is invalid"
+    );
+    return { ticket: null, justCreated: false };
+  }
+
   const result = await sequelize.transaction(async () => {
     let ticket = await Ticket.findOne({
       where: {
         status: {
           [Op.or]: ["open", "pending"]
         },
-        contactId: groupContact ? groupContact.id : contact.id,
+        contactId: effectiveContactId,
         whatsappId
       },
       order: [["id", "DESC"]]
@@ -51,10 +100,10 @@ const internalFindOrCreateTicketService = async (
       ticket = await ticket.reload();
     }
 
-    if (!ticket && groupContact) {
+    if (!ticket && baseGroupContactId) {
       ticket = await Ticket.findOne({
         where: {
-          contactId: groupContact.id,
+          contactId: baseGroupContactId,
           whatsappId
         },
         order: [["updatedAt", "DESC"]]
@@ -78,7 +127,7 @@ const internalFindOrCreateTicketService = async (
       }
     }
 
-    if (!doNotReopen && !ticket && !groupContact) {
+    if (!doNotReopen && !ticket && !baseGroupContactId) {
       const reopenTimeout = parseInt(
         await GetCompanySetting(companyId, "autoReopenTimeout", "0"),
         10
@@ -93,7 +142,7 @@ const internalFindOrCreateTicketService = async (
                 +new Date()
               ]
             },
-            contactId: contact.id,
+            contactId: baseContactId,
             whatsappId
           },
           order: [["updatedAt", "DESC"]]
@@ -119,7 +168,7 @@ const internalFindOrCreateTicketService = async (
 
     let queueId = queue?.id || null;
 
-    if (groupContact) {
+    if (baseGroupContactId) {
       const whatsapp = await Whatsapp.findByPk(whatsappId, {
         include: ["queues"]
       });
@@ -134,15 +183,36 @@ const internalFindOrCreateTicketService = async (
     }
 
     if (!ticket) {
-      ticket = await Ticket.create({
-        contactId: groupContact ? groupContact.id : contact.id,
-        status: "pending",
-        isGroup: !!groupContact,
-        unreadMessages: incrementUnread ? 1 : 0,
-        whatsappId,
-        queueId,
-        companyId
-      });
+      try {
+        ticket = await Ticket.create({
+          contactId: effectiveContactId,
+          status: "pending",
+          isGroup: !!baseGroupContactId,
+          unreadMessages: incrementUnread ? 1 : 0,
+          whatsappId,
+          queueId,
+          companyId
+        });
+      } catch (err) {
+        const isFkError =
+          (err as any)?.name === "SequelizeForeignKeyConstraintError";
+        if (!isFkError) {
+          throw err;
+        }
+
+        logger.warn(
+          {
+            event: "ticket.create_fk_contact_missing",
+            companyId,
+            whatsappId,
+            contactId: effectiveContactId,
+            fallbackContactId: baseContactId,
+            fallbackGroupContactId: baseGroupContactId
+          },
+          "Ticket creation blocked by contact FK; skipping this message cycle"
+        );
+        return { ticket: null, justCreated: false };
+      }
 
       justCreated = true;
 
@@ -171,7 +241,7 @@ const FindOrCreateTicketService = async (
   whatsappId: number,
   companyId: number,
   options: FindOrCreateTicketOptions = {}
-): Promise<{ ticket: Ticket; justCreated: boolean }> => {
+): Promise<{ ticket: Ticket | null; justCreated: boolean }> => {
   const release = await createTicketMutex.acquire();
 
   try {

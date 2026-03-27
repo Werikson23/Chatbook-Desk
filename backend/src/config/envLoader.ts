@@ -25,6 +25,53 @@ function applyAliases(): void {
   setIfMissing("FRONTEND_URL", process.env.API_FRONTEND_URL);
 }
 
+/**
+ * `env/development.ports.json` na raiz do monorepo — fonte única de portas em dev.
+ * Aplica-se após `.env*` para alinhar API + CORS ao frontend sem editar vários arquivos.
+ */
+function applyDevelopmentPortsFromMonorepo(): void {
+  if (process.env.NODE_ENV !== "development") {
+    return;
+  }
+  const portsPath = path.join(backendRoot, "..", "env", "development.ports.json");
+  if (!exists(portsPath)) {
+    return;
+  }
+  try {
+    const data = JSON.parse(fs.readFileSync(portsPath, "utf8")) as {
+      frontend?: number;
+      backend?: number;
+      lanHost?: string;
+    };
+    const be = Number(data.backend);
+    if (Number.isFinite(be)) {
+      process.env.PORT = String(be);
+      process.env.API_PORT = String(be);
+    }
+    const fe = Number(data.frontend);
+    if (Number.isFinite(fe)) {
+      const lan =
+        typeof data.lanHost === "string" && data.lanHost.trim().length > 0
+          ? data.lanHost.trim()
+          : "";
+      const customUrls = [`http://localhost:${fe}`, `http://127.0.0.1:${fe}`];
+      if (lan) {
+        customUrls.push(`http://${lan}:${fe}`);
+      }
+      process.env.FRONTEND_CUSTOM_URL = customUrls.join(",");
+      process.env.FRONTEND_URL_REGEX = `^http://[^:]+:${fe}$`;
+      const primary = lan ? `http://${lan}:${fe}` : `http://localhost:${fe}`;
+      process.env.API_FRONTEND_URL = primary;
+      process.env.FRONTEND_URL = primary;
+    }
+    logger.debug(
+      `Applied monorepo development ports from ${path.basename(portsPath)}`
+    );
+  } catch (err) {
+    logger.warn({ err }, `Could not apply ${portsPath}`);
+  }
+}
+
 const REQUIRED_KEYS = [
   "PORT",
   "DB_HOST",
@@ -61,6 +108,7 @@ export function loadEnvFiles(): void {
   }
 
   applyAliases();
+  applyDevelopmentPortsFromMonorepo();
 }
 
 export function validateEnv(): void {

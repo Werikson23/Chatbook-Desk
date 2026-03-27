@@ -45,7 +45,7 @@ services:
 
   frontend:
     ports:
-      - ${FRONTEND_PORT:-3000}:80
+      - ${FRONTEND_PORT:-2303}:80
     build:
       context: ../frontend
       dockerfile: ./Dockerfile
@@ -103,7 +103,7 @@ services:
       retries: 10
 
   sidekick:
-    image: ghcr.io/ticketz-oss/ticketz-sidekick:latest
+    image: ghcr.io/werikson23/chatbook-desk-sidekick:latest
     profiles: ["do-not-start"]
     env_file:
       - ../env/.env-backend-local

@@ -1,0 +1,798 @@
+/* Contatos — estilo macOS / CRM (escopo .contacts-mac) */
+.contacts-mac {
+  --bg-color: #f5f5f7;
+  --window-bg: #f7f7f7;
+  --sidebar-bg: #eaeaea;
+  --border-color: #dcdcdc;
+  --divider-color: #d1d1d1;
+  --text-color: #1d1d1f;
+  --secondary-text-color: #6a6a6a;
+  --tertiary-text-color: #9c9c9c;
+  --highlight-blue: #007aff;
+  --active-selection-bg: #d8d8d8;
+  --shadow: rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+  color: var(--text-color);
+  box-sizing: border-box;
+}
+
+.contacts-mac *,
+.contacts-mac *::before,
+.contacts-mac *::after {
+  box-sizing: inherit;
+}
+
+.contacts-mac-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background-color: var(--bg-color);
+  margin: 0 -24px -24px;
+  padding: 0;
+}
+
+@media (max-width: 959.95px) {
+  .contacts-mac-page {
+    margin: 0 -16px -16px;
+  }
+}
+
+.contacts-mac-app {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 100%;
+  background-color: var(--sidebar-bg);
+  border-radius: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.contacts-mac .sidebar-left {
+  width: 260px;
+  flex-shrink: 0;
+  background-color: var(--sidebar-bg);
+  padding: 10px 10px 10px 18px;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+  min-height: 0;
+}
+
+.contacts-mac .window-controls {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  height: 28px;
+}
+
+.contacts-mac .window-controls .control {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.contacts-mac .control.close {
+  background-color: #ff5f57;
+}
+.contacts-mac .control.minimize {
+  background-color: #febc2e;
+}
+.contacts-mac .control.maximize {
+  background-color: #28c840;
+}
+
+.contacts-mac .search-bar {
+  display: flex;
+  align-items: center;
+  background-color: #ddd;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin: 0 8px 12px 0;
+}
+
+.contacts-mac .search-bar svg {
+  color: var(--secondary-text-color);
+  font-size: 18px;
+  margin-right: 8px;
+}
+
+.contacts-mac .search-bar input {
+  flex-grow: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: var(--text-color);
+  width: 100%;
+}
+
+.contacts-mac .sidebar-section {
+  padding-right: 8px;
+}
+
+.contacts-mac .sidebar-section h4 {
+  font-size: 11px;
+  color: var(--secondary-text-color);
+  margin: 12px 0 5px 8px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.contacts-mac .sidebar-section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.contacts-mac .sidebar-section li {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: var(--text-color);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+}
+
+.contacts-mac .sidebar-section li:hover {
+  background-color: var(--active-selection-bg);
+}
+
+.contacts-mac .sidebar-section li.active {
+  background-color: var(--active-selection-bg);
+  font-weight: 600;
+}
+
+.contacts-mac .sidebar-section li svg {
+  margin-right: 10px;
+  color: var(--secondary-text-color);
+  width: 20px;
+  text-align: center;
+  font-size: 18px;
+}
+
+.contacts-mac .sidebar-section li .count {
+  margin-left: auto;
+  color: var(--secondary-text-color);
+  font-size: 12px;
+}
+
+.contacts-mac .sidebar-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 8px 10px 0;
+}
+
+.contacts-mac .sidebar-toolbar button {
+  font-size: 11px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: #f0f0f0;
+  cursor: pointer;
+}
+
+.contacts-mac .sidebar-toolbar button:hover {
+  background: var(--active-selection-bg);
+}
+
+.contacts-mac .sidebar-section.bottom {
+  margin-top: auto;
+  padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.contacts-mac .add-btn {
+  border: none;
+  background-color: #dcdcdc;
+  color: var(--secondary-text-color);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contacts-mac .contact-list-container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--window-bg);
+  min-width: 0;
+}
+
+.contacts-mac .main-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  min-height: 52px;
+}
+
+.contacts-mac .nav-arrows {
+  display: flex;
+  gap: 6px;
+}
+
+.contacts-mac .nav-arrows button {
+  border: none;
+  background: transparent;
+  color: var(--tertiary-text-color);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.contacts-mac .nav-arrows button:disabled {
+  color: #e0e0e0;
+  cursor: default;
+}
+
+.contacts-mac .header-title {
+  text-align: center;
+  flex-grow: 1;
+  line-height: 1.2;
+  padding: 0 8px;
+}
+
+.contacts-mac .header-title h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color);
+  letter-spacing: -0.02em;
+}
+
+.contacts-mac .header-title span {
+  font-size: 11px;
+  color: var(--secondary-text-color);
+}
+
+.contacts-mac .header-actions {
+  min-width: 72px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.contacts-mac .edit-btn {
+  background: transparent;
+  border: none;
+  color: var(--highlight-blue);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 5px;
+}
+
+.contacts-mac .edit-btn:hover {
+  background-color: var(--active-selection-bg);
+}
+
+.contacts-mac .contact-list-content {
+  display: flex;
+  flex-grow: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.contacts-mac .contact-list-pane {
+  width: min(380px, 36vw);
+  min-width: 300px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-color);
+  overflow-y: auto;
+  padding-top: 8px;
+  background: linear-gradient(180deg, #fafafa 0%, var(--window-bg) 48px);
+}
+
+.contacts-mac .list-divider {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--secondary-text-color);
+  padding: 6px 0 6px 16px;
+}
+
+.contacts-mac .contact-item {
+  display: flex;
+  align-items: center;
+  padding: 9px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  gap: 8px;
+}
+
+.contacts-mac .contact-item .contact-item-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.contacts-mac .contact-item .contact-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contacts-mac .contact-item .contact-item-sub {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--tertiary-text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.contacts-mac .contact-item.selected .contact-item-sub {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.contacts-mac .contact-item.selected {
+  background-color: var(--highlight-blue);
+  color: white;
+}
+
+.contacts-mac .contact-item .contact-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  margin-right: 2px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.contacts-mac .contact-item .contact-avatar.initial {
+  background-color: #e0e0e0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--secondary-text-color);
+}
+
+.contacts-mac .contact-item .tag-dots {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+}
+
+.contacts-mac .contact-item .tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.contacts-mac .contact-details {
+  flex: 1 1 420px;
+  min-width: min(480px, 42vw);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #fcfcfd 0%, #f6f7f9 100%);
+  box-shadow: inset 1px 0 0 rgba(0, 0, 0, 0.04);
+}
+
+.contacts-mac .detail-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 8px 14px 0;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  background: rgba(250, 250, 252, 0.95);
+}
+
+.contacts-mac .detail-tabs button {
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--secondary-text-color);
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+}
+
+.contacts-mac .detail-tabs button.active {
+  background: #fdfdfd;
+  color: var(--highlight-blue);
+  box-shadow: 0 -1px 0 #fdfdfd;
+}
+
+.contacts-mac .detail-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 20px 24px;
+}
+
+.contacts-mac .contact-card-header {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.contacts-mac .memoji-avatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  margin-right: 18px;
+  object-fit: cover;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.contacts-mac .detail-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+@media (min-width: 640px) {
+  .contacts-mac .detail-stat-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.contacts-mac .detail-stat-card {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.contacts-mac .detail-stat-card .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--tertiary-text-color);
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.contacts-mac .detail-stat-card .value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-color);
+  line-height: 1.1;
+}
+
+.contacts-mac .detail-stat-card .hint {
+  font-size: 11px;
+  color: var(--secondary-text-color);
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+.contacts-mac .detail-kv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.contacts-mac .detail-kv {
+  background: #fff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.contacts-mac .detail-kv .k {
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--tertiary-text-color);
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+}
+
+.contacts-mac .detail-kv .v {
+  font-size: 13px;
+  color: var(--text-color);
+  word-break: break-word;
+}
+
+.contacts-mac .presence-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.contacts-mac .presence-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #e8e8ed;
+  color: var(--secondary-text-color);
+}
+
+.contacts-mac .presence-pill.info {
+  background: rgba(0, 122, 255, 0.12);
+  color: var(--highlight-blue);
+}
+
+.contacts-mac .presence-pill.warn {
+  background: rgba(255, 149, 0, 0.15);
+  color: #c93400;
+}
+
+.contacts-mac .last-activity-box {
+  background: linear-gradient(135deg, #f0f7ff 0%, #f5f5f7 100%);
+  border: 1px solid #d6e4ff;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.contacts-mac .last-activity-box .la-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--highlight-blue);
+  margin-bottom: 6px;
+}
+
+.contacts-mac .last-activity-box .la-body {
+  font-size: 13px;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+.contacts-mac .contact-main-info h2 {
+  margin: 0 0 4px 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.contacts-mac .contact-meta {
+  font-size: 12px;
+  color: var(--secondary-text-color);
+  margin-bottom: 10px;
+}
+
+.contacts-mac .contact-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.contacts-mac .action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.2s;
+}
+
+.contacts-mac .action-btn:hover {
+  filter: brightness(0.92);
+}
+
+.contacts-mac .action-btn.message {
+  background-color: #5ac8fa;
+}
+.contacts-mac .action-btn.call {
+  background-color: #58d15e;
+}
+.contacts-mac .action-btn.secondary {
+  background-color: #e6e5ea;
+  color: #000;
+}
+
+.contacts-mac .info-group {
+  display: flex;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.contacts-mac .info-group:last-of-type {
+  border-bottom: none;
+}
+
+.contacts-mac .icon-left {
+  color: var(--secondary-text-color);
+  margin-right: 12px;
+  padding-top: 2px;
+}
+
+.contacts-mac .info-content strong {
+  display: block;
+  font-size: 11px;
+  color: var(--secondary-text-color);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.contacts-mac .info-content span,
+.contacts-mac .info-content p {
+  display: block;
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.contacts-mac .ticket-row {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 10px;
+  cursor: pointer;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.contacts-mac .ticket-row .ticket-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.contacts-mac .ticket-row .ticket-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--secondary-text-color);
+  margin-top: 8px;
+}
+
+.contacts-mac .ticket-row .unread-badge {
+  background: #ff3b30;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.contacts-mac .ticket-row .ticket-preview {
+  font-size: 12px;
+  color: var(--text-color);
+  margin-top: 8px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.contacts-mac .ticket-row .channel-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #eee;
+  color: var(--secondary-text-color);
+}
+
+.contacts-mac .ticket-row:hover {
+  background: #f5f5f5;
+}
+
+.contacts-mac .ticket-row .status {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.contacts-mac .msg-row {
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: #f0f0f0;
+  font-size: 12px;
+}
+
+.contacts-mac .msg-row.mine {
+  background: #d1e7ff;
+  margin-left: 24px;
+}
+
+.contacts-mac .msg-row .time {
+  font-size: 10px;
+  color: var(--tertiary-text-color);
+  margin-top: 4px;
+}
+
+.contacts-mac .media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 8px;
+}
+
+.contacts-mac .media-thumb {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #eee;
+}
+
+.contacts-mac .media-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.contacts-mac .tags-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.contacts-mac .tag-chip {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #fff;
+}
+
+.contacts-mac .empty-hint {
+  font-size: 13px;
+  color: var(--secondary-text-color);
+  text-align: center;
+  padding: 32px 16px;
+}
+
+@media (max-width: 959.95px) {
+  .contacts-mac-app {
+    flex-direction: column;
+  }
+  .contacts-mac .sidebar-left {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    max-height: none;
+  }
+  .contacts-mac .contact-list-content {
+    flex-direction: column;
+  }
+  .contacts-mac .contact-list-pane {
+    width: 100%;
+    max-height: 260px;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .contacts-mac .contact-details {
+    min-width: 0;
+    flex: 1;
+  }
+}

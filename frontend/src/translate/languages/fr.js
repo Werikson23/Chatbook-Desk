@@ -904,7 +904,15 @@ const messages = {
         header: "Informations du contact",
         buttons: {
           edit: "Modifier le contact",
+          editShort: "Modifier",
         },
+        sections: {
+          tags: "Étiquettes",
+          details: "Détails du contact",
+          notes: "Notes",
+          integration: "Intégration",
+        },
+        emptyDetails: "Aucun champ supplémentaire pour ce contact.",
         extraInfo: "Autres informations",
       },
       ticketOptionsMenu: {

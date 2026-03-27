@@ -34,10 +34,10 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPhoneSlash, faQrcode, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 
-import MainContainer from "../../components/MainContainer";
-import MainHeader from "../../components/MainHeader";
-import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
-import Title from "../../components/Title";
+import SettingsModuleLayout from "../../components/SettingsModuleLayout";
+import Stepper from "@material-ui/core/Stepper";
+import Step from "@material-ui/core/Step";
+import StepLabel from "@material-ui/core/StepLabel";
 import TableRowSkeleton from "../../components/TableRowSkeleton";
 
 import api from "../../services/api";
@@ -53,10 +53,23 @@ import WavoipModal from "../../components/WavoipModal";
 import { wavoipAvailable } from "../../helpers/wavoipCallManager";
 
 const useStyles = makeStyles(theme => ({
+	stepper: {
+		background: "#fff",
+		border: "1px solid #e8e8e8",
+		borderRadius: 12,
+		padding: theme.spacing(1.5, 2),
+		marginBottom: theme.spacing(2),
+	},
+	stepLabel: {
+		"& .MuiStepLabel-label": { fontSize: 13, fontWeight: 600 },
+	},
 	mainPaper: {
 		flex: 1,
-		padding: theme.spacing(1),
+		padding: theme.spacing(2),
 		overflowY: "scroll",
+		borderRadius: 12,
+		border: "1px solid #e8e8e8",
+		boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
 		...theme.scrollbarStyles,
 	},
 	customTableCell: {
@@ -349,8 +362,23 @@ const Connections = () => {
 		);
 	};
 
+	const connectionSteps = [
+		"Criar ou selecionar a caixa de entrada",
+		"Configurar nome, fila padrão e token (se API)",
+		"Conectar: QR Code, sessão ou status em tempo real",
+	];
+
 	return (
-		<MainContainer>
+		<SettingsModuleLayout
+			embedded
+			title={i18n.t("connections.title")}
+			description="Cada conexão funciona como uma caixa de entrada (inbox): gerencie canais WhatsApp e demais adaptadores, acompanhe o status da sessão e conclua a vinculação em poucos passos."
+			actions={
+				<Button variant="contained" color="primary" onClick={handleOpenWhatsAppModal}>
+					{i18n.t("connections.buttons.add")}
+				</Button>
+			}
+		>
 			<ConfirmationModal
 				title={confirmModalInfo.title}
 				open={confirmModalOpen}
@@ -382,19 +410,14 @@ const Connections = () => {
         onClose={handleCloseWavoipModal}
         whatsappId={selectedWhatsApp?.id}
       />
-			<MainHeader>
-				<Title>{i18n.t("connections.title")}</Title>
-				<MainHeaderButtonsWrapper>
-					<Button
-						variant="contained"
-						color="primary"
-						onClick={handleOpenWhatsAppModal}
-					>
-						{i18n.t("connections.buttons.add")}
-					</Button>
-				</MainHeaderButtonsWrapper>
-			</MainHeader>
-			<Paper className={classes.mainPaper} variant="outlined">
+			<Stepper activeStep={0} className={classes.stepper}>
+				{connectionSteps.map((label) => (
+					<Step key={label}>
+						<StepLabel className={classes.stepLabel}>{label}</StepLabel>
+					</Step>
+				))}
+			</Stepper>
+			<Paper className={classes.mainPaper} elevation={0}>
 				<Table size="small">
 					<TableHead>
 						<TableRow>
@@ -489,7 +512,7 @@ const Connections = () => {
 					</TableBody>
 				</Table>
 			</Paper>
-		</MainContainer>
+		</SettingsModuleLayout>
 	);
 };
 

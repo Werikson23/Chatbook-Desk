@@ -33,8 +33,20 @@ class ChatMessage extends Model<ChatMessage> {
 
   @Column(DataType.STRING)
   get mediaPath(): string | null {
-    if (this.getDataValue("mediaPath")) {
-      return `${process.env.BACKEND_URL}/public/${this.getDataValue("mediaPath")}`;
+    const value = this.getDataValue("mediaPath");
+    if (value) {
+      if (/^https?:\/\//i.test(value)) {
+        try {
+          const parsed = new URL(value);
+          if (parsed.pathname.startsWith("/public/")) {
+            return `${parsed.pathname}${parsed.search || ""}`;
+          }
+        } catch {
+          // keep original URL when parsing fails
+        }
+        return value;
+      }
+      return `/public/${value}`;
     }
     return null;
   }

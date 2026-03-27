@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter, Switch } from "react-router-dom";
+import { BrowserRouter, Redirect, Switch } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 
 import LoggedInLayout from "../layout";
@@ -7,24 +7,16 @@ import Dashboard from "../pages/Dashboard/";
 import TicketResponsiveContainer from "../pages/TicketResponsiveContainer";
 import Signup from "../pages/Signup/";
 import Login from "../pages/Login/";
-import Connections from "../pages/Connections/";
-import SettingsCustom from "../pages/SettingsCustom/";
+import SettingsLayout from "../layout/SettingsLayout";
 import Financeiro from "../pages/Financeiro/";
-import Users from "../pages/Users";
 import Contacts from "../pages/Contacts/";
-import Queues from "../pages/Queues/";
-import Tags from "../pages/Tags/";
-import MessagesAPI from "../pages/MessagesAPI/";
 import Helps from "../pages/Helps/";
 import ContactLists from "../pages/ContactLists/";
 import ContactListItems from "../pages/ContactListItems/";
-// import Companies from "../pages/Companies/";
-import QuickMessages from "../pages/QuickMessages/";
 import { AuthProvider } from "../context/Auth/AuthContext";
 import { TicketsContextProvider } from "../context/Tickets/TicketsContext";
 import { WhatsAppsProvider } from "../context/WhatsApp/WhatsAppsContext";
 import Route from "./Route";
-import Schedules from "../pages/Schedules";
 import Campaigns from "../pages/Campaigns";
 import CampaignsConfig from "../pages/CampaignsConfig";
 import CampaignReport from "../pages/CampaignReport";
@@ -32,8 +24,6 @@ import Annoucements from "../pages/Annoucements";
 import Chat from "../pages/Chat";
 import ToDoList from "../pages/ToDoList/";
 import Subscription from "../pages/Subscription/";
-import CloseReasons from "../pages/CloseReasons";
-import FarewellTemplates from "../pages/FarewellTemplates";
 
 const Routes = () => {
   const [showCampaigns, setShowCampaigns] = useState(false);
@@ -52,7 +42,6 @@ const Routes = () => {
           <Switch>
             <Route exact path="/login" component={Login} />
             <Route exact path="/signup" component={Signup} />
-            {/* <Route exact path="/create-company" component={Companies} /> */}
             <WhatsAppsProvider>
               <LoggedInLayout>
                 <Route exact path="/" component={Dashboard} isPrivate />
@@ -65,109 +54,73 @@ const Routes = () => {
                 <Route
                   exact
                   path="/connections"
-                  component={Connections}
+                  component={() => <Redirect to="/settings/channels" />}
                   isPrivate
                 />
                 <Route
                   exact
                   path="/quick-messages"
-                  component={QuickMessages}
+                  component={() => <Redirect to="/settings/quick-messages" />}
                   isPrivate
                 />
                 <Route
                   exact
                   path="/schedules"
-                  component={Schedules}
+                  component={() => <Redirect to="/settings/sla" />}
                   isPrivate
                 />
-                <Route
-                  exact
-                  path="/todolist"
-                  component={ToDoList}
-                  isPrivate
-                />
-                <Route exact path="/tags" component={Tags} isPrivate />
+                <Route exact path="/todolist" component={ToDoList} isPrivate />
+                <Route exact path="/tags" component={() => <Redirect to="/settings/tags" />} isPrivate />
                 <Route exact path="/contacts" component={Contacts} isPrivate />
                 <Route exact path="/helps" component={Helps} isPrivate />
-                <Route exact path="/users" component={Users} isPrivate />
+                <Route exact path="/users" component={() => <Redirect to="/settings/users" />} isPrivate />
                 <Route
                   exact
                   path="/messages-api"
-                  component={MessagesAPI}
+                  component={() => <Redirect to="/settings/integrations" />}
                   isPrivate
                 />
                 <Route
                   exact
-                  path="/settings"
-                  component={SettingsCustom}
+                  path="/superadmin/saas"
+                  component={() => <Redirect to="/settings/super-admin" />}
                   isPrivate
                 />
-                <Route
-                  exact
-                  path="/financeiro"
-                  component={Financeiro}
-                  isPrivate
-                />
-                <Route exact path="/queues" component={Queues} isPrivate />
-                <Route
-                  exact
-                  path="/announcements"
-                  component={Annoucements}
-                  isPrivate
-                />
-                <Route
-                  exact
-                  path="/subscription"
-                  component={Subscription}
-                  isPrivate
-                />
+                <Route exact path="/financeiro" component={Financeiro} isPrivate />
+                <Route exact path="/queues" component={() => <Redirect to="/settings/queues" />} isPrivate />
+                <Route path="/settings" component={SettingsLayout} isPrivate />
+                <Route exact path="/announcements" component={Annoucements} isPrivate />
+                <Route exact path="/subscription" component={Subscription} isPrivate />
                 <Route
                   exact
                   path="/close-reasons"
-                  component={CloseReasons}
+                  component={() => <Redirect to="/settings/close-reasons" />}
                   isPrivate
                 />
                 <Route
                   exact
                   path="/farewell-templates"
-                  component={FarewellTemplates}
+                  component={() => <Redirect to="/settings/automation/farewell-messages" />}
                   isPrivate
                 />
-                
                 <Route exact path="/chats/:id?" component={Chat} isPrivate />
                 {showCampaigns && (
                   <>
-                    <Route
-                      exact
-                      path="/contact-lists"
-                      component={ContactLists}
-                      isPrivate
-                    />
+                    <Route exact path="/contact-lists" component={ContactLists} isPrivate />
                     <Route
                       exact
                       path="/contact-lists/:contactListId/contacts"
                       component={ContactListItems}
                       isPrivate
                     />
-                    <Route
-                      exact
-                      path="/campaigns"
-                      component={Campaigns}
-                      isPrivate
-                    />
+                    <Route exact path="/campaigns" component={Campaigns} isPrivate />
                     <Route
                       exact
                       path="/campaign/:campaignId/report"
                       component={CampaignReport}
                       isPrivate
                     />
-                    <Route
-                      exact
-                      path="/campaigns-config"
-                      component={CampaignsConfig}
-                      isPrivate
-                    />
-                    
+                    <Route exact path="/campaigns-config" component={CampaignsConfig} isPrivate />
                   </>
                 )}
               </LoggedInLayout>

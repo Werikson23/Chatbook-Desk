@@ -12,6 +12,10 @@ interface UserData {
   profile?: string;
   companyId?: number;
   queueIds?: number[];
+  signatureEnabled?: boolean;
+  signatureTemplate?: string;
+  signatureChannels?: string;
+  signatureAutoMode?: string;
 }
 
 interface Request {
@@ -52,7 +56,17 @@ const UpdateUserService = async ({
     password: Yup.string()
   });
 
-  const { email, password, profile, name, queueIds = [] } = userData;
+  const {
+    email,
+    password,
+    profile,
+    name,
+    queueIds = [],
+    signatureEnabled,
+    signatureTemplate,
+    signatureChannels,
+    signatureAutoMode
+  } = userData;
 
   try {
     await schema.validate({ email, password, profile, name });
@@ -65,14 +79,22 @@ const UpdateUserService = async ({
       email,
       password,
       profile,
-      name
+      name,
+      signatureEnabled,
+      signatureTemplate,
+      signatureChannels,
+      signatureAutoMode
     });
     await user.$set("queues", queueIds);
   } else {
     await user.update({
       email,
       password,
-      name
+      name,
+      signatureEnabled,
+      signatureTemplate,
+      signatureChannels,
+      signatureAutoMode
     });
   }
 
@@ -87,6 +109,10 @@ const UpdateUserService = async ({
     profile: user.profile,
     companyId: user.companyId,
     company,
+    signatureEnabled: user.signatureEnabled,
+    signatureTemplate: user.signatureTemplate,
+    signatureChannels: user.signatureChannels,
+    signatureAutoMode: user.signatureAutoMode,
     queues: user.queues
   };
 

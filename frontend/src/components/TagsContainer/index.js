@@ -5,7 +5,7 @@ import { isArray, isString } from "lodash";
 import toastError from "../../errors/toastError";
 import api from "../../services/api";
 
-export function TagsContainer ({ ticket, contact }) {
+export function TagsContainer ({ ticket, contact, compact = false }) {
 
     const [tags, setTags] = useState([]);
     const [selecteds, setSelecteds] = useState([]);
@@ -123,7 +123,7 @@ export function TagsContainer ({ ticket, contact }) {
                     <TextField {...params} variant="outlined" placeholder="Tags" />
                 )}
                 PaperComponent={({ children }) => (
-                    <Paper style={{width: 400, marginLeft: 12}}>
+                    <Paper style={{ width: compact ? "100%" : 400, marginLeft: compact ? 0 : 12 }}>
                         {children}
                     </Paper>
                 )}

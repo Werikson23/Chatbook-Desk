@@ -137,6 +137,7 @@ export default function Options(props) {
   const [tagsMode, setTagsMode] = useState("ticket");
   const [ticketAcceptedMessage, setTicketAcceptedMessage] = useState("");
   const [transferMessage, setTransferMessage] = useState("");
+  const [messageSignatureMode, setMessageSignatureMode] = useState("optional");
 
   const { getCurrentUserInfo } = useAuth();
   const [currentUser, setCurrentUser] = useState({});
@@ -265,6 +266,9 @@ export default function Options(props) {
 
       const transferMessage = settings.find((s) => s.key === "transferMessage");
       setTransferMessage(transferMessage?.value || "");
+
+      const messageSignatureMode = settings.find((s) => s.key === "message_signature_mode");
+      setMessageSignatureMode(messageSignatureMode?.value || "optional");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings]);
@@ -484,6 +488,25 @@ export default function Options(props) {
             >
               <MenuItem value={"company"}>{i18n.t("settings.QuickMessages.options.enabled")}</MenuItem>
               <MenuItem value={"individual"}>{i18n.t("settings.QuickMessages.options.disabled")}</MenuItem>
+            </Select>
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} sm={6} md={4} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id="message-signature-mode-label">
+              Assinatura de mensagens
+            </InputLabel>
+            <Select
+              labelId="message-signature-mode-label"
+              value={messageSignatureMode}
+              onChange={async (e) => {
+                await handleSetting("message_signature_mode", e.target.value, setMessageSignatureMode);
+              }}
+            >
+              <MenuItem value={"required"}>Obrigatória para todos</MenuItem>
+              <MenuItem value={"optional"}>Opcional por usuário</MenuItem>
+              <MenuItem value={"disabled"}>Desativada para todos</MenuItem>
             </Select>
           </FormControl>
         </Grid>

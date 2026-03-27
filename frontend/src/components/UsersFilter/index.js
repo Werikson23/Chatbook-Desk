@@ -1,6 +1,6 @@
 import { Box, Chip, TextField } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { i18n } from "../../translate/i18n";
 import toastError from "../../errors/toastError";
 import api from "../../services/api";
@@ -9,12 +9,27 @@ export function UsersFilter({ onFiltered, initialUsers, excludeId, multiple = fa
   const [users, setUsers] = useState([]);
   const [selected, setSelected] = useState(multiple ? [] : null);
 
-  useEffect(() => {
-    async function fetchData() {
-      await loadUsers();
+  const loadUsers = useCallback(async () => {
+    try {
+      const { data } = await api.get(`/users/list`);
+      let userList = data.map((u) => ({ id: u.id, name: u.name }));
+      if (excludeId) {
+        userList = userList.filter(user => user.id !== excludeId);
+      }
+      setUsers(userList);
+    } catch (err) {
+      toastError(err);
     }
-    fetchData();
-  }, []);
+  }, [excludeId]);
+
+  const onChange = useCallback((value) => {
+    setSelected(value);
+    onFiltered(multiple ? (value || []) : value ? [value] : []);
+  }, [multiple, onFiltered]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   useEffect(() => {
     if (multiple) {
@@ -27,37 +42,20 @@ export function UsersFilter({ onFiltered, initialUsers, excludeId, multiple = fa
       ) {
         onChange(initialUsers);
       }
-    } else {
-      setSelected(null);
-      if (
-        Array.isArray(initialUsers) &&
-        Array.isArray(users) &&
-        users.length > 0 &&
-        initialUsers.length > 0
-      ) {
-        onChange(initialUsers[0]);
-      }
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialUsers, users, multiple]);
 
-  const loadUsers = async () => {
-    try {
-      const { data } = await api.get(`/users/list`);
-      let userList = data.map((u) => ({ id: u.id, name: u.name }));
-      if (excludeId) {
-        userList = userList.filter(user => user.id !== excludeId);
-      }
-      setUsers(userList);
-    } catch (err) {
-      toastError(err);
+    setSelected(null);
+    if (
+      Array.isArray(initialUsers) &&
+      Array.isArray(users) &&
+      users.length > 0 &&
+      initialUsers.length > 0
+    ) {
+      onChange(initialUsers[0]);
     }
-  };
+  }, [initialUsers, multiple, onChange, users]);
 
-  const onChange = async (value) => {
-    setSelected(value);
-    onFiltered(multiple ? (value || []) : value ? [value] : []);
-  };
 
   return (
     <Box style={{ padding: "0px 10px 10px" }}>

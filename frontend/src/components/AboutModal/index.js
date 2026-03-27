@@ -63,28 +63,38 @@ const AboutModal = ({ open, onClose }) => {
 	};
 
   useEffect(() => {
-    let isMounted = true;
-    getCurrentUserInfo().then(
-      (user) => {
-        if (isMounted) {
-          setCurrentUser(user);
+    if (!open) {
+      return undefined;
+    }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const user = await getCurrentUserInfo();
+        if (!cancelled) {
+          setCurrentUser(user || {});
+        }
+      } catch {
+        if (!cancelled) {
+          setCurrentUser({});
         }
       }
-    );
-
-    api.get("/").then(
-      (response) => {
-        if (isMounted) {
+      try {
+        const response = await api.get("/");
+        if (!cancelled) {
           setBackendGitInfo(response.data);
         }
+      } catch {
+        if (!cancelled) {
+          setBackendGitInfo(null);
+        }
       }
-    );
-
-    return () => {
-      isMounted = false;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    load();
+    return () => {
+      cancelled = true;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- dados só ao abrir (evita loop com getCurrentUserInfo)
+  }, [open]);
 
 	return (
 		<div className={classes.root}>
@@ -130,20 +140,20 @@ const AboutModal = ({ open, onClose }) => {
             }
             </Typography>
             <Typography variant="body1">{i18n.t("about.aboutdetail")}</Typography>
-            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://todobom.com">{i18n.t("about.aboutauthorsite")}</Link></Typography>
-            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/canove/whaticket-community">{i18n.t("about.aboutwhaticketsite")}</Link></Typography>
-            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/vemfazer">{i18n.t("about.aboutvemfazersite")}</Link></Typography>
+            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/Werikson23/Chatbook-Desk">{i18n.t("about.aboutauthorsite")}</Link></Typography>
+            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/Werikson23/Chatbook-Desk">{i18n.t("about.aboutwhaticketsite")}</Link></Typography>
+            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/Werikson23/Chatbook-Desk">{i18n.t("about.aboutvemfazersite")}</Link></Typography>
             <Typography variant="h4">{i18n.t("about.licenseheading")}</Typography>
             <Typography variant="body1">{i18n.t("about.licensedetail")}</Typography>
-            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/ticketz-oss/ticketz/blob/main/LICENSE.md">{i18n.t("about.licensefulltext")}</Link></Typography>
-            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/ticketz-oss/ticketz">{i18n.t("about.licensesourcecode")}</Link></Typography>
+            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/Werikson23/Chatbook-Desk/blob/main/LICENSE.md">{i18n.t("about.licensefulltext")}</Link></Typography>
+            <Typography><Link target="_blank" rel="noreferrer noopener" href="https://github.com/Werikson23/Chatbook-Desk">{i18n.t("about.licensesourcecode")}</Link></Typography>
           </>
           :
           <>
             <div>
               <img className={classes.logoImg} alt="Application logo" />
             </div>
-            <Typography className={classes.textCenter} ><Link target="_blank" rel="noreferrer noopener" href="https://ticke.tz">{i18n.t("about.copyright")}</Link></Typography>
+            <Typography className={classes.textCenter} ><Link target="_blank" rel="noreferrer noopener" href="https://github.com/Werikson23/Chatbook-Desk">{i18n.t("about.copyright")}</Link></Typography>
           </>
         }
 				</DialogContent>

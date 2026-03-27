@@ -46,9 +46,13 @@ async function startServer() {
 
 // wait for i18n initialization before starting the server
 i18nReady.then(() => {
-  // Create and start the server
-  const server = app.listen(process.env.PORT, async () => {
-    logger.info(`Server is listening on port: ${process.env.PORT}`);
+  const port = Number(process.env.PORT);
+  const listenHost = process.env.LISTEN_HOST || "0.0.0.0";
+  // Create and start the server (0.0.0.0 = acessível na rede local)
+  const server = app.listen(port, listenHost, async () => {
+    logger.info(
+      `Server is listening on http://${listenHost}:${port} (API / WebSocket)`
+    );
 
     await startServer();
   });

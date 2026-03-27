@@ -1,11 +1,11 @@
 import { Box, Chip, TextField } from "@material-ui/core";
 import Autocomplete from "@material-ui/lab/Autocomplete";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import toastError from "../../errors/toastError";
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
 
-export function TagsFilter({ onFiltered }) {
+export function TagsFilter({ onFiltered, valueIds = [], dense = false }) {
   const [tags, setTags] = useState([]);
   const [selecteds, setSelecteds] = useState([]);
 
@@ -15,6 +15,36 @@ export function TagsFilter({ onFiltered }) {
     }
     fetchData();
   }, []);
+
+  const valueIdsKey = useMemo(
+    () =>
+      [...(valueIds || []).map((n) => Number(n)).filter((n) => Number.isFinite(n))]
+        .sort((a, b) => a - b)
+        .join(","),
+    [valueIds]
+  );
+
+  useEffect(() => {
+    if (!tags.length) return;
+    const ids = new Set(
+      valueIdsKey
+        ? valueIdsKey
+            .split(",")
+            .map((s) => Number(s))
+            .filter((n) => Number.isFinite(n))
+        : []
+    );
+    const next = tags.filter((t) => ids.has(Number(t.id)));
+    setSelecteds((prev) => {
+      if (
+        prev.length === next.length &&
+        prev.every((p, i) => p.id === next[i].id)
+      ) {
+        return prev;
+      }
+      return next;
+    });
+  }, [valueIdsKey, tags]);
 
   const loadTags = async () => {
     try {
@@ -27,11 +57,13 @@ export function TagsFilter({ onFiltered }) {
 
   const onChange = async (value) => {
     setSelecteds(value);
-    onFiltered(value);
+    if (typeof onFiltered === "function") {
+      onFiltered(value);
+    }
   };
 
   return (
-    <Box style={{ padding: 10 }}>
+    <Box style={{ padding: dense ? 6 : 10 }}>
       <Autocomplete
         multiple
         size="small"
@@ -58,6 +90,7 @@ export function TagsFilter({ onFiltered }) {
           <TextField
             {...params}
             variant="outlined"
+            margin={dense ? "dense" : "normal"}
             placeholder={i18n.t("tickets.search.filterByTags")}
           />
         )}

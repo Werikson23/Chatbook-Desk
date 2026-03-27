@@ -1,6 +1,6 @@
-import { Op, Sequelize } from "sequelize";
+import { Op } from "sequelize";
 import Tag from "../../models/Tag";
-import Ticket from "../../models/Ticket";
+import ContactTag from "../../models/ContactTag";
 import TicketTag from "../../models/TicketTag";
 
 interface Request {
@@ -8,10 +8,19 @@ interface Request {
   searchParam?: string;
 }
 
+export type TagListRow = {
+  id: number;
+  name: string;
+  color: string;
+  kanban: number;
+  ticketsCount: number;
+  contactsCount: number;
+};
+
 const ListService = async ({
   companyId,
   searchParam
-}: Request): Promise<Tag[]> => {
+}: Request): Promise<TagListRow[]> => {
   let whereCondition = {};
 
   if (searchParam) {
@@ -26,10 +35,32 @@ const ListService = async ({
 
   const tags = await Tag.findAll({
     where: { ...whereCondition, companyId },
-    order: [["name", "ASC"]]
+    order: [["name", "ASC"]],
+    include: [
+      {
+        model: TicketTag,
+        as: "ticketTags",
+        attributes: ["ticketId"],
+        required: false
+      },
+      {
+        model: ContactTag,
+        as: "contactTags",
+        attributes: ["contactId"],
+        required: false
+      }
+    ],
+    attributes: ["id", "name", "color", "kanban", "companyId"]
   });
 
-  return tags;
+  return tags.map((t) => ({
+    id: t.id,
+    name: t.name,
+    color: t.color,
+    kanban: t.kanban,
+    ticketsCount: t.ticketTags?.length ?? 0,
+    contactsCount: t.contactTags?.length ?? 0
+  }));
 };
 
 export default ListService;

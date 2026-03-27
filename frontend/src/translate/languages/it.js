@@ -908,7 +908,15 @@ const messages = {
         header: "Dati del contatto",
         buttons: {
           edit: "Modifica contatto",
+          editShort: "Modifica",
         },
+        sections: {
+          tags: "Tag",
+          details: "Dettagli contatto",
+          notes: "Note",
+          integration: "Integrazione",
+        },
+        emptyDetails: "Nessun campo aggiuntivo per questo contatto.",
         extraInfo: "Altre informazioni",
       },
       ticketOptionsMenu: {

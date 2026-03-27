@@ -31,4 +31,19 @@ routes.get(
   DashboardController.usersReport
 );
 
+routes.get(
+  "/dashboard/close-reasons-stats",
+  isAuth,
+  isAdmin,
+  isCompliant,
+  DashboardController.closeReasonsStats
+);
+
+routes.get(
+  "/dashboard/geo-by-ddd",
+  isAuth,
+  isCompliant,
+  DashboardController.geoByDdd
+);
+
 export default routes;

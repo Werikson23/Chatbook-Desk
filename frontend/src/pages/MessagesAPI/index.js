@@ -4,13 +4,32 @@ import { makeStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 
 import { i18n } from "../../translate/i18n";
-import { Button, CircularProgress, Grid, TextField, Typography } from "@material-ui/core";
+import { Button, CircularProgress, Divider, Grid, TextField, Typography } from "@material-ui/core";
+import SettingsModuleLayout from "../../components/SettingsModuleLayout";
 import { Field, Form, Formik } from "formik";
 import toastError from "../../errors/toastError";
 import { toast } from "react-toastify";
 import { getBackendURL } from "../../services/config";
 
 const useStyles = makeStyles((theme) => ({
+  section: {
+    padding: theme.spacing(2.5),
+    borderRadius: 12,
+    border: "1px solid #e8e8e8",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
+    marginBottom: theme.spacing(2),
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: 700,
+    color: "#1d1d1f",
+    marginBottom: theme.spacing(1),
+  },
+  muted: {
+    fontSize: 14,
+    color: "#86868b",
+    lineHeight: 1.5,
+  },
   mainPaper: {
     flex: 1,
     padding: theme.spacing(2),
@@ -238,68 +257,88 @@ const MessagesAPI = () => {
   }
 
   return (
-    <Paper
-      className={classes.mainPaper}
-      variant="outlined"
+    <SettingsModuleLayout
+      embedded
+      title="Integrações · API e mensagens"
+      description="Tokens de API por conexão, endpoint de envio e área de testes. Webhooks e log de integrações podem ser estendidos no backend conforme necessidade."
     >
-      <Typography variant="h5">
+      <Paper className={classes.section} elevation={0}>
+        <Typography className={classes.sectionTitle}>Tokens e conexões</Typography>
+        <Typography className={classes.muted}>
+          Cadastre o token em <strong>Configurações → Canais / Adaptadores</strong>, editando a conexão desejada.
+          Cada token autentica requisições <code>Bearer</code> para a conexão correspondente.
+        </Typography>
+      </Paper>
+
+      <Paper className={classes.section} elevation={0}>
+        <Typography className={classes.sectionTitle}>Webhooks e logs</Typography>
+        <Typography className={classes.muted}>
+          O projeto possui rotas e eventos internos que podem ser documentados aqui quando houver URL de webhook
+          exposta. Registre chamadas e erros no seu gateway ou em uma fila de auditoria externa até centralizarmos logs
+          nesta tela.
+        </Typography>
+      </Paper>
+
+      <Paper className={classes.mainPaper} elevation={0} style={{ border: "1px solid #e8e8e8", borderRadius: 12, boxShadow: "0 8px 24px rgba(0,0,0,0.04)" }}>
+      <Typography variant="h6" style={{ fontWeight: 700 }}>
         Documentação para envio de mensagens
       </Typography>
-      <Typography variant="h6" color="primary" className={classes.elementMargin}>
-        Métodos de Envio
+      <Typography variant="subtitle1" color="primary" className={classes.elementMargin}>
+        Métodos de envio
       </Typography>
       <Typography component="div">
         <ol>
-          <li>Mensagens de Texto</li>
-          <li>Mensagens de Media</li>
+          <li>Mensagens de texto</li>
+          <li>Mensagens de mídia</li>
         </ol>
       </Typography>
-      <Typography variant="h6" color="primary" className={classes.elementMargin}>
+      <Divider className={classes.elementMargin} />
+      <Typography variant="subtitle1" style={{ fontWeight: 600 }} className={classes.elementMargin}>
         Instruções
       </Typography>
       <Typography className={classes.elementMargin} component="div">
         <b>Observações importantes</b><br />
         <ul>
-          <li>Antes de enviar mensagens, é necessário o cadastro do token vinculado à conexão que enviará as mensagens. <br/>Para realizar o cadastro acesse o menu "Conexões", clique no botão editar da conexão e insira o token no devido campo.</li>
+          <li>Antes de enviar mensagens, cadastre o token na conexão que enviará as mensagens (Configurações → Canais / Adaptadores).</li>
           <li>
-            O campo número aceita dois tipos de informação:
+            O campo número aceita:
               <ul>
-                <li><b>Número de Whatsapp:</b> Qualquer número de whatsapp completo iniciando pelo código do país (BR=55)</li>
-                <li><b>Whatsapp JID:</b> Qualquer identificador do Whatsapp, para grupos ele é um número extenso seguido de @g.us</li>
+                <li><b>Número de WhatsApp:</b> completo com DDI (BR=55).</li>
+                <li><b>JID:</b> identificador WhatsApp; grupos terminam em @g.us.</li>
               </ul>
           </li>
         </ul>
       </Typography>
-      <Typography variant="h6" color="primary" className={classes.elementMargin}>
-        1. Mensagens de Texto
+      <Typography variant="subtitle1" color="primary" className={classes.elementMargin}>
+        1. Mensagens de texto
       </Typography>
-      <Grid container>
+      <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
           <Typography className={classes.elementMargin} component="div">
-            <p>Seguem abaixo a lista de informações necessárias para envio das mensagens de texto:</p>
+            <p>Informações para envio:</p>
             <b>Endpoint: </b> {getEndpoint()} <br />
             <b>Método: </b> POST <br />
-            <b>Headers: </b> Authorization ("Bearer " + token cadastrado) e Content-Type (application/json) <br />
+            <b>Headers: </b> Authorization (&quot;Bearer &quot; + token) e Content-Type application/json <br />
             <b>Body: </b> {"{ \"number\": \"558599999999\", \"body\": \"Sua mensagem\", \"saveOnTicket\": true, \"linkPreview\": true }"}
           </Typography>
         </Grid>
         <Grid item xs={12} sm={6}>
           <Typography className={classes.elementMargin}>
-            <b>Teste de Envio</b>
+            <b>Teste de envio</b>
           </Typography>
           {renderFormMessageText()}
         </Grid>
       </Grid>
-      <Typography variant="h6" color="primary" className={classes.elementMargin}>
-        2. Mensagens de Media
+      <Typography variant="subtitle1" color="primary" className={classes.elementMargin}>
+        2. Mensagens de mídia
       </Typography>
-      <Grid container>
+      <Grid container spacing={2}>
         <Grid item xs={12} sm={6}>
           <Typography className={classes.elementMargin} component="div">
-            <p>Seguem abaixo a lista de informações necessárias para envio das mensagens de texto:</p>
+            <p>Envio multipart:</p>
             <b>Endpoint: </b> {getEndpoint()} <br />
             <b>Método: </b> POST <br />
-            <b>Headers: </b> Authorization ("Bearer " + token cadastrado) e Content-Type (multipart/form-data) <br />
+            <b>Headers: </b> Authorization (&quot;Bearer &quot; + token) e Content-Type multipart/form-data <br />
             <b>FormData: </b> <br />
             <ul>
               <li>
@@ -316,12 +355,13 @@ const MessagesAPI = () => {
         </Grid>
         <Grid item xs={12} sm={6}>
           <Typography className={classes.elementMargin}>
-            <b>Teste de Envio</b>
+            <b>Teste de envio</b>
           </Typography>
           {renderFormMessageMedia()}
         </Grid>
       </Grid>
     </Paper>
+    </SettingsModuleLayout>
   );
 };
 

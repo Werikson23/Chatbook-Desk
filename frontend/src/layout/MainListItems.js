@@ -284,7 +284,7 @@ const MainListItems = (props) => {
         icon={<BorderColorIcon />}
       />
             <ListItemLink
-              to="/quick-messages"
+              to="/settings/quick-messages"
               primary={i18n.t("mainDrawer.listItems.quickMessages")}
               icon={<FlashOnIcon />}
             />
@@ -294,12 +294,12 @@ const MainListItems = (props) => {
               icon={<ContactPhoneOutlinedIcon />}
             />
             <ListItemLink
-              to="/schedules"
+              to="/settings/sla"
               primary={i18n.t("mainDrawer.listItems.schedules")}
               icon={<EventIcon />}
             />
             <ListItemLink
-              to="/tags"
+              to="/settings/tags"
               primary={i18n.t("mainDrawer.listItems.tags")}
               icon={<LocalOfferIcon />}
             />
@@ -429,7 +429,7 @@ const MainListItems = (props) => {
               />
             )}
             <ListItemLink
-              to="/connections"
+              to="/settings/channels"
               primary={i18n.t("mainDrawer.listItems.connections")}
               icon={
                 <Badge badgeContent={connectionWarning ? "!" : 0} color="error" overlap="rectangular">
@@ -438,27 +438,27 @@ const MainListItems = (props) => {
               }
             />
             <ListItemLink
-              to="/queues"
+              to="/settings/queues"
               primary={i18n.t("mainDrawer.listItems.queues")}
               icon={<AccountTreeOutlinedIcon />}
             />
             <ListItemLink
-              to="/close-reasons"
+              to="/settings/close-reasons"
               primary="Motivos de Encerramento"
               icon={<AssignmentTurnedInIcon />}
             />
             <ListItemLink
-              to="/farewell-templates"
+              to="/settings/automation/farewell-messages"
               primary="Mensagens de Despedida"
               icon={<SmsIcon />}
             />
             <ListItemLink
-              to="/users"
+              to="/settings/users"
               primary={i18n.t("mainDrawer.listItems.users")}
               icon={<PeopleAltOutlinedIcon />}
             />
             <ListItemLink
-              to="/messages-api"
+              to="/settings/integrations"
               primary={i18n.t("mainDrawer.listItems.messagesAPI")}
               icon={<CodeRoundedIcon />}
             />

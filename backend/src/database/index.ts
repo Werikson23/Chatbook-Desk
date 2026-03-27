@@ -44,6 +44,12 @@ import Wavoip from "../models/Wavoip";
 import CloseReason from "../models/CloseReason";
 import CloseReasonQueue from "../models/CloseReasonQueue";
 import FarewellTemplate from "../models/FarewellTemplate";
+import AttributeContainer from "../models/AttributeContainer";
+import AttributeDefinition from "../models/AttributeDefinition";
+import AttributeGroupInstance from "../models/AttributeGroupInstance";
+import AttributeValue from "../models/AttributeValue";
+import AttributeAuditLog from "../models/AttributeAuditLog";
+import AttributeContainerProfilePermission from "../models/AttributeContainerProfilePermission";
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const dbConfig = require("../config/database");
@@ -57,6 +63,12 @@ const models = [
   CloseReasonQueue,
   CloseReason,
   FarewellTemplate,
+  AttributeContainer,
+  AttributeDefinition,
+  AttributeGroupInstance,
+  AttributeValue,
+  AttributeAuditLog,
+  AttributeContainerProfilePermission,
   Contact,
   ContactTag,
   Ticket,

@@ -1,15 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import clsx from "clsx";
 import moment from "moment";
 import {
   makeStyles,
-  Drawer,
   AppBar,
   Toolbar,
-  List,
   Typography,
-  Divider,
   MenuItem,
   IconButton,
   Menu,
@@ -17,12 +14,11 @@ import {
   useMediaQuery,
 } from "@material-ui/core";
 
-import MenuIcon from "@material-ui/icons/Menu";
-import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
+import AppsIcon from "@material-ui/icons/Apps";
 import AccountCircle from "@material-ui/icons/AccountCircle";
 import CachedIcon from "@material-ui/icons/Cached";
 
-import MainListItems from "./MainListItems";
+import AppSwitcher from "../components/AppSwitcher";
 import NotificationsPopOver from "../components/NotificationsPopOver";
 import { Backendlogs } from "../components/Backendlogs";
 import { PhoneCall } from "../components/PhoneCall";
@@ -143,6 +139,9 @@ const useStyles = makeStyles((theme) => ({
     flex: 1,
     overflow: "auto",
   },
+  contentTicketsChatwoot: {
+    backgroundColor: "#0c0c0e",
+  },
   container: {
     paddingTop: theme.spacing(4),
     paddingBottom: theme.spacing(4),
@@ -178,14 +177,19 @@ const useStyles = makeStyles((theme) => ({
 const LoggedInLayout = ({ children, themeToggle }) => {
   const classes = useStyles();
   const history = useHistory();
+  const location = useLocation();
+  const isSettingsModule =
+    location.pathname === "/settings" || location.pathname.startsWith("/settings/");
+  const isTicketsChatwootShell =
+    location.pathname === "/tickets" ||
+    location.pathname.startsWith("/tickets/");
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const { handleLogout, loading } = useContext(AuthContext);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerVariant, setDrawerVariant] = useState("permanent");
+  const [appsAnchorEl, setAppsAnchorEl] = useState(null);
   // const [dueDate, setDueDate] = useState("");
   const { user } = useContext(AuthContext);
 
@@ -255,20 +259,18 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   //##############################################################################
 
   useEffect(() => {
-    if (document.body.offsetWidth > 600) {
-      setDrawerOpen(true);
-    }
-  }, []);
-  
-  useEffect(() => {
     let isMounted = true;
-    getCurrentUserInfo().then(
-      (user) => {
+    getCurrentUserInfo()
+      .then((user) => {
         if (isMounted) {
-          setCurrentUser(user);
+          setCurrentUser(user || {});
         }
-      }
-    );
+      })
+      .catch(() => {
+        if (isMounted) {
+          setCurrentUser({});
+        }
+      });
     return () => {
       isMounted = false;
     };
@@ -283,23 +285,23 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   }, []);
 
   useEffect(() => {
+    let alive = true;
     window.mentionClick = (mention) => {
+      if (!alive) return;
       const contact = {
         id: mention.contactId || mention.id,
         name: mention.name,
         number: mention.number
-      }
+      };
       setNewTicketContact(contact);
-    }
+    };
+    return () => {
+      alive = false;
+      if (window.mentionClick) {
+        delete window.mentionClick;
+      }
+    };
   }, []);
-
-  useEffect(() => {
-    if (document.body.offsetWidth < 600) {
-      setDrawerVariant("temporary");
-    } else {
-      setDrawerVariant("permanent");
-    }
-  }, [drawerOpen]);
 
   useEffect(() => {
     const companyId = localStorage.getItem("companyId");
@@ -360,18 +362,12 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     handleCloseProfileMenu();
     handleLogout();
   };
-
-  const drawerClose = () => {
-    if (document.body.offsetWidth < 600) {
-      setDrawerOpen(false);
-    }
+  const handleOpenApps = (event) => {
+    setAppsAnchorEl(event.currentTarget);
   };
 
-  const handleMenuItemClick = () => {
-    const { innerWidth: width } = window;
-    if (width <= 600) {
-      setDrawerOpen(false);
-    }
+  const handleCloseApps = () => {
+    setAppsAnchorEl(null);
   };
 
   const toggleColorMode = () => {
@@ -387,31 +383,13 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     return <BackdropLoading />;
   }
 
+  if (isSettingsModule) {
+    return <div className={classes.root}>{children}</div>;
+  }
+
   return (
     <div className={classes.root}>
-      <Drawer
-        variant={drawerVariant}
-        className={drawerOpen ? classes.drawerPaper : classes.drawerPaperClose}
-        classes={{
-          paper: clsx(
-            classes.drawerPaper,
-            !drawerOpen && classes.drawerPaperClose
-          ),
-        }}
-        open={drawerOpen}
-      >
-        <div className={classes.toolbarIcon}>
-          <img  className={drawerOpen ? classes.logo : classes.hideLogo } alt="logo" />
-          <IconButton onClick={() => setDrawerOpen(!drawerOpen)}>
-            <ChevronLeftIcon />
-          </IconButton>
-        </div>
-        <Divider />
-        <List className={classes.containerWithScroll}>
-          <MainListItems drawerClose={drawerClose} drawerOpen={drawerOpen} collapsed={!drawerOpen} />
-        </List>
-        <Divider />
-      </Drawer>
+      <AppSwitcher anchorEl={appsAnchorEl} open={!!appsAnchorEl} onClose={handleCloseApps} />
       <UserModal
         open={userModalOpen}
         onClose={() => setUserModalOpen(false)}
@@ -423,21 +401,18 @@ const LoggedInLayout = ({ children, themeToggle }) => {
       />
       <AppBar
         position="absolute"
-        className={clsx(classes.appBar, drawerOpen && classes.appBarShift)}
+        className={classes.appBar}
         color="primary"
       >
         <Toolbar variant="dense" className={classes.toolbar}>
           <IconButton
             edge="start"
             variant="contained"
-            aria-label="open drawer"
-            onClick={() => setDrawerOpen(!drawerOpen)}
-            className={clsx(
-              classes.menuButton,
-              drawerOpen && classes.menuButtonHidden
-            )}
+            aria-label="open apps"
+            onClick={handleOpenApps}
+            className={classes.menuButton}
           >
-            <MenuIcon />
+            <AppsIcon />
           </IconButton>
 
           <Typography
@@ -544,7 +519,12 @@ const LoggedInLayout = ({ children, themeToggle }) => {
           }
         }}
       />
-      <main className={classes.content}>
+      <main
+        className={clsx(
+          classes.content,
+          isTicketsChatwootShell && classes.contentTicketsChatwoot
+        )}
+      >
         <div className={classes.appBarSpacer} />
         <OnlyForSuperUser
           user={currentUser}

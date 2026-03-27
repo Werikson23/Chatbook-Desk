@@ -158,7 +158,17 @@ const UpdateTicketService = async ({
     let selectedFarewellTemplate: FarewellTemplate | null = null;
 
     if (status === "closed") {
-      if (reqUserId && !justClose && !closeReasonId) {
+      const requireCloseReasonSetting = await GetCompanySetting(
+        companyId,
+        "requireCloseReason",
+        "enabled"
+      );
+      const requireCloseReason =
+        !requireCloseReasonSetting ||
+        requireCloseReasonSetting === "enabled" ||
+        requireCloseReasonSetting === "true";
+
+      if (reqUserId && !justClose && !closeReasonId && requireCloseReason) {
         throw new AppError("ERR_CLOSE_REASON_REQUIRED", 400);
       }
 

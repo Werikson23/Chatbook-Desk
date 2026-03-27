@@ -4,6 +4,8 @@ import { useHistory } from "react-router-dom";
 import { makeStyles, createTheme, ThemeProvider } from "@material-ui/core/styles";
 import { IconButton } from "@material-ui/core";
 import { MoreVert, Replay } from "@material-ui/icons";
+import Button from "@material-ui/core/Button";
+import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 
 import { i18n } from "../../translate/i18n";
 import api from "../../services/api";
@@ -20,7 +22,6 @@ import Tooltip from '@material-ui/core/Tooltip';
 import { green } from '@material-ui/core/colors';
 import { PhoneCallContext } from "../../context/PhoneCall/PhoneCallContext";
 import { wavoipAvailable, wavoipCall } from "../../helpers/wavoipCallManager";
-import { toBeChecked } from "@testing-library/jest-dom/matchers";
 import TicketCloseModal from "../TicketCloseModal";
 
 const useStyles = makeStyles(theme => ({
@@ -33,9 +34,55 @@ const useStyles = makeStyles(theme => ({
 			margin: theme.spacing(0.5),
 		},
 	},
+  actionButtonsChatwoot: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    marginRight: 10,
+    "& .MuiIconButton-root": {
+      color: "#9ca3af",
+      borderRadius: 6,
+      background: "#1c1e21",
+      border: "1px solid #2b2e33",
+      padding: 6,
+    },
+    "& .MuiIconButton-root:hover": {
+      background: "#272a2e",
+    },
+  },
+  resolveBtnChatwoot: {
+    background: "#1c64f2",
+    color: "#fff",
+    textTransform: "none",
+    borderRadius: 6,
+    border: "1px solid #1c64f2",
+    padding: "6px 12px",
+    minWidth: 92,
+    height: 32,
+    fontWeight: 600,
+    fontSize: 12,
+    "&:hover": {
+      background: "#1a56db",
+    },
+  },
+  acceptBtnChatwoot: {
+    background: "#1c64f2",
+    color: "#fff",
+    textTransform: "none",
+    borderRadius: 6,
+    border: "1px solid #1c64f2",
+    padding: "6px 12px",
+    minWidth: 92,
+    height: 32,
+    fontWeight: 600,
+    fontSize: 12,
+    "&:hover": {
+      background: "#1a56db",
+    },
+  },
 }));
 
-const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
+const TicketActionButtonsCustom = ({ ticket, showTabGroups, chatwootUI = false }) => {
 	const classes = useStyles();
 	const history = useHistory();
 	const [anchorEl, setAnchorEl] = useState(null);
@@ -110,7 +157,7 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
   };
      
 	return (
-    <div className={classes.actionButtons}>
+    <div className={chatwootUI ? classes.actionButtonsChatwoot : classes.actionButtons}>
       {ticket.status === "closed" && (!showTabGroups || !ticket.isGroup) && (
         <>
           <Tooltip title={i18n.t("ticketsManager.buttons.newTicket")}>
@@ -172,9 +219,19 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
               </Tooltip>
               <ThemeProvider theme={customTheme}>
                 <Tooltip title={i18n.t("messagesList.header.buttons.resolve")}>
-                  <IconButton onClick={() => setCloseModalOpen(true)} color="primary">
-                    <CheckCircleIcon />
-                  </IconButton>
+                  {chatwootUI ? (
+                    <Button
+                      className={classes.resolveBtnChatwoot}
+                      onClick={() => setCloseModalOpen(true)}
+                      endIcon={<ExpandMoreIcon style={{ fontSize: 16 }} />}
+                    >
+                      Resolve
+                    </Button>
+                  ) : (
+                    <IconButton onClick={() => setCloseModalOpen(true)} color="primary">
+                      <CheckCircleIcon />
+                    </IconButton>
+                  )}
                 </Tooltip>
               </ThemeProvider>
             </>
@@ -193,15 +250,25 @@ const TicketActionButtonsCustom = ({ ticket, showTabGroups }) => {
 				</>
 			)}
 			{ticket.status === "pending" && (!showTabGroups || !ticket.isGroup) && (
-				<ButtonWithSpinner
-					loading={loading}
-					size="small"
-					variant="contained"
-					color="primary"
-					onClick={e => handleUpdateTicketStatus(e, "open", user?.id)}
-				>
-					{i18n.t("messagesList.header.buttons.accept")}
-				</ButtonWithSpinner>
+        chatwootUI ? (
+          <Button
+            className={classes.acceptBtnChatwoot}
+            onClick={e => handleUpdateTicketStatus(e, "open", user?.id)}
+            disabled={loading}
+          >
+            {i18n.t("messagesList.header.buttons.accept")}
+          </Button>
+        ) : (
+          <ButtonWithSpinner
+            loading={loading}
+            size="small"
+            variant="contained"
+            color="primary"
+            onClick={e => handleUpdateTicketStatus(e, "open", user?.id)}
+          >
+            {i18n.t("messagesList.header.buttons.accept")}
+          </ButtonWithSpinner>
+        )
 			)}
       <TicketCloseModal
         open={closeModalOpen}

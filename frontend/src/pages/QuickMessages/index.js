@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import MainContainer from "../../components/MainContainer";
-import MainHeader from "../../components/MainHeader";
-import Title from "../../components/Title";
-import MainHeaderButtonsWrapper from "../../components/MainHeaderButtonsWrapper";
+import SettingsModuleLayout from "../../components/SettingsModuleLayout";
 import { makeStyles, Button, Paper } from "@material-ui/core";
 
 import QuickMessagesTable from "../../components/QuickMessagesTable";
@@ -18,8 +15,11 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 const useStyles = makeStyles((theme) => ({
   mainPaper: {
     flex: 1,
-    padding: theme.spacing(1),
+    padding: theme.spacing(2),
     overflowY: "scroll",
+    borderRadius: 12,
+    border: "1px solid #e8e8e8",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.04)",
     ...theme.scrollbarStyles,
   },
 }));
@@ -109,16 +109,17 @@ function QuickMessages(props) {
   };
 
   return (
-    <MainContainer>
-      <MainHeader>
-        <Title>{i18n.t("quickMessages.title")}</Title>
-        <MainHeaderButtonsWrapper>
-          <Button variant="contained" color="primary" onClick={handleOpenToAdd}>
-            {i18n.t("quickMessages.buttons.add")}
-          </Button>
-        </MainHeaderButtonsWrapper>
-      </MainHeader>
-      <Paper className={classes.mainPaper} variant="outlined">
+    <SettingsModuleLayout
+      embedded
+      title={i18n.t("quickMessages.title")}
+      description="Organize atalhos com códigos curtos (ex.: /pix) para inserção rápida no chat. Use categorias no cadastro de cada mensagem quando disponível."
+      actions={
+        <Button variant="contained" color="primary" onClick={handleOpenToAdd}>
+          {i18n.t("quickMessages.buttons.add")}
+        </Button>
+      }
+    >
+      <Paper className={classes.mainPaper} elevation={0}>
         <QuickMessagesTable
           readOnly={false}
           messages={messages}
@@ -147,7 +148,7 @@ function QuickMessages(props) {
       >
         Deseja realmente excluir este registro?
       </ConfirmationModal>
-    </MainContainer>
+    </SettingsModuleLayout>
   );
 }
 

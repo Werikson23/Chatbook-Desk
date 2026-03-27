@@ -3,10 +3,21 @@ import ReactDOM from "react-dom";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import App from "./App";
 import { loadJSON } from "./helpers/loadJSON";
+import {
+  adaptConfigForLanAccess,
+  getLanFallbackConfig
+} from "./helpers/lanConfig";
 import { i18n } from "./translate/i18n";
 import axios from "axios";
 
-const config = loadJSON("/config.json");
+let config = loadJSON("/config.json");
+if (!config && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+  config = loadJSON("/config-dev.json");
+}
+if (!config) {
+  config = getLanFallbackConfig();
+}
+config = adaptConfigForLanAccess(config);
 
 if (!config) {
   window.renderError(i18n.t("frontendErrors.ERR_CONFIG_ERROR"));

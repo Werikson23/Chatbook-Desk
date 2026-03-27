@@ -47,7 +47,7 @@ export function RatingBox ({ rating }) {
 }
 
 export default function TableAttendantsStatus(props) {
-    const { loading, attendants: loadedAttendants } = props
+    const { loading, attendants: loadedAttendants, tableContainerClassName } = props
     const classes = useStyles()
     const socketManager = useContext(SocketContext)
     const [attendants, setAttendants] = useState(loadedAttendants || [])
@@ -100,7 +100,7 @@ export default function TableAttendantsStatus(props) {
     }
 
     return ( !loading ?
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} className={tableContainerClassName}>
             <Table>
                 <TableHead>
                     <TableRow>
