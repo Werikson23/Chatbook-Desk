@@ -6,10 +6,7 @@ import User from "../../models/User";
 import TicketTraking from "../../models/TicketTraking";
 import sequelize from "../../database";
 import { listCounterSerie } from "../CounterServices/ListCounterSerie";
-import {
-  regionFromDdd,
-  BrazilRegionId
-} from "../../helpers/brazilDddRegion";
+import { regionFromDdd, BrazilRegionId } from "../../helpers/brazilDddRegion";
 
 type TicketTrackingStatistics = {
   avgWaitTime: number;
@@ -370,7 +367,9 @@ export async function ticketsStatisticsService(
   let start: Date;
   let end = new Date();
   const tz = params.tz || "Z";
-  const closeReasonId = params.closeReasonId ? Number(params.closeReasonId) : null;
+  const closeReasonId = params.closeReasonId
+    ? Number(params.closeReasonId)
+    : null;
   const queueId = params.queueId ? Number(params.queueId) : null;
   const channel = params.channel || null;
 
@@ -470,7 +469,9 @@ export async function usersReportService(
   let start: Date;
   let end = new Date();
   const tz = params.tz || "Z";
-  const closeReasonId = params.closeReasonId ? Number(params.closeReasonId) : null;
+  const closeReasonId = params.closeReasonId
+    ? Number(params.closeReasonId)
+    : null;
   const queueId = params.queueId ? Number(params.queueId) : null;
   const channel = params.channel || null;
 
@@ -622,7 +623,7 @@ export async function geoByDddService(
     desconhecido: 0
   };
 
-  const ddds: DashboardGeoByDddDddRow[] = rows.map((row) => {
+  const ddds: DashboardGeoByDddDddRow[] = rows.map(row => {
     const rid = regionFromDdd(row.ddd);
     regionTotals[rid] += row.count;
     return { ddd: row.ddd, regionId: rid, count: row.count };
@@ -641,7 +642,7 @@ export async function geoByDddService(
     }))
     .sort((a, b) => b.count - a.count);
 
-  const points: DashboardGeoByDddPoint[] = regions.map((r) => {
+  const points: DashboardGeoByDddPoint[] = regions.map(r => {
     const layout =
       GEO_REGION_LAYOUT[r.regionId as BrazilRegionId] ||
       GEO_REGION_LAYOUT.desconhecido;

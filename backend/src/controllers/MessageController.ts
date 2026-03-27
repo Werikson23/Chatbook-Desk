@@ -43,7 +43,9 @@ type ForwardData = {
 
 type SignatureMode = "required" | "optional" | "disabled";
 
-const getMessageSignatureMode = async (companyId: number): Promise<SignatureMode> => {
+const getMessageSignatureMode = async (
+  companyId: number
+): Promise<SignatureMode> => {
   const setting = await Setting.findOne({
     where: {
       key: "message_signature_mode",
@@ -76,15 +78,21 @@ const applySignaturePolicy = (
     .replace(/\{\{\s*name\s*\}\}/gi, user?.name || "");
   const signaturePrefix = `${renderedTemplate || `*${user?.name || ""}:*`}\n`;
   const defaultPrefix = `*${user?.name || ""}:*\n`;
-  const hasPrefix = body.startsWith(signaturePrefix) || body.startsWith(defaultPrefix);
-  const allowedChannels = (user?.signatureChannels || "whatsapp,email,facebook,instagram")
+  const hasPrefix =
+    body.startsWith(signaturePrefix) || body.startsWith(defaultPrefix);
+  const allowedChannels = (
+    user?.signatureChannels || "whatsapp,email,facebook,instagram"
+  )
     .split(",")
     .map(c => c.trim().toLowerCase())
     .filter(Boolean);
-  const channelAllowed = allowedChannels.includes((channel || "whatsapp").toLowerCase());
+  const channelAllowed = allowedChannels.includes(
+    (channel || "whatsapp").toLowerCase()
+  );
   const autoMode = (user?.signatureAutoMode || "always").toLowerCase();
   const shouldSign =
-    (mode === "required" || (mode === "optional" && user?.signatureEnabled !== false)) &&
+    (mode === "required" ||
+      (mode === "optional" && user?.signatureEnabled !== false)) &&
     channelAllowed &&
     (autoMode !== "first_message" || isFirstOutbound);
 
@@ -154,10 +162,19 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     const isFirstOutbound = outboundCount === 0;
 
     if (user) {
-      body = applySignaturePolicy(body, signatureMode, user, channel, isFirstOutbound);
+      body = applySignaturePolicy(
+        body,
+        signatureMode,
+        user,
+        channel,
+        isFirstOutbound
+      );
     }
   } catch (error) {
-    logger.warn({ error }, "Signature policy failed; sending original message body");
+    logger.warn(
+      { error },
+      "Signature policy failed; sending original message body"
+    );
   }
   if (channel === "whatsapp") {
     await SetTicketMessagesAsRead(ticket);

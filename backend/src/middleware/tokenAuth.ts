@@ -19,7 +19,7 @@ const tokenAuth = async (
     } else {
       throw new Error();
     }
-  } catch (err) {
+  } catch {
     throw new AppError("Acesso não permitido", 401);
   }
 

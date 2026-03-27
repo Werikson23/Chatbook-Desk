@@ -1,7 +1,6 @@
 import fs from "fs";
 import { Sequelize } from "sequelize";
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const dbConfig = require("../config/database");
 
 const sequelize = new Sequelize(dbConfig);

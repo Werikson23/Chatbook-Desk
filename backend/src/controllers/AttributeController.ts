@@ -22,17 +22,22 @@ const mapErr = (e: unknown): never => {
     ERR_INVALID_GROUP_INSTANCE: "Instância do conjunto inválida",
     ERR_GROUP_REQUIRED: "Instância do conjunto obrigatória para este container",
     ERR_GROUP_NOT_FOUND: "Instância não encontrada",
-    ERR_CONTAINER_NOT_REPEATABLE: "Este conjunto não permite múltiplas instâncias",
+    ERR_CONTAINER_NOT_REPEATABLE:
+      "Este conjunto não permite múltiplas instâncias",
     ERR_NO_PERMISSION_COPY: "Sem permissão para copiar",
     ERR_CONTAINER_NOT_FOUND: "Conjunto não encontrado",
     ERR_DEFINITION_NOT_FOUND: "Campo não encontrado",
-    ERR_DUPLICATE_CONTAINER_KEY: "Já existe um conjunto com esta chave para este tipo de entidade"
+    ERR_DUPLICATE_CONTAINER_KEY:
+      "Já existe um conjunto com esta chave para este tipo de entidade"
   };
   const friendly = map[msg] || msg;
   throw new AppError(friendly, 400);
 };
 
-export const listContainers = async (req: Request, res: Response): Promise<Response> => {
+export const listContainers = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   const { entityType } = req.query as { entityType?: string };
   const companyId = req.user.companyId;
 
@@ -47,7 +52,10 @@ export const listContainers = async (req: Request, res: Response): Promise<Respo
   return res.json(rows);
 };
 
-export const createContainer = async (req: Request, res: Response): Promise<Response> => {
+export const createContainer = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   const companyId = req.user.companyId;
   const row = await CreateAttributeContainerService({
     companyId,
@@ -56,7 +64,10 @@ export const createContainer = async (req: Request, res: Response): Promise<Resp
   return res.status(201).json(row);
 };
 
-export const getContainerDetail = async (req: Request, res: Response): Promise<Response> => {
+export const getContainerDetail = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const containerId = Number(req.params.containerId);
     const data = await GetAttributeContainerDetailService({
@@ -69,7 +80,10 @@ export const getContainerDetail = async (req: Request, res: Response): Promise<R
   }
 };
 
-export const updateContainer = async (req: Request, res: Response): Promise<Response> => {
+export const updateContainer = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const containerId = Number(req.params.containerId);
     const row = await UpdateAttributeContainerService({
@@ -83,7 +97,10 @@ export const updateContainer = async (req: Request, res: Response): Promise<Resp
   }
 };
 
-export const deleteDefinition = async (req: Request, res: Response): Promise<Response> => {
+export const deleteDefinition = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const definitionId = Number(req.params.definitionId);
     await DeleteAttributeDefinitionService({
@@ -96,7 +113,10 @@ export const deleteDefinition = async (req: Request, res: Response): Promise<Res
   }
 };
 
-export const createDefinition = async (req: Request, res: Response): Promise<Response> => {
+export const createDefinition = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const row = await CreateAttributeDefinitionService({
       companyId: req.user.companyId,
@@ -108,17 +128,27 @@ export const createDefinition = async (req: Request, res: Response): Promise<Res
   }
 };
 
-export const setPermissions = async (req: Request, res: Response): Promise<Response> => {
+export const setPermissions = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const containerId = Number(req.params.containerId);
-    await UpsertContainerPermissionService(req.user.companyId, containerId, req.body.rows || []);
+    await UpsertContainerPermissionService(
+      req.user.companyId,
+      containerId,
+      req.body.rows || []
+    );
     return res.json({ ok: true });
   } catch (e) {
     mapErr(e);
   }
 };
 
-export const createInstance = async (req: Request, res: Response): Promise<Response> => {
+export const createInstance = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const containerId = Number(req.params.containerId);
     const { entityType, entityId, label, sortOrder } = req.body;
@@ -136,7 +166,10 @@ export const createInstance = async (req: Request, res: Response): Promise<Respo
   }
 };
 
-export const copyInstance = async (req: Request, res: Response): Promise<Response> => {
+export const copyInstance = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     const groupInstanceId = Number(req.params.groupInstanceId);
     const { newLabel } = req.body || {};
@@ -153,7 +186,10 @@ export const copyInstance = async (req: Request, res: Response): Promise<Respons
   }
 };
 
-export const getSchema = async (req: Request, res: Response): Promise<Response> => {
+export const getSchema = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   const entityType = req.params.entityType as "contact" | "ticket";
   const entityId = Number(req.params.entityId);
   const data = await GetEntityAttributeSchemaService({
@@ -166,7 +202,10 @@ export const getSchema = async (req: Request, res: Response): Promise<Response> 
   return res.json(data);
 };
 
-export const putValues = async (req: Request, res: Response): Promise<Response> => {
+export const putValues = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   try {
     await UpsertAttributeValuesService({
       companyId: req.user.companyId,
@@ -176,7 +215,8 @@ export const putValues = async (req: Request, res: Response): Promise<Response> 
       isSuper: Boolean(req.user.isSuper),
       values: req.body.values || [],
       actorId: Number(req.user.id),
-      ipAddress: (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress,
+      ipAddress:
+        (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress,
       userAgent: req.headers["user-agent"],
       source: "frontend_autosave"
     });
@@ -186,11 +226,12 @@ export const putValues = async (req: Request, res: Response): Promise<Response> 
   }
 };
 
-export const listAuditLogs = async (req: Request, res: Response): Promise<Response> => {
-  const { entityType, entityId, action, dateFrom, dateTo, pageNumber } = req.query as Record<
-    string,
-    string
-  >;
+export const listAuditLogs = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
+  const { entityType, entityId, action, dateFrom, dateTo, pageNumber } =
+    req.query as Record<string, string>;
   const data = await ListAttributeAuditLogsService({
     companyId: req.user.companyId,
     entityType,

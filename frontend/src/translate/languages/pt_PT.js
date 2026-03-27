@@ -1058,7 +1058,8 @@ const messages = {
       frontendErrors: {
         ERR_CONFIG_ERROR: "Erro de configuração. Por favor, contacte o suporte.",
         ERR_CLOCK_OUT_OF_SYNC: "Relógio fora de sincronização. Verifique as configurações de data e hora do seu dispositivo.",
-        ERR_BACKEND_UNREACHABLE: "Backend inacessível. Por favor, tente novamente mais tarde.",
+        ERR_BACKEND_UNREACHABLE:
+          "Backend inacessível (ex.: porta 8080). Na raiz: npm run dev:up e npm run dev, ou npm run dev:backend se a BD já estiver a correr.",
       },
       backendErrors: {
         ERR_UNAUTHORIZED: "Não autorizado. Por favor, faça o login novamente.",

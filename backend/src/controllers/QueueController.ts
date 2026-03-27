@@ -5,9 +5,9 @@ import DeleteQueueService from "../services/QueueService/DeleteQueueService";
 import ListQueuesService from "../services/QueueService/ListQueuesService";
 import ShowQueueService from "../services/QueueService/ShowQueueService";
 import UpdateQueueService from "../services/QueueService/UpdateQueueService";
-import { isNil } from "lodash";
+import { isNil, head } from "lodash";
 import Queue from "../models/Queue";
-import { head } from "lodash";
+
 import fs from "fs";
 import path from "path";
 import AppError from "../errors/AppError";
@@ -108,12 +108,12 @@ export const mediaUpload = async (
 
   try {
     const queue = await Queue.findByPk(queueId);
-   
+
     queue.update({
       mediaPath: file.filename,
       mediaName: file.originalname
     });
-   
+
     return res.send({ mensagem: "Arquivo Salvo" });
   } catch (err: any) {
     throw new AppError(err.message);

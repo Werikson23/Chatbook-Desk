@@ -1298,7 +1298,8 @@ const messages = {
       frontendErrors: {
         ERR_CONFIG_ERROR: "Configuration error. Please contact support.",
         ERR_CLOCK_OUT_OF_SYNC: "Clock out of sync. Please check the date and time settings of your device.",
-        ERR_BACKEND_UNREACHABLE: "Backend unreachable. Please try again later.",
+        ERR_BACKEND_UNREACHABLE:
+          "Backend unreachable (e.g. port 8080). From repo root: npm run dev:up then npm run dev — or npm run dev:backend if the database is already running.",
       },        
       backendErrors: {
         ERR_UNAUTHORIZED: "You are not authorized to perform this action.",

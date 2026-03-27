@@ -159,13 +159,46 @@ const App = () => {
         barraSuperior: mode === "light" ? primaryColorLight : "#666",
         boxticket: mode === "light" ? "#EEE" : "#666",
         campaigntab: mode === "light" ? "#ededed" : "#666",
-        ticketzproad: { main: "#39ACE7", contrastText: "white" }
+        chatbookProAd: { main: "#39ACE7", contrastText: "white" }
       },
       mode,
       appLogoLight,
       appLogoDark,
       appLogoFavicon,
       appName,
+      overrides: {
+        MuiDialog: {
+          paper: {
+            borderRadius: 12,
+            border: "1px solid rgba(0,0,0,0.08)",
+            boxShadow: mode === "light"
+              ? "0 14px 38px rgba(0,0,0,0.16)"
+              : "0 14px 38px rgba(0,0,0,0.5)",
+          },
+          paperFullWidth: {
+            margin: 16,
+            maxWidth: "calc(100% - 32px)",
+          },
+        },
+        MuiDialogTitle: {
+          root: {
+            fontWeight: 700,
+            padding: "14px 20px",
+          },
+        },
+        MuiDialogContent: {
+          dividers: {
+            borderTop: "1px solid rgba(0,0,0,0.08)",
+            borderBottom: "1px solid rgba(0,0,0,0.08)",
+          },
+        },
+        MuiDialogActions: {
+          root: {
+            padding: "12px 16px",
+            gap: 8,
+          },
+        },
+      },
       calculatedLogoLight,
       calculatedLogoDark,
       calculatedLogo: () => {
@@ -212,7 +245,7 @@ const App = () => {
     getPublicSetting("appLogoFavicon")
       .then((file) => { setAppLogoFavicon(file ? (`${getBackendURL()}/public/${file}`) : null) })
       .catch((error) => { console.log("Error reading setting", error); });
-    getPublicSetting("appName").then((name) => { setAppName(name || "ticketz") })
+    getPublicSetting("appName").then((name) => { setAppName(name || "Chatbook-Desk") })
       .catch((error) => { console.log("Error reading setting", error); setAppName("whitelabel chat") });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

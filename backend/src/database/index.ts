@@ -50,9 +50,10 @@ import AttributeGroupInstance from "../models/AttributeGroupInstance";
 import AttributeValue from "../models/AttributeValue";
 import AttributeAuditLog from "../models/AttributeAuditLog";
 import AttributeContainerProfilePermission from "../models/AttributeContainerProfilePermission";
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const dbConfig = require("../config/database");
+import Backup from "../models/Backup";
+import BackupRestoreLog from "../models/BackupRestoreLog";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+import dbConfig = require("../config/database");
 
 const sequelize = new Sequelize(dbConfig);
 
@@ -69,6 +70,8 @@ const models = [
   AttributeValue,
   AttributeAuditLog,
   AttributeContainerProfilePermission,
+  Backup,
+  BackupRestoreLog,
   Contact,
   ContactTag,
   Ticket,

@@ -167,7 +167,6 @@ const processMention = async (body: string, mention: string) => {
     payload.name = contact.name;
     payload.number = contact.number;
   } else {
-    // eslint-disable-next-line prefer-destructuring
     payload.number = mention.split("@")[0];
   }
 
@@ -246,7 +245,6 @@ export const getBodyMessage = async (msg: proto.IMessage): Promise<string> => {
 
     // eslint-disable-next-line no-restricted-syntax
     for (const mention of (msg[type] as any)?.contextInfo?.mentionedJid ?? []) {
-      // eslint-disable-next-line no-await-in-loop
       body = await processMention(body, mention);
     }
 
@@ -485,7 +483,6 @@ const downloadMedia = async (
 
       sendMsg.message.extendedTextMessage.text = `${autoMessage}: ${limitInstructions}.`;
 
-      // eslint-disable-next-line no-use-before-define
       await verifyMessage(sendMsg, ticket, ticket.contact);
     }
     throw new Error("ERR_FILESIZE_OVER_LIMIT");
@@ -510,11 +507,10 @@ const downloadMedia = async (
         tmpMessage.url = "";
       }
 
-      // eslint-disable-next-line no-await-in-loop
       stream = await downloadContentFromMessage(tmpMessage, messageType);
-    } catch (error) {
+    } catch {
       contDownload += 1;
-      // eslint-disable-next-line no-await-in-loop, no-loop-func
+
       await new Promise(resolve => {
         setTimeout(resolve, 1000 * contDownload * 2);
       });
@@ -582,13 +578,11 @@ const storeQuotedMessage = async (
 
   let mediaUrl = null;
   if (media) {
-    // eslint-disable-next-line no-use-before-define
     mediaUrl = await saveMediaToFile(media, { destination: ticket });
   }
 
   let thumbnailUrl = null;
   if (thumbnailMedia) {
-    // eslint-disable-next-line no-use-before-define
     thumbnailUrl = await saveMediaToFile(thumbnailMedia, {
       destination: ticket
     });
@@ -1962,7 +1956,8 @@ const handleMessage = async (
         errorName: (err as any)?.name,
         errorMessage: (err as any)?.message,
         errorCode: (err as any)?.parent?.code || (err as any)?.code,
-        constraint: (err as any)?.parent?.constraint || (err as any)?.constraint,
+        constraint:
+          (err as any)?.parent?.constraint || (err as any)?.constraint,
         remoteJid: msg?.key?.remoteJid,
         messageId: msg?.key?.id
       },

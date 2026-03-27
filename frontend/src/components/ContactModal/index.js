@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 
 import * as Yup from "yup";
 import { Formik, FieldArray, Form, Field } from "formik";
@@ -84,10 +84,11 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
   const [showTags, setShowTags] = useState(false);
 
 	useEffect(() => {
-    getSetting("tagsMode").then(res => {
-      setShowTags(["contact", "both"].includes(res));
+    let cancelled = false;
+    getSetting("tagsMode").then((res) => {
+      if (!cancelled) setShowTags(["contact", "both"].includes(res));
     });
-    
+
 		const fetchContact = async () => {
 			if (initialValues) {
 				setContact(prevState => {
@@ -99,14 +100,17 @@ const ContactModal = ({ open, onClose, contactId, initialValues, onSave }) => {
 
 			try {
 				const { data } = await api.get(`/contacts/${contactId}`);
-  			setContact(data);
+        if (!cancelled) setContact(data);
 			} catch (err) {
-				toastError(err);
+				if (!cancelled) toastError(err);
 			}
 		};
 
 		fetchContact();
-	}, [contactId, open, initialValues]);
+    return () => {
+      cancelled = true;
+    };
+	}, [contactId, open, initialValues, getSetting]);
 
 	const handleClose = () => {
 		onClose();

@@ -1,7 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import clsx from "clsx";
-import moment from "moment";
 import {
   makeStyles,
   AppBar,
@@ -16,7 +15,6 @@ import {
 
 import AppsIcon from "@material-ui/icons/Apps";
 import AccountCircle from "@material-ui/icons/AccountCircle";
-import CachedIcon from "@material-ui/icons/Cached";
 
 import AppSwitcher from "../components/AppSwitcher";
 import NotificationsPopOver from "../components/NotificationsPopOver";
@@ -27,7 +25,6 @@ import UserModal from "../components/UserModal";
 import AboutModal from "../components/AboutModal";
 import { AuthContext } from "../context/Auth/AuthContext";
 import BackdropLoading from "../components/BackdropLoading";
-import DarkMode from "../components/DarkMode";
 import { i18n } from "../translate/i18n";
 import { messages } from "../translate/languages";
 import toastError from "../errors/toastError";
@@ -40,10 +37,6 @@ import { useDate } from "../hooks/useDate";
 import useAuth from "../hooks/useAuth.js";
 
 import ColorModeContext from "../layout/themeContext";
-import Brightness4Icon from '@material-ui/icons/Brightness4';
-import Brightness7Icon from '@material-ui/icons/Brightness7';
-import LanguageIcon from '@material-ui/icons/Language';
-import { getBackendURL } from "../services/config";
 import NestedMenuItem from "material-ui-nested-menu-item";
 import GoogleAnalytics from "../components/GoogleAnalytics";
 import OnlyForSuperUser from "../components/OnlyForSuperUser";
@@ -187,7 +180,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [languageOpen, setLanguageOpen] = useState(false);
   const { handleLogout, loading } = useContext(AuthContext);
   const [appsAnchorEl, setAppsAnchorEl] = useState(null);
   // const [dueDate, setDueDate] = useState("");
@@ -343,11 +335,6 @@ const LoggedInLayout = ({ children, themeToggle }) => {
     setMenuOpen(false);
   };
 
-  const handleCloseLanguageMenu = () => {
-    setAnchorEl(null);
-    setLanguageOpen(false);
-  };
-
   const handleOpenUserModal = () => {
     setUserModalOpen(true);
     handleCloseProfileMenu();
@@ -499,7 +486,7 @@ const LoggedInLayout = ({ children, themeToggle }) => {
                 }
               </NestedMenuItem>
               <MenuItem onClick={handleOpenAboutModal}>
-                {i18n.t("about.aboutthe")} {currentUser?.super ? "ticketz" : theme.appName}
+                {i18n.t("about.aboutthe")} {currentUser?.super ? "Chatbook-Desk" : theme.appName}
               </MenuItem>
               <MenuItem onClick={handleClickLogout}>
                 {i18n.t("mainDrawer.appBar.user.logout")}

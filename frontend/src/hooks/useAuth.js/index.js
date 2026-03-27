@@ -10,64 +10,27 @@ import toastError from "../../errors/toastError";
 import { SocketContext } from "../../context/Socket/SocketContext";
 import moment from "moment";
 import { decodeToken } from "react-jwt";
+import { ensureApiAuthInterceptors } from "../../services/apiAuthSetup";
+
+const parseStoredToken = () => {
+  const rawToken = localStorage.getItem("token");
+  if (!rawToken) return null;
+  try {
+    return JSON.parse(rawToken);
+  } catch (_) {
+    localStorage.removeItem("token");
+    return null;
+  }
+};
 
 const useAuth = () => {
+  ensureApiAuthInterceptors();
   const history = useHistory();
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState({});
 
   const socketManager = useContext(SocketContext);
-
-  const parseStoredToken = () => {
-    const rawToken = localStorage.getItem("token");
-    if (!rawToken) return null;
-    try {
-      return JSON.parse(rawToken);
-    } catch (_) {
-      localStorage.removeItem("token");
-      return null;
-    }
-  };
-
-  api.interceptors.request.use(
-    (config) => {
-      const token = parseStoredToken();
-      if (token) {
-        config.headers["Authorization"] = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => {
-      Promise.reject(error);
-    }
-  );
-
-  api.interceptors.response.use(
-    (response) => {
-      return response;
-    },
-    async (error) => {
-      const originalRequest = error.config;
-      if (error?.response?.status === 403 && !originalRequest._retry) {
-        originalRequest._retry = true;
-
-        const { data } = await api.post("/auth/refresh_token");
-        if (data) {
-          localStorage.setItem("token", JSON.stringify(data.token));
-          api.defaults.headers.Authorization = `Bearer ${data.token}`;
-        }
-        return api(originalRequest);
-      }
-      if (error?.response?.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("companyId");
-        api.defaults.headers.Authorization = undefined;
-        setIsAuth(false);
-      }
-      return Promise.reject(error);
-    }
-  );
 
   useEffect(() => {
     const token = parseStoredToken();
@@ -114,7 +77,7 @@ const useAuth = () => {
       token
     } = data;
 
-    const { companyId, userId } = decodeToken(token);
+    const { companyId } = decodeToken(token);
 
     if (has(company, "settings") && isArray(company.settings)) {
       const setting = company.settings.find(
@@ -127,7 +90,6 @@ const useAuth = () => {
 
     moment.locale('pt-br');
     const dueDate = data.user.company.dueDate;
-    const hoje = moment(moment()).format("DD/MM/yyyy");
     const vencimento = moment(dueDate).format("DD/MM/yyyy");
 
     var diff = moment(dueDate).diff(moment(moment()).format());

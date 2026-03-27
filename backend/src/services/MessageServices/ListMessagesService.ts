@@ -54,7 +54,6 @@ const ListMessagesService = async ({
     (await GetCompanySetting(companyId, "messageVisibility", "message")) ===
       "message"
   ) {
-    // eslint-disable-next-line dot-notation
     options.where["queueId"] = {
       [Op.or]: {
         [Op.in]: queues,

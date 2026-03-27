@@ -25,7 +25,6 @@ export class TranslationsSequelize implements BackendModule {
     logger.trace("TranslationsSequelize: initialized");
   }
 
-  // eslint-disable-next-line class-methods-use-this
   async read(
     language: string,
     namespace: string,

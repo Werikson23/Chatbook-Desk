@@ -42,7 +42,7 @@ const CreateService = async (data: Data): Promise<ContactListItem> => {
     const number = response.jid.replace(/\D/g, "");
     record.number = number;
     await record.save();
-  } catch (e) {
+  } catch {
     logger.error(`Número de contato inválido: ${record.number}`);
   }
 

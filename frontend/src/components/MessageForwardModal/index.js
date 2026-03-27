@@ -9,7 +9,6 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import Autocomplete, { createFilterOptions } from "@material-ui/lab/Autocomplete";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import { Grid } from "@material-ui/core";
-import { toast } from "react-toastify";
 
 import api from "../../services/api";
 import { AuthContext } from "../../context/Auth/AuthContext";
@@ -20,9 +19,16 @@ const filter = createFilterOptions({
   trim: true,
 });
 
-const MessageForwardModal = ({ modalOpen, onClose, ticketId, messageId, initialContact }) => {
+const MessageForwardModal = ({
+  modalOpen = false,
+  onClose,
+  ticketId,
+  messageId,
+  initialContact
+}) => {
   const [options, setOptions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [searchParam, setSearchParam] = useState("");
   const [selectedContact, setSelectedContact] = useState(null);
   const [selectedQueue, setSelectedQueue] = useState(null);
@@ -37,10 +43,10 @@ const MessageForwardModal = ({ modalOpen, onClose, ticketId, messageId, initialC
 
   useEffect(() => {
     if (!modalOpen || searchParam.length < 3) {
-      setLoading(false);
+      setSearchLoading(false);
       return;
     }
-    setLoading(true);
+    setSearchLoading(true);
     const delayDebounceFn = setTimeout(() => {
       const fetchContacts = async () => {
         try {
@@ -48,9 +54,9 @@ const MessageForwardModal = ({ modalOpen, onClose, ticketId, messageId, initialC
             params: { searchParam },
           });
           setOptions(data.contacts);
-          setLoading(false);
+          setSearchLoading(false);
         } catch (err) {
-          setLoading(false);
+          setSearchLoading(false);
           toastError(err);
         }
       };
@@ -69,7 +75,7 @@ const MessageForwardModal = ({ modalOpen, onClose, ticketId, messageId, initialC
 
   const handleForwardMessage = async (contact, queue) => {
     if (!contact || (!queue && !contact.isGroup)) return;
-    setLoading(true);
+    setSubmitting(true);
     try {
       await api.post("/messages/forward", {
         contactId: contact.id,
@@ -82,7 +88,7 @@ const MessageForwardModal = ({ modalOpen, onClose, ticketId, messageId, initialC
     } catch (err) {
       toastError(err);
     }
-    setLoading(false);
+    setSubmitting(false);
   };
 
   const handleSelectOption = (e, newValue) => {
@@ -108,7 +114,7 @@ const MessageForwardModal = ({ modalOpen, onClose, ticketId, messageId, initialC
   };
 
   return (
-    <Dialog open={modalOpen} onClose={handleClose}>
+    <Dialog open={Boolean(modalOpen)} onClose={handleClose}>
       <DialogTitle id="form-dialog-title">{i18n.t("messageOptionsMenu.forward")}</DialogTitle>
       <DialogContent dividers>
         <Grid style={{ width: 300 }} container spacing={2}>
@@ -116,7 +122,7 @@ const MessageForwardModal = ({ modalOpen, onClose, ticketId, messageId, initialC
             <Autocomplete
               fullWidth
               options={options}
-              loading={loading}
+              loading={searchLoading}
               clearOnBlur
               autoHighlight
               freeSolo
@@ -136,7 +142,7 @@ const MessageForwardModal = ({ modalOpen, onClose, ticketId, messageId, initialC
                     ...params.InputProps,
                     endAdornment: (
                       <React.Fragment>
-                        {loading ? (
+                        {searchLoading ? (
                           <CircularProgress color="inherit" size={20} />
                         ) : null}
                         {params.InputProps.endAdornment}
@@ -170,7 +176,7 @@ const MessageForwardModal = ({ modalOpen, onClose, ticketId, messageId, initialC
         <Button
           onClick={handleClose}
           color="secondary"
-          disabled={loading}
+          disabled={submitting || searchLoading}
           variant="outlined"
         >
           {i18n.t("newTicketModal.buttons.cancel")}
@@ -178,12 +184,19 @@ const MessageForwardModal = ({ modalOpen, onClose, ticketId, messageId, initialC
         <Button
           variant="contained"
           type="button"
-          disabled={!selectedContact || (!selectedQueue && !selectedContact.isGroup)}
+          disabled={
+            submitting ||
+            !selectedContact ||
+            (!selectedQueue && !selectedContact.isGroup)
+          }
           onClick={() => handleForwardMessage(selectedContact, selectedQueue)}
           color="primary"
-          loading={loading}
         >
-          {i18n.t("messageOptionsMenu.forward")}
+          {submitting ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : (
+            i18n.t("messageOptionsMenu.forward")
+          )}
         </Button>
       </DialogActions>
     </Dialog>

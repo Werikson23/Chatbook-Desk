@@ -8,7 +8,11 @@ import AttributeGroupInstance from "../../models/AttributeGroupInstance";
 import ShowContactService from "../ContactServices/ShowContactService";
 import ShowTicketService from "../TicketServices/ShowTicketService";
 import resolveContainerPermissions from "./resolveContainerPermissions";
-import { decodeStoredValue, encodeValueForStorage, valuesEqual } from "./valueCodec";
+import {
+  decodeStoredValue,
+  encodeValueForStorage,
+  valuesEqual
+} from "./valueCodec";
 
 interface ValueInput {
   attributeDefinitionId: number;
@@ -29,7 +33,9 @@ interface Params {
   source?: string;
 }
 
-const UpsertAttributeValuesService = async (params: Params): Promise<{ ok: boolean }> => {
+const UpsertAttributeValuesService = async (
+  params: Params
+): Promise<{ ok: boolean }> => {
   const {
     companyId,
     entityType,
@@ -51,20 +57,34 @@ const UpsertAttributeValuesService = async (params: Params): Promise<{ ok: boole
 
   await sequelize.transaction(async (t: Transaction) => {
     for (const item of payload) {
-      const def = await AttributeDefinition.findByPk(item.attributeDefinitionId, {
-        transaction: t
-      });
+      const def = await AttributeDefinition.findByPk(
+        item.attributeDefinitionId,
+        {
+          transaction: t
+        }
+      );
 
       if (!def || def.companyId !== companyId) {
         throw new Error("ERR_INVALID_ATTRIBUTE_DEFINITION");
       }
 
-      const container = await AttributeContainer.findByPk(def.containerId, { transaction: t });
-      if (!container || container.entityType !== entityType || container.companyId !== companyId) {
+      const container = await AttributeContainer.findByPk(def.containerId, {
+        transaction: t
+      });
+      if (
+        !container ||
+        container.entityType !== entityType ||
+        container.companyId !== companyId
+      ) {
         throw new Error("ERR_INVALID_CONTAINER");
       }
 
-      const perms = await resolveContainerPermissions(companyId, container.id, profile, isSuper);
+      const perms = await resolveContainerPermissions(
+        companyId,
+        container.id,
+        profile,
+        isSuper
+      );
       if (!perms.canEdit) {
         throw new Error("ERR_NO_PERMISSION_EDIT_ATTRIBUTES");
       }
@@ -72,7 +92,13 @@ const UpsertAttributeValuesService = async (params: Params): Promise<{ ok: boole
       const groupId = item.groupInstanceId ?? null;
       if (groupId) {
         const gi = await AttributeGroupInstance.findOne({
-          where: { id: groupId, companyId, containerId: container.id, entityType, entityId },
+          where: {
+            id: groupId,
+            companyId,
+            containerId: container.id,
+            entityType,
+            entityId
+          },
           transaction: t
         });
         if (!gi) {

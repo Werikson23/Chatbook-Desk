@@ -16,10 +16,6 @@ type IndexQuery = {
   pageNumber: string;
 };
 
-type ListQueryParams = {
-  companyId: string;
-};
-
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const { searchParam, pageNumber } = req.query as IndexQuery;
   const { companyId, profile } = req.user;
@@ -57,7 +53,7 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     requestUser = await User.findByPk(req.user.id);
   }
 
-  const newUserCompanyId = bodyCompanyId || userCompanyId; 
+  const newUserCompanyId = bodyCompanyId || userCompanyId;
 
   if (req.user?.profile !== "admin") {
     throw new AppError("ERR_NO_PERMISSION", 403);

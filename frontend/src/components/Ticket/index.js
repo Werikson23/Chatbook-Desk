@@ -117,16 +117,22 @@ const Ticket = ({ forceContactPanel = false, chatwootLayout = false }) => {
   const socketManager = useContext(SocketContext);
 
   useEffect(() => {
+    let cancelled = false;
     Promise.all([
       getSetting("CheckMsgIsGroup"),
       getSetting("groupsTab")
     ]).then(([ignoreGroups, groupsTab]) => {
+      if (cancelled) return;
       setShowTabGroups(ignoreGroups === "disabled" && groupsTab === "enabled");
     });
-    
-    getSetting("tagsMode","ticket").then((tagsMode) => {
-      setTagsMode(tagsMode);
+
+    getSetting("tagsMode", "ticket").then((mode) => {
+      if (cancelled) return;
+      setTagsMode(mode);
     });
+    return () => {
+      cancelled = true;
+    };
   }, [getSetting]);
 
   const loadInternalNotes = async () => {
@@ -147,10 +153,12 @@ const Ticket = ({ forceContactPanel = false, chatwootLayout = false }) => {
 
   useEffect(() => {
     setLoading(true);
+    let cancelled = false;
     const delayDebounceFn = setTimeout(() => {
       const fetchTicket = async () => {
         try {
           const { data } = await api.get("/tickets/u/" + ticketId);
+          if (cancelled) return;
           const { queueId } = data;
           const { queues, profile } = user;
 
@@ -165,13 +173,17 @@ const Ticket = ({ forceContactPanel = false, chatwootLayout = false }) => {
           setTicket(data);
           setLoading(false);
         } catch (err) {
+          if (cancelled) return;
           setLoading(false);
           toastError(err);
         }
       };
       fetchTicket();
     }, 500);
-    return () => clearTimeout(delayDebounceFn);
+    return () => {
+      cancelled = true;
+      clearTimeout(delayDebounceFn);
+    };
   }, [ticketId, user, history]);
 
   useEffect(() => {

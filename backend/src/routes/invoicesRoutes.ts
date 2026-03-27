@@ -1,7 +1,6 @@
 import express from "express";
 import isAuth from "../middleware/isAuth";
-import * as QueueOptionController from "../controllers/QueueOptionController";
-import * as InvoicesController from "../controllers/InvoicesController"
+import * as InvoicesController from "../controllers/InvoicesController";
 
 const invoiceRoutes = express.Router();
 

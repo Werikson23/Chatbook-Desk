@@ -155,11 +155,9 @@ export default function Options(props) {
   }, []);
   
   useEffect(() => {
-    getCurrentUserInfo().then(
-      (u) => {
-        setCurrentUser(u);
-      }
-    );
+    getCurrentUserInfo().then((u) => {
+      if (isMounted.current) setCurrentUser(u);
+    });
 
     if (Array.isArray(settings) && settings.length) {
       const userRating = settings.find((s) => s.key === "userRating");
@@ -275,14 +273,20 @@ export default function Options(props) {
 
 
   useEffect(() => {
-    if (isMounted.current) {
-      const loadQueues = async () => {
+    let cancelled = false;
+    const loadQueues = async () => {
+      try {
         const list = await findAllQueues();
-        setQueues(list);
-      };
-      loadQueues();
-    }
-  }, []);
+        if (!cancelled && isMounted.current) setQueues(list);
+      } catch {
+        if (!cancelled && isMounted.current) setQueues([]);
+      }
+    };
+    loadQueues();
+    return () => {
+      cancelled = true;
+    };
+  }, [findAllQueues]);
 
   async function handleChangeUserRating(value) {
     setUserRating(value);

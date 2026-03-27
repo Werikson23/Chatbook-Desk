@@ -11,8 +11,7 @@ import {
   AutoIncrement,
   Default,
   BeforeCreate,
-  BelongsToMany,
-  HasOne
+  BelongsToMany
 } from "sequelize-typescript";
 import { v4 as uuidv4 } from "uuid";
 
@@ -75,7 +74,6 @@ class Ticket extends Model<Ticket> {
   @ForeignKey(() => Whatsapp)
   @Column
   whatsappId: number;
-
 
   @BelongsTo(() => Whatsapp)
   whatsapp: Whatsapp;

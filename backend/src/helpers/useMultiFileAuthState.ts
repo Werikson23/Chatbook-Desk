@@ -78,9 +78,9 @@ export const useMultiFileAuthState = async (
         },
         set: async data => {
           const tasks: Promise<void>[] = [];
-          // eslint-disable-next-line no-restricted-syntax, guard-for-in
+          // eslint-disable-next-line no-restricted-syntax
           for (const category in data) {
-            // eslint-disable-next-line no-restricted-syntax, guard-for-in
+            // eslint-disable-next-line no-restricted-syntax
             for (const id in data[category]) {
               const value = data[category][id];
               const file = `${category}-${id}`;

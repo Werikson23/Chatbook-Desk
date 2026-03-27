@@ -11,14 +11,11 @@ export type BrazilRegionId =
 const DDD_TO_REGION: Record<string, BrazilRegionId> = (() => {
   const m: Record<string, BrazilRegionId> = {};
   const add = (ddds: string[], r: BrazilRegionId) => {
-    ddds.forEach((d) => {
+    ddds.forEach(d => {
       m[d] = r;
     });
   };
-  add(
-    ["68", "96", "92", "97", "91", "93", "94", "69", "95", "63"],
-    "norte"
-  );
+  add(["68", "96", "92", "97", "91", "93", "94", "69", "95", "63"], "norte");
   add(
     [
       "82",
@@ -69,7 +66,21 @@ const DDD_TO_REGION: Record<string, BrazilRegionId> = (() => {
     "sudeste"
   );
   add(
-    ["41", "42", "43", "44", "45", "46", "51", "53", "54", "55", "47", "48", "49"],
+    [
+      "41",
+      "42",
+      "43",
+      "44",
+      "45",
+      "46",
+      "51",
+      "53",
+      "54",
+      "55",
+      "47",
+      "48",
+      "49"
+    ],
     "sul"
   );
   return m;

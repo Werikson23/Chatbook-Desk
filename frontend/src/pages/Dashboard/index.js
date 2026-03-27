@@ -231,21 +231,26 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const loadCurrentUser = async () => {
       try {
         const user = await getCurrentUserInfo();
+        if (cancelled) return;
         if (user?.profile !== "admin") {
           window.location.href = "/tickets";
           return;
         }
         setCurrentUser(user);
       } catch (_) {
-        window.location.href = "/login";
+        if (!cancelled) window.location.href = "/login";
       } finally {
-        setAuthReady(true);
+        if (!cancelled) setAuthReady(true);
       }
     };
     loadCurrentUser();
+    return () => {
+      cancelled = true;
+    };
   }, [getCurrentUserInfo]);
 
   useEffect(() => {
@@ -295,13 +300,19 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     const loadCloseReasons = async () => {
       try {
         const { data } = await api.get("/close-reasons");
-        setCloseReasons(data || []);
-      } catch (_) {}
+        if (!cancelled) setCloseReasons(data || []);
+      } catch (_) {
+        if (!cancelled) setCloseReasons([]);
+      }
     };
     loadCloseReasons();
+    return () => {
+      cancelled = true;
+    };
   }, []);
     
   async function handleChangePeriod(value) {

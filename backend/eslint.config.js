@@ -8,7 +8,14 @@ const globals = require("globals");
 
 module.exports = [
   {
-    ignores: ["dist/**", "node_modules/**", "public/**", "private/**"]
+    ignores: [
+      "dist/**",
+      "node_modules/**",
+      "public/**",
+      "private/**",
+      "src/database/migrations/**",
+      "src/database/seeds/**"
+    ]
   },
   {
     files: ["src/**/*.ts"],
@@ -39,7 +46,14 @@ module.exports = [
       "no-undef": "off",
       "no-unused-vars": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_"
+        }
+      ],
+      "@typescript-eslint/no-explicit-any": "warn",
       "import/prefer-default-export": "off",
       "import/no-duplicates": "error",
       "import/order": "off",
@@ -48,7 +62,6 @@ module.exports = [
       "no-restricted-syntax": [
         "error",
         "ForInStatement",
-        "ForOfStatement",
         "LabeledStatement",
         "WithStatement"
       ],

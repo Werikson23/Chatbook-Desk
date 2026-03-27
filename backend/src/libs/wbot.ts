@@ -17,7 +17,6 @@ import NodeCache from "node-cache";
 import { Op } from "sequelize";
 import { Agent } from "https";
 import { Mutex } from "async-mutex";
-import { Socket } from "socket.io-client";
 import Whatsapp from "../models/Whatsapp";
 import { logger, loggerBaileys } from "../utils/logger";
 import authState from "../helpers/authState";
@@ -605,7 +604,7 @@ export const initWASocket = async (
           try {
             const metadata = await wsocket.groupMetadata(event.id);
             groupCache.set(event.id, metadata);
-          } catch (error) {
+          } catch {
             groupCache.del(event.id);
           }
         });

@@ -1,7 +1,6 @@
 import { logger } from "../../utils/logger";
 
 export class DecoupledDriverServices {
-  // eslint-disable-next-line no-use-before-define
   private static instance: DecoupledDriverServices;
 
   private functions: { [key: string]: (...args: any[]) => any } = {};

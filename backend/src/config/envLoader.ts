@@ -33,7 +33,12 @@ function applyDevelopmentPortsFromMonorepo(): void {
   if (process.env.NODE_ENV !== "development") {
     return;
   }
-  const portsPath = path.join(backendRoot, "..", "env", "development.ports.json");
+  const portsPath = path.join(
+    backendRoot,
+    "..",
+    "env",
+    "development.ports.json"
+  );
   if (!exists(portsPath)) {
     return;
   }

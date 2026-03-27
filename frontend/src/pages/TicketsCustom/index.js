@@ -20,7 +20,7 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import TicketsListCustom from "../../components/TicketsListCustom";
 import Ticket from "../../components/Ticket";
 
-const PRESET_KEY = "ticketzInboxPreset";
+const PRESET_KEY = "chatbookInboxPreset";
 
 const useStyles = makeStyles((theme) => ({
   page: {
@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
   },
   appGrid: {
     display: "grid",
-    gridTemplateColumns: "260px 340px 1fr",
+    gridTemplateColumns: "232px 372px 1fr",
     height: "100%",
     width: "100%",
     [theme.breakpoints.down("md")]: {

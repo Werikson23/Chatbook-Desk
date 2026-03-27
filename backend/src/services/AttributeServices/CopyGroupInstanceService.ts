@@ -33,7 +33,12 @@ const CopyGroupInstanceService = async ({
     throw new Error("ERR_CONTAINER_NOT_REPEATABLE");
   }
 
-  const perms = await resolveContainerPermissions(companyId, container.id, profile, isSuper);
+  const perms = await resolveContainerPermissions(
+    companyId,
+    container.id,
+    profile,
+    isSuper
+  );
   if (!perms.canCopy) {
     throw new Error("ERR_NO_PERMISSION_COPY");
   }
@@ -47,7 +52,10 @@ const CopyGroupInstanceService = async ({
     await ShowTicketService(entityId, companyId);
   }
 
-  const maxSort = await AttributeGroupInstance.max<number, AttributeGroupInstance>("sortOrder", {
+  const maxSort = await AttributeGroupInstance.max<
+    number,
+    AttributeGroupInstance
+  >("sortOrder", {
     where: {
       companyId,
       containerId: container.id,
@@ -58,7 +66,7 @@ const CopyGroupInstanceService = async ({
 
   const label = newLabel?.trim() || `${src.label} (cópia)`;
 
-  const created = await sequelize.transaction(async (transaction) => {
+  const created = await sequelize.transaction(async transaction => {
     const inst = await AttributeGroupInstance.create(
       {
         companyId,

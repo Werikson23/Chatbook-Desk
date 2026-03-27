@@ -24,7 +24,7 @@ export const genGreeting = (
     _t("Good evening", lngSource)
   ];
   const h = new Date().getHours();
-  // eslint-disable-next-line no-bitwise
+
   return greetings[(h / 6) >> 0];
 };
 

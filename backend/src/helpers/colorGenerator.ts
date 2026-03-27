@@ -1,5 +1,3 @@
-/* eslint-disable no-bitwise */
-
 type Color = {
   r: number;
   g: number;

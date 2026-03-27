@@ -17,33 +17,23 @@ export function TagsContainer ({ ticket, contact, compact = false }) {
         }
     }, [])
 
-    useEffect(() => {
-        if (!ticket) return;
-
-        if (isMounted.current) {
-            loadTags().then(() => {
-                if (Array.isArray(ticket.tags)) {
-                    setSelecteds(ticket.tags);
-                } else {
-                    setSelecteds([]);
-                }
-            });
+    const normalizeTag = (item) => {
+        if (!item) return null;
+        if (isString(item)) {
+            const name = item.trim();
+            return name ? { name } : null;
         }
-    }, [ticket]);
+        return item;
+    };
 
     useEffect(() => {
-        if (!contact) return;
-
-        if (isMounted.current) {
-            loadTags().then(() => {
-                if (Array.isArray(contact.tags)) {
-                    setSelecteds(contact.tags);
-                } else {
-                    setSelecteds([]);
-                }
-            });
-        }
-    }, [contact]);
+        if (!isMounted.current) return;
+        loadTags();
+        const sourceTags = Array.isArray(ticket?.tags)
+            ? ticket.tags
+            : (Array.isArray(contact?.tags) ? contact.tags : []);
+        setSelecteds(sourceTags.filter(Boolean));
+    }, [ticket?.id, contact?.id, ticket?.tags, contact?.tags]);
 
     const createTag = async (data) => {
         try {
@@ -77,22 +67,27 @@ export function TagsContainer ({ ticket, contact, compact = false }) {
         if (reason === 'create-option') {
             if (isArray(value)) {
                 for (let item of value) {
+                    const normalized = normalizeTag(item);
+                    if (!normalized) continue;
                     if (isString(item)) {
-                        if (item.length > 2) {
-                            const newTag = await createTag({ name: item })
-                            optionsChanged.push(newTag);
+                        if (normalized.name.length > 2) {
+                            const newTag = await createTag({ name: normalized.name })
+                            if (newTag) optionsChanged.push(newTag);
                         }
                     } else {
-                        optionsChanged.push(item);
+                        optionsChanged.push(normalized);
                     }
                 }
             }
             await loadTags();
         } else {
-            optionsChanged = value;
+            optionsChanged = (value || []).map(normalizeTag).filter(Boolean);
         }
         setSelecteds(optionsChanged);
-        await syncTags({ ticketId: ticket?.id, contactId: contact?.id, tags: optionsChanged });
+        const response = await syncTags({ ticketId: ticket?.id, contactId: contact?.id, tags: optionsChanged });
+        if (Array.isArray(response?.tags)) {
+            setSelecteds(response.tags);
+        }
     }
 
     return (
@@ -103,7 +98,11 @@ export function TagsContainer ({ ticket, contact, compact = false }) {
                 value={selecteds}
                 freeSolo
                 onChange={(e, v, r) => onChange(v, r)}
-                getOptionLabel={(option) => option.name}
+                getOptionLabel={(option) => (isString(option) ? option : (option?.name || ""))}
+                isOptionEqualToValue={(option, value) =>
+                    (option?.id && value?.id && option.id === value.id) ||
+                    (option?.name || "").toLowerCase() === (value?.name || "").toLowerCase()
+                }
                 renderTags={(value, getTagProps) =>
                     value.map((option, index) => (
                         <Chip
@@ -113,7 +112,7 @@ export function TagsContainer ({ ticket, contact, compact = false }) {
                               backgroundColor: option.color || '#eee',
                               textShadow: "-1px 0 #808080, 0 1px #808080, 1px 0 #808080, 0 -1px #808080"
                             }}
-                            label={option.name}
+                            label={option?.name || ""}
                             {...getTagProps({ index })}
                             size="small"
                         />

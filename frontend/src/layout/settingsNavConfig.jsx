@@ -10,6 +10,7 @@ import DescriptionIcon from "@material-ui/icons/Description";
 import SupervisorAccountIcon from "@material-ui/icons/SupervisorAccount";
 import LocalOfferIcon from "@material-ui/icons/LocalOffer";
 import HelpOutlineIcon from "@material-ui/icons/HelpOutline";
+import StorageIcon from "@material-ui/icons/Storage";
 
 import { i18n } from "../translate/i18n";
 
@@ -80,6 +81,14 @@ export function getSettingsNavItems() {
       color: "#5856d6",
       icon: <SyncAltIcon style={{ fontSize: 14 }} />,
       route: "/settings/integrations"
+    },
+    {
+      key: "backup",
+      label: "Backup",
+      cat: "Sistema",
+      color: "#0a84ff",
+      icon: <StorageIcon style={{ fontSize: 14 }} />,
+      route: "/settings/backup"
     },
     {
       key: "sla",

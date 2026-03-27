@@ -73,9 +73,9 @@ const GetEntityAttributeSchemaService = async ({
           groupInstanceId: { [Op.is]: null }
         }
       });
-      const byDef = new Map(values.map((v) => [v.attributeDefinitionId, v]));
+      const byDef = new Map(values.map(v => [v.attributeDefinitionId, v]));
 
-      const attributes = defs.map((d) => ({
+      const attributes = defs.map(d => ({
         id: d.id,
         key: d.key,
         name: d.name,
@@ -116,13 +116,13 @@ const GetEntityAttributeSchemaService = async ({
             groupInstanceId: inst.id
           }
         });
-        const byDef = new Map(values.map((v) => [v.attributeDefinitionId, v]));
+        const byDef = new Map(values.map(v => [v.attributeDefinitionId, v]));
 
         instOut.push({
           id: inst.id,
           label: inst.label,
           sortOrder: inst.sortOrder,
-          attributes: defs.map((d) => ({
+          attributes: defs.map(d => ({
             id: d.id,
             key: d.key,
             name: d.name,

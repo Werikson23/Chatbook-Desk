@@ -39,7 +39,7 @@ const useStyles = makeStyles(theme => ({
     margin: "0 auto",
     content: `url("${theme.calculatedLogo()}")`
   },
-  ticketzLogoImg: {
+  appBrandLogoImg: {
     width: "100%",
     margin: "0 auto",
     content: "url(" + (theme.mode === "light" ? logo : logoDark) + ")"
@@ -106,13 +106,13 @@ const AboutModal = ({ open, onClose }) => {
 				scroll="paper"
 			>
 				<DialogTitle id="form-dialog-title">
-					{i18n.t("about.aboutthe")} {currentUser?.super ? "ticketz" : theme.appName }
+					{i18n.t("about.aboutthe")} {currentUser?.super ? "Chatbook-Desk" : theme.appName }
 				</DialogTitle>
 				<DialogContent dividers>
 				{ currentUser?.super ? 
           <>
             <div>
-              <img className={classes.ticketzLogoImg} alt="Ticketz logo" />
+              <img className={classes.appBrandLogoImg} alt="Chatbook-Desk logo" />
             </div>
             <Typography variant="body1" gutterBottom><b>Frontend: 
               { frontendGitInfo.tagName && `Version: ${frontendGitInfo.tagName} Build info: ${frontendGitInfo.buildTimestamp}` }

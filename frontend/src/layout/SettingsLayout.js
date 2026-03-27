@@ -17,6 +17,7 @@ import CloseReasons from "../pages/CloseReasons";
 import FarewellTemplates from "../pages/FarewellTemplates";
 import SuperadminSaaS from "../pages/SuperadminSaaS";
 import SettingsAttributesPage from "../pages/SettingsCustom/SettingsAttributesPage";
+import SettingsBackupPage from "../pages/SettingsCustom/SettingsBackupPage";
 import { AuthContext } from "../context/Auth/AuthContext";
 
 const useStyles = makeStyles(() => ({
@@ -69,6 +70,7 @@ export default function SettingsLayout() {
               <Route path={`${path}/sla`} component={Schedules} />
               <Route path={`${path}/tags`} component={Tags} />
               <Route path={`${path}/attributes`} component={SettingsAttributesPage} />
+              <Route path={`${path}/backup`} component={SettingsBackupPage} />
               <Route path={`${path}/users`} component={Users} />
               <Route path={`${path}/integrations`} component={MessagesAPI} />
               <Route path={`${path}/queues`} component={Queues} />

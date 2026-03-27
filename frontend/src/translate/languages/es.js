@@ -1288,7 +1288,8 @@ const messages = {
       frontendErrors: {
         ERR_CONFIG_ERROR: "Error de configuración. Por favor, contacte al soporte.",
         ERR_CLOCK_OUT_OF_SYNC: "Reloj fuera de sincronización. Por favor, verifique la configuración de fecha y hora de su dispositivo.",
-        ERR_BACKEND_UNREACHABLE: "Backend inalcanzable. Por favor, intente nuevamente más tarde.",
+        ERR_BACKEND_UNREACHABLE:
+          "Backend inalcanzable (p. ej. puerto 8080). En la raíz: npm run dev:up y npm run dev, o npm run dev:backend si la BD ya está en marcha.",
       },
       backendErrors: {
         ERR_FORBIDDEN: "No tienes permisos para acceder a este recurso.",

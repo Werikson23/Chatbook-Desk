@@ -250,47 +250,67 @@
       const hostname = config.BACKEND_HOST || window.location.hostname;
       const port = config.BACKEND_PORT ? `:${config.BACKEND_PORT}` : "";
       const path = config.BACKEND_PATH || ((hostname === "localhost" || hostname !== window.location.hostname) ? "" : "/backend");
-    	
-	    const backendUrl = `${protocol}://${hostname}${port}${path}`;
-	    const settingsBaseUrl = backendUrl + "/public-settings";
-	    
-	    fetch(settingsBaseUrl + "/primaryColor" + (theme === "dark" ? "Dark" : "Light"))
-	        .then(response => response.json())
-	        .then(data => {
-	          const root = document.documentElement;
-	          
-	          if (data) {
-	            root.style.setProperty('--primary', data);
-	            return;
-	          }
-	          
-	          root.style.setProperty('--primary', theme === "dark" ? "#39ACE7" : "#00f");
-	        });
-	    
-	    Promise.all([
-	        fetch(settingsBaseUrl + "/appLogoDark"),
-	        fetch(settingsBaseUrl + "/appLogoLight")
-	        ]).then(async responses => {
-	          const appLogo = document.getElementById('app-logo');
-	          
-	          const logoSrc =
-	            await (theme === "dark" ? responses[0] : responses[1]).json() ||
-	            await (theme === "dark" ? responses[1] : responses[0]).json();
-	          
-	          if (!logoSrc) {
-	            appLogo.src = `/vector/logo${theme === "dark" ? "-dark" : ""}.svg`;
-	          } else {
-	            appLogo.src = backendUrl + "/public/" + (logoSrc || logoAltSrc);
-	          }
-	          const appLogoDiv = document.getElementById('app-logo-div');
-	          appLogoDiv.style.display = "block";
-	        });
-	    
-	    fetch(settingsBaseUrl + "/appName")
-	        .then(response => response.json())
-	        .then(data => {
-	          document.title = data || "ticketz";
-	        });
+
+      const backendUrl = `${protocol}://${hostname}${port}${path}`;
+      const settingsBaseUrl = backendUrl + "/public-settings";
+
+      const readJson = async (response) => {
+        if (!response || !response.ok) return null;
+        try {
+          return await response.json();
+        } catch (e) {
+          return null;
+        }
+      };
+
+      try {
+        const colorKey = "/primaryColor" + (theme === "dark" ? "Dark" : "Light");
+        const colorRes = await fetch(settingsBaseUrl + colorKey);
+        const colorData = await readJson(colorRes);
+        const root = document.documentElement;
+        if (colorData) {
+          root.style.setProperty("--primary", colorData);
+        } else {
+          root.style.setProperty("--primary", theme === "dark" ? "#39ACE7" : "#00f");
+        }
+      } catch (e) {
+        document.documentElement.style.setProperty(
+          "--primary",
+          theme === "dark" ? "#39ACE7" : "#00f"
+        );
+      }
+
+      try {
+        const [resDark, resLight] = await Promise.all([
+          fetch(settingsBaseUrl + "/appLogoDark"),
+          fetch(settingsBaseUrl + "/appLogoLight"),
+        ]);
+        const appLogo = document.getElementById("app-logo");
+        let logoSrc =
+          theme === "dark" ? await readJson(resDark) : await readJson(resLight);
+        if (!logoSrc) {
+          logoSrc =
+            theme === "dark" ? await readJson(resLight) : await readJson(resDark);
+        }
+        if (!logoSrc) {
+          appLogo.src = "/vector/logo" + (theme === "dark" ? "-dark" : "") + ".svg";
+        } else {
+          appLogo.src = backendUrl + "/public/" + logoSrc;
+        }
+        document.getElementById("app-logo-div").style.display = "block";
+      } catch (e) {
+        const appLogo = document.getElementById("app-logo");
+        appLogo.src = "/vector/logo" + (theme === "dark" ? "-dark" : "") + ".svg";
+        document.getElementById("app-logo-div").style.display = "block";
+      }
+
+      try {
+        const nameRes = await fetch(settingsBaseUrl + "/appName");
+        const nameData = await readJson(nameRes);
+        document.title = nameData || "Chatbook-Desk";
+      } catch (e) {
+        document.title = "Chatbook-Desk";
+      }
     };
 		
 		fetch("/config.json")
@@ -312,14 +332,14 @@
             })
             .catch(function () {
               var h = window.location.hostname;
-              if (!isLocalSplashHost(h)) {
-                configureSplash({
+              configureSplash(
+                adaptLanSplash({
                   BACKEND_PROTOCOL: "http",
-                  BACKEND_HOST: h,
+                  BACKEND_HOST: isLocalSplashHost(h) ? "localhost" : h,
                   BACKEND_PORT: "8080",
-                  BACKEND_PATH: ""
-                });
-              }
+                  BACKEND_PATH: "",
+                })
+              );
             });
         });
 		

@@ -29,7 +29,10 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
   return res.status(201).json(template);
 };
 
-export const update = async (req: Request, res: Response): Promise<Response> => {
+export const update = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   const { id } = req.params;
   const { companyId } = req.user;
   const { name, content, sortOrder, isActive } = req.body;
@@ -43,7 +46,10 @@ export const update = async (req: Request, res: Response): Promise<Response> => 
   return res.json(template);
 };
 
-export const remove = async (req: Request, res: Response): Promise<Response> => {
+export const remove = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   const { id } = req.params;
   const { companyId } = req.user;
 

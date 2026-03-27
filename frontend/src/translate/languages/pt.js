@@ -911,18 +911,18 @@ const messages = {
       },
       about: {
         aboutthe: "Sobre o",
-        copyright: "© 2024 - Funcionando com ticketz",
+        copyright: "© 2024 - Powered by Chatbook-Desk",
         buttonclose: "Fechar",
-        title: "Sobre o ticketz",
+        title: "Sobre o Chatbook-Desk",
         abouttitle: "Origem e melhorias",
-        aboutdetail: "O ticketz é derivado indireto do projeto Whaticket com melhorias compartilhadas pelos desenvolvedores do sistema EquipeChat através do canal VemFazer no youtube, posteriormente melhoradas por Claudemir Todo Bom",
+        aboutdetail: "O Chatbook-Desk é uma evolução da base Whaticket com melhorias contínuas de usabilidade, performance e operação omnichannel.",
         aboutauthorsite: "Site do autor",
         aboutwhaticketsite: "Site do Whaticket Community no Github",
         aboutvemfazersite: "Site do canal Vem Fazer no Github",
         licenseheading: "Licença em Código Aberto",
-        licensedetail: "O ticketz está licenciado sob a GNU Affero General Public License versão 3, isso significa que qualquer usuário que tiver acesso a esta aplicação tem o direito de obter acesso ao código fonte. Mais informações nos links abaixo:",
+        licensedetail: "O Chatbook-Desk segue os termos da GNU Affero General Public License v3. Usuários com acesso à aplicação têm direito de acesso ao código-fonte conforme a licença.",
         licensefulltext: "Texto completo da licença",
-        licensesourcecode: "Código fonte do ticketz"
+        licensesourcecode: "Código fonte do Chatbook-Desk"
       },
       schedules: {
         title: "Agendamentos",
@@ -1307,7 +1307,8 @@ const messages = {
       frontendErrors: {
         ERR_CONFIG_ERROR: "Erro de configuração. Por favor, contate o suporte.",
         ERR_CLOCK_OUT_OF_SYNC: "Relógio fora de sincronia. Por favor, verifique as configurações de data e hora do seu dispositivo.",
-        ERR_BACKEND_UNREACHABLE: "Backend inacessível. Por favor, tente novamente mais tarde.",
+        ERR_BACKEND_UNREACHABLE:
+          "Backend inacessível (ex.: porta 8080). Na raiz do projeto rode: npm run dev:up (Docker) e depois npm run dev — ou só npm run dev:backend se o banco já estiver no ar.",
       },
       backendErrors: {
         ERR_UNAUTHORIZED: "Você não está autorizado a acessar este recurso.",
@@ -1359,7 +1360,7 @@ const messages = {
       wavoipModal: {
         title: "Insira o token da sua conexão no Wavoip",
         instructions: "Acessando o endereço abaixo você pode criar uma conta com 50 ligações gratuitas para teste",
-        coupon: "Ao contratar o serviço use o cupom TICKETZ para ganhar um desconto!",
+        coupon: "Ao contratar o serviço, use o cupom CHATBOOK para ganhar desconto!",
       },
       openHours: {
         title: "Horários de Funcionamento",
@@ -1415,15 +1416,15 @@ const messages = {
       },
       ticketz: {
         registration: {
-          header: "Cadastre-se na base de usuários do Ticketz",
-          description: "Preencha os campos abaixo para se cadastrar na base de usuários do Ticketz e receber novidades sobre o projeto.",
+          header: "Cadastre-se na base de usuários do Chatbook-Desk",
+          description: "Preencha os campos abaixo para se cadastrar na base de usuários do Chatbook-Desk e receber novidades do projeto.",
           name: "Nome",
           country: "País",
           phoneNumber: "Número de Whatsapp",
           submit: "Cadastrar",
         },
         support: {
-          title: "Apoie o projeto Ticketz Open Source",
+          title: "Apoie o projeto Chatbook-Desk Open Source",
           mercadopagotitle: "Cartão de Crédito",
           recurringbrl: "Doação recorrente em R$",
           paypaltitle: "Cartão de Crédito",

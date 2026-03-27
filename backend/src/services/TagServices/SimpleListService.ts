@@ -27,7 +27,7 @@ const ListService = async ({
     whereCondition = {
       [Op.or]: [
         { name: { [Op.like]: `%${searchParam}%` } },
-        { color: { [Op.like]: `%${searchParam}%` } },
+        { color: { [Op.like]: `%${searchParam}%` } }
         // { kanban: { [Op.like]: `%${searchParam}%` } }
       ]
     };
@@ -53,7 +53,7 @@ const ListService = async ({
     attributes: ["id", "name", "color", "kanban", "companyId"]
   });
 
-  return tags.map((t) => ({
+  return tags.map(t => ({
     id: t.id,
     name: t.name,
     color: t.color,

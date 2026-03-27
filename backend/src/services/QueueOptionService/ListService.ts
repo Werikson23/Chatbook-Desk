@@ -1,4 +1,4 @@
-import { WhereOptions } from "sequelize/types";
+import type { WhereOptions } from "sequelize";
 import QueueOption from "../../models/QueueOption";
 
 type QueueOptionFilter = {
@@ -7,8 +7,11 @@ type QueueOptionFilter = {
   parentId: number;
 };
 
-const ListService = async ({ queueId, queueOptionId, parentId }: QueueOptionFilter): Promise<QueueOption[]> => {
-
+const ListService = async ({
+  queueId,
+  queueOptionId,
+  parentId
+}: QueueOptionFilter): Promise<QueueOption[]> => {
   const whereOptions: WhereOptions = {};
 
   if (queueId) {

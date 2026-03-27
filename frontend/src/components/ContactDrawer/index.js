@@ -30,10 +30,12 @@ import { TagsContainer } from "../TagsContainer";
 import useSettings from "../../hooks/useSettings";
 import FullscreenImageDialog from "../FullscreenImageDialog";
 import DynamicAttributesPanel from "../DynamicAttributesPanel";
+import api from "../../services/api";
+import { useHistory } from "react-router-dom";
 
 const drawerWidth = 320;
 
-const COLLAPSE_STORAGE_KEY = "ticketzContactDrawerSections_v1";
+const COLLAPSE_STORAGE_KEY = "chatbookContactDrawerSections_v1";
 
 const useStyles = makeStyles(theme => ({
 	drawer: {
@@ -184,6 +186,7 @@ const ContactDrawer = ({
 }) => {
 	const classes = useStyles();
   const { getSetting } = useSettings();
+  const history = useHistory();
 
   const getBestAvatarUrl = (url) => {
     if (!url) return "";
@@ -194,11 +197,17 @@ const ContactDrawer = ({
   const [showTags, setShowTags] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState("");
+  const [contactAttrContainers, setContactAttrContainers] = useState([]);
+  const [ticketAttrContainers, setTicketAttrContainers] = useState([]);
+  const [previousTickets, setPreviousTickets] = useState([]);
+  const [previousLoading, setPreviousLoading] = useState(false);
   const [openSections, setOpenSections] = useState({
     tags: true,
     details: true,
     integration: true,
     notes: true,
+    previousOpen: true,
+    previousClosed: false,
   });
 
 	useEffect(() => {
@@ -268,6 +277,83 @@ const ContactDrawer = ({
     return match?.value;
   }, [contact?.extraInfo]);
 
+  useEffect(() => {
+    let active = true;
+    const loadContainers = async () => {
+      try {
+        if (contact?.id) {
+          const { data } = await api.get(`/entities/contact/${contact.id}/attributes/schema`);
+          if (active) setContactAttrContainers(data?.containers || []);
+        } else if (active) {
+          setContactAttrContainers([]);
+        }
+        if (ticket?.id) {
+          const { data } = await api.get(`/entities/ticket/${ticket.id}/attributes/schema`);
+          if (active) setTicketAttrContainers(data?.containers || []);
+        } else if (active) {
+          setTicketAttrContainers([]);
+        }
+      } catch {
+        if (active) {
+          setContactAttrContainers([]);
+          setTicketAttrContainers([]);
+        }
+      }
+    };
+    loadContainers();
+    return () => {
+      active = false;
+    };
+  }, [contact?.id, ticket?.id, open]);
+
+  useEffect(() => {
+    let active = true;
+    const loadPrevious = async () => {
+      if (!contact?.id || !open) {
+        if (active) setPreviousTickets([]);
+        return;
+      }
+      setPreviousLoading(true);
+      try {
+        const { data } = await api.get("/tickets", {
+          params: { contactId: contact.id, pageNumber: "1", showAll: "true" }
+        });
+        if (active) {
+          const rows = Array.isArray(data?.tickets) ? data.tickets : [];
+          setPreviousTickets(rows.filter((t) => !ticket?.id || t.id !== ticket.id));
+        }
+      } catch {
+        if (active) setPreviousTickets([]);
+      } finally {
+        if (active) setPreviousLoading(false);
+      }
+    };
+    loadPrevious();
+    return () => {
+      active = false;
+    };
+  }, [contact?.id, ticket?.id, open]);
+
+  const openOrPendingTickets = useMemo(
+    () => previousTickets.filter((t) => t.status === "open" || t.status === "pending"),
+    [previousTickets]
+  );
+  const closedTickets = useMemo(
+    () => previousTickets.filter((t) => t.status === "closed"),
+    [previousTickets]
+  );
+
+  const statusLabel = (s) =>
+    ({ open: "Aberto", pending: "Pendente", closed: "Fechado" }[s] || s || "—");
+
+  const openTicket = (tk) => {
+    if (tk?.uuid) {
+      history.push(`/tickets/${tk.uuid}`);
+      return;
+    }
+    if (tk?.id) history.push(`/tickets/${tk.id}`);
+  };
+
   const Section = ({ sectionKey, title, defaultOpen = true, children }) => {
     const isOpen = openSections[sectionKey] ?? defaultOpen;
     return (
@@ -300,6 +386,62 @@ const ContactDrawer = ({
         {isOpen ? (
           <div className={classes.sectionBody}>
             <div className={classes.sectionBodyInner}>{children}</div>
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
+  const HistoryBlock = ({ sectionKey, title, rows }) => {
+    const isOpen = openSections[sectionKey] ?? false;
+    return (
+      <div style={{ border: "1px solid #2b2e33", borderRadius: 8, marginBottom: 10 }}>
+        <button
+          type="button"
+          className={classes.sectionHeader}
+          onClick={() => toggleSection(sectionKey)}
+          style={{ padding: "8px 10px", borderRadius: 8 }}
+        >
+          <div className={classes.sectionTitle}>{title}</div>
+          {isOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+        </button>
+        {isOpen ? (
+          <div style={{ padding: "6px 8px 10px 8px" }}>
+            {!rows.length ? (
+              <Typography variant="body2" style={{ color: "#9ca3af" }}>
+                Nenhuma conversa neste bloco.
+              </Typography>
+            ) : (
+              rows.map((tk) => (
+                <div
+                  key={tk.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openTicket(tk)}
+                  onKeyDown={(e) => e.key === "Enter" && openTicket(tk)}
+                  style={{
+                    marginTop: 6,
+                    padding: "8px 9px",
+                    borderRadius: 8,
+                    border: "1px solid #2b2e33",
+                    cursor: "pointer",
+                    background: "#23262b",
+                  }}
+                >
+                  <Typography variant="caption" style={{ color: "#f8f9fa", display: "block", fontWeight: 600 }}>
+                    #{tk.id} · {statusLabel(tk.status)}
+                  </Typography>
+                  <Typography variant="caption" style={{ color: "#9ca3af", display: "block" }}>
+                    {tk.queue?.name || "Sem fila"} · {tk.user?.name || "Sem responsável"}
+                  </Typography>
+                  {tk.lastMessage ? (
+                    <Typography variant="caption" style={{ color: "#cdd2da", display: "block", marginTop: 4 }}>
+                      {String(tk.lastMessage).slice(0, 90)}
+                    </Typography>
+                  ) : null}
+                </div>
+              ))
+            )}
           </div>
         ) : null}
       </div>
@@ -427,49 +569,90 @@ const ContactDrawer = ({
                     Nenhuma macro disponível.
                   </Typography>
                 </ChatwootSection>
-                <ChatwootSection sectionKey="attrs" title="Contact Attributes">
+                <ChatwootSection sectionKey="tags" title="Contact Tags">
                   <div style={{ marginBottom: 12 }}>
                     <Typography variant="caption" style={{ color: "#9ca3af", display: "block", marginBottom: 6 }}>
                       Etiquetas
                     </Typography>
                     <TagsContainer
-                      ticket={ticket}
                       contact={contact}
                       compact
                     />
                   </div>
-                  {contact?.id ? (
-                    <div style={{ marginBottom: 16 }}>
-                      <DynamicAttributesPanel entityType="contact" entityId={contact.id} chatwoot />
-                    </div>
-                  ) : null}
-                  {ticket?.id ? (
-                    <div style={{ marginBottom: 8 }}>
-                      <DynamicAttributesPanel entityType="ticket" entityId={ticket.id} chatwoot title="Atributos da conversa" />
-                    </div>
-                  ) : null}
-                  {extraInfoRows.length ? (
-                    extraInfoRows.map((info) => (
+                </ChatwootSection>
+                {contactAttrContainers.map((container) => (
+                  <ChatwootSection
+                    key={`contact-attr-${container.id}`}
+                    sectionKey={`contact-attr-${container.id}`}
+                    title={container.name}
+                  >
+                    {contact?.id ? (
+                      <DynamicAttributesPanel
+                        entityType="contact"
+                        entityId={contact.id}
+                        containerId={container.id}
+                        renderAsSection={false}
+                        chatwoot
+                      />
+                    ) : null}
+                  </ChatwootSection>
+                ))}
+                {ticketAttrContainers.map((container) => (
+                  <ChatwootSection
+                    key={`ticket-attr-${container.id}`}
+                    sectionKey={`ticket-attr-${container.id}`}
+                    title={container.name}
+                  >
+                    {ticket?.id ? (
+                      <DynamicAttributesPanel
+                        entityType="ticket"
+                        entityId={ticket.id}
+                        containerId={container.id}
+                        renderAsSection={false}
+                        chatwoot
+                      />
+                    ) : null}
+                  </ChatwootSection>
+                ))}
+                {extraInfoRows.length ? (
+                  <ChatwootSection sectionKey="legacy-attrs" title="Legacy Attributes">
+                    {extraInfoRows.map((info) => (
                       <div key={`${info?.name}-${info?.value}`} className={classes.kvRow}>
                         <div className={classes.kvKey}>{info?.name}</div>
                         <div className={classes.kvValue}>
                           <WhatsMarked>{String(info?.value || "")}</WhatsMarked>
                         </div>
                       </div>
-                    ))
-                  ) : (
-                    <Typography variant="body2" style={{ color: "#9ca3af" }}>
-                      Sem atributos extras (legado).
-                    </Typography>
-                  )}
-                </ChatwootSection>
+                    ))}
+                  </ChatwootSection>
+                ) : null}
                 <ChatwootSection sectionKey="info" title="Conversation Information">
                   <TicketNotes ticket={ticket} compact />
                 </ChatwootSection>
                 <ChatwootSection sectionKey="previous" title="Previous Conversations">
-                  <Typography variant="body2" style={{ color: "#9ca3af" }}>
-                    Sem conversas anteriores.
-                  </Typography>
+                  {previousLoading ? (
+                    <Typography variant="body2" style={{ color: "#9ca3af" }}>
+                      Carregando conversas...
+                    </Typography>
+                  ) : (
+                    <>
+                      <HistoryBlock
+                        sectionKey="previousOpen"
+                        title={`Abertas/Pendentes (${openOrPendingTickets.length})`}
+                        rows={openOrPendingTickets}
+                      />
+                      <HistoryBlock
+                        sectionKey="previousClosed"
+                        title={`Fechadas (${closedTickets.length})`}
+                        rows={closedTickets}
+                      />
+                      {!openOrPendingTickets.length && !closedTickets.length ? (
+                        <Typography variant="body2" style={{ color: "#9ca3af" }}>
+                          Sem conversas anteriores.
+                        </Typography>
+                      ) : null}
+                    </>
+                  )}
                 </ChatwootSection>
               </div>
 
@@ -615,9 +798,29 @@ const ContactDrawer = ({
               <TicketNotes ticket={ticket} compact />
             </Section>
             <Section sectionKey="previous" title="Previous Conversations">
-              <Typography variant="body2" style={{ color: "#9ca3af" }}>
-                Sem conversas anteriores.
-              </Typography>
+              {previousLoading ? (
+                <Typography variant="body2" style={{ color: "#9ca3af" }}>
+                  Carregando conversas...
+                </Typography>
+              ) : (
+                <>
+                  <HistoryBlock
+                    sectionKey="previousOpen"
+                    title={`Abertas/Pendentes (${openOrPendingTickets.length})`}
+                    rows={openOrPendingTickets}
+                  />
+                  <HistoryBlock
+                    sectionKey="previousClosed"
+                    title={`Fechadas (${closedTickets.length})`}
+                    rows={closedTickets}
+                  />
+                  {!openOrPendingTickets.length && !closedTickets.length ? (
+                    <Typography variant="body2" style={{ color: "#9ca3af" }}>
+                      Sem conversas anteriores.
+                    </Typography>
+                  ) : null}
+                </>
+              )}
             </Section>
           </div>
 

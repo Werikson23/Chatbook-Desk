@@ -38,7 +38,8 @@ interface TicketData {
 
 const updateMutex = new Mutex();
 
-const parseBoolean = (value?: string): boolean => value === "true" || value === "1";
+const parseBoolean = (value?: string): boolean =>
+  value === "true" || value === "1";
 
 export const index = async (req: Request, res: Response): Promise<Response> => {
   const {

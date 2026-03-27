@@ -14,7 +14,14 @@ export const index = async (req: Request, res: Response): Promise<Response> => {
       companyId,
       ...(listAll && canManage ? {} : { isActive: true })
     },
-    include: [{ model: Queue, as: "queues", attributes: ["id", "name"], through: { attributes: [] } }],
+    include: [
+      {
+        model: Queue,
+        as: "queues",
+        attributes: ["id", "name"],
+        through: { attributes: [] }
+      }
+    ],
     order: [["name", "ASC"]]
   });
 
@@ -40,12 +47,22 @@ export const store = async (req: Request, res: Response): Promise<Response> => {
     await reason.$set("queues", queueIds);
   }
   await reason.reload({
-    include: [{ model: Queue, as: "queues", attributes: ["id"], through: { attributes: [] } }]
+    include: [
+      {
+        model: Queue,
+        as: "queues",
+        attributes: ["id"],
+        through: { attributes: [] }
+      }
+    ]
   });
   return res.status(201).json(reason);
 };
 
-export const update = async (req: Request, res: Response): Promise<Response> => {
+export const update = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   const { id } = req.params;
   const { companyId } = req.user;
   const { name, color, queueIds, isActive } = req.body;
@@ -60,12 +77,22 @@ export const update = async (req: Request, res: Response): Promise<Response> => 
     await reason.$set("queues", queueIds);
   }
   await reason.reload({
-    include: [{ model: Queue, as: "queues", attributes: ["id"], through: { attributes: [] } }]
+    include: [
+      {
+        model: Queue,
+        as: "queues",
+        attributes: ["id"],
+        through: { attributes: [] }
+      }
+    ]
   });
   return res.json(reason);
 };
 
-export const remove = async (req: Request, res: Response): Promise<Response> => {
+export const remove = async (
+  req: Request,
+  res: Response
+): Promise<Response> => {
   const { id } = req.params;
   const { companyId } = req.user;
 

@@ -6,12 +6,6 @@ import ShowTicketService from "./ShowTicketService";
 import FindOrCreateATicketTrakingService from "./FindOrCreateATicketTrakingService";
 import Setting from "../../models/Setting";
 
-interface TicketData {
-  status?: string;
-  companyId?: number;
-  unreadMessages?: number;
-}
-
 const FindOrCreateTicketServiceMeta = async (
   contact: Contact,
   whatsappId: number,
@@ -34,6 +28,14 @@ const FindOrCreateTicketServiceMeta = async (
   if (ticket) {
     await ticket.update({ unreadMessages });
   }
+
+  const timeCreateNewTicketSetting = await Setting.findOne({
+    where: { key: "timeCreateNewTicket", companyId }
+  });
+  const windowSeconds = timeCreateNewTicketSetting
+    ? parseInt(timeCreateNewTicketSetting.value, 10)
+    : 7200;
+  const windowHours = Math.max(windowSeconds / 3600, 1 / 60);
 
   if (!ticket) {
     ticket = await Ticket.findOne({
@@ -60,18 +62,13 @@ const FindOrCreateTicketServiceMeta = async (
         channel
       });
     }
-    const msgIsGroupBlock = await Setting.findOne({
-      where: { key: "timeCreateNewTicket" }
-    });
-  
-    const value = msgIsGroupBlock ? parseInt(msgIsGroupBlock.value, 10) : 7200;
   }
 
   if (!ticket) {
     ticket = await Ticket.findOne({
       where: {
         updatedAt: {
-          [Op.between]: [+subHours(new Date(), 2), +new Date()]
+          [Op.between]: [+subHours(new Date(), windowHours), +new Date()]
         },
         contactId: contact.id
       },
@@ -98,7 +95,7 @@ const FindOrCreateTicketServiceMeta = async (
 
   if (!ticket) {
     ticket = await Ticket.create({
-      contactId:contact.id,
+      contactId: contact.id,
       status: "pending",
       isGroup: false,
       unreadMessages,
@@ -114,7 +111,6 @@ const FindOrCreateTicketServiceMeta = async (
       userId: ticket.userId,
       channel
     });
-    
   } else {
     await ticket.update({ whatsappId });
   }

@@ -5,8 +5,17 @@ import * as AttributeController from "../controllers/AttributeController";
 
 const attributeRoutes = express.Router();
 
-attributeRoutes.get("/attribute-containers", isAuth, AttributeController.listContainers);
-attributeRoutes.post("/attribute-containers", isAuth, isAdmin, AttributeController.createContainer);
+attributeRoutes.get(
+  "/attribute-containers",
+  isAuth,
+  AttributeController.listContainers
+);
+attributeRoutes.post(
+  "/attribute-containers",
+  isAuth,
+  isAdmin,
+  AttributeController.createContainer
+);
 attributeRoutes.get(
   "/attribute-containers/:containerId/detail",
   isAuth,
@@ -19,7 +28,12 @@ attributeRoutes.put(
   isAdmin,
   AttributeController.updateContainer
 );
-attributeRoutes.post("/attribute-definitions", isAuth, isAdmin, AttributeController.createDefinition);
+attributeRoutes.post(
+  "/attribute-definitions",
+  isAuth,
+  isAdmin,
+  AttributeController.createDefinition
+);
 attributeRoutes.delete(
   "/attribute-definitions/:definitionId",
   isAuth,
@@ -55,6 +69,10 @@ attributeRoutes.put(
   AttributeController.putValues
 );
 
-attributeRoutes.get("/attribute-audit-logs", isAuth, AttributeController.listAuditLogs);
+attributeRoutes.get(
+  "/attribute-audit-logs",
+  isAuth,
+  AttributeController.listAuditLogs
+);
 
 export default attributeRoutes;

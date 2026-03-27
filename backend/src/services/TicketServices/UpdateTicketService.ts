@@ -179,7 +179,14 @@ const UpdateTicketService = async ({
             companyId,
             isActive: true
           },
-          include: [{ model: Queue, as: "queues", attributes: ["id"], through: { attributes: [] } }]
+          include: [
+            {
+              model: Queue,
+              as: "queues",
+              attributes: ["id"],
+              through: { attributes: [] }
+            }
+          ]
         });
         if (!selectedCloseReason) {
           throw new AppError("ERR_CLOSE_REASON_NOT_FOUND", 404);
@@ -301,7 +308,11 @@ const UpdateTicketService = async ({
 
       const isManualCloseRequest = status === "closed" && !!reqUserId;
 
-      if (selectedFarewellTemplate && ticket.channel === "whatsapp" && !isGroup) {
+      if (
+        selectedFarewellTemplate &&
+        ticket.channel === "whatsapp" &&
+        !isGroup
+      ) {
         const body = formatBody(selectedFarewellTemplate.content, ticket);
         const sentMessage = await SendWhatsAppMessage({ body, ticket });
         await verifyMessage(sentMessage, ticket, ticket.contact);

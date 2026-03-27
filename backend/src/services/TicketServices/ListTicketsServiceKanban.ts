@@ -39,7 +39,7 @@ const ListTicketsServiceKanban = async ({
   queueIds,
   tags,
   users,
-  status,
+  status: _status,
   date,
   updatedAt,
   showAll,
@@ -78,7 +78,7 @@ const ListTicketsServiceKanban = async ({
       model: Whatsapp,
       as: "whatsapp",
       attributes: ["name"]
-    },
+    }
   ];
 
   if (showAll === "true") {

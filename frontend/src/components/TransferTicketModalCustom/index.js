@@ -54,14 +54,19 @@ const TransferTicketModalCustom = ({ modalOpen, onClose, ticketid }) => {
   }, []);
 
   useEffect(() => {
-    if (isMounted.current) {
-      const loadQueues = async () => {
+    const loadQueues = async () => {
+      try {
         const list = await findAllQueues();
+        if (!isMounted.current) return;
         setAllQueues(list);
         setQueues(list);
-      };
-      loadQueues();
-    }
+      } catch {
+        if (!isMounted.current) return;
+        setAllQueues([]);
+        setQueues([]);
+      }
+    };
+    loadQueues();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -118,17 +123,17 @@ const TransferTicketModalCustom = ({ modalOpen, onClose, ticketid }) => {
       }
 
       await api.put(`/tickets/${ticketid}`, data);
-      console.log(data)
-
+      if (!isMounted.current) return;
       history.push(`/tickets`);
     } catch (err) {
-      setLoading(false);
       toastError(err);
+    } finally {
+      if (isMounted.current) setLoading(false);
     }
   };
 
   return (
-    <Dialog open={modalOpen} onClose={handleClose} maxWidth="lg" scroll="paper">
+    <Dialog open={Boolean(modalOpen)} onClose={handleClose} maxWidth="lg" scroll="paper">
       <form onSubmit={handleSaveTicket}>
         <DialogTitle id="form-dialog-title">
           {i18n.t("transferTicketModal.title")}

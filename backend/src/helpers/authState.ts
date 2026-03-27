@@ -155,12 +155,12 @@ const authState = async (
         },
         set: async (data: any) => {
           const tasks: Promise<unknown>[] = [];
-          // eslint-disable-next-line no-restricted-syntax, guard-for-in
+          // eslint-disable-next-line no-restricted-syntax
           for (const category in data) {
             if (category === "pre-key") {
               logger.info({ category: data[category] }, "Setting pre-keys");
             }
-            // eslint-disable-next-line no-restricted-syntax, guard-for-in
+            // eslint-disable-next-line no-restricted-syntax
             for (const id in data[category]) {
               const value = data[category][id];
               tasks.push(

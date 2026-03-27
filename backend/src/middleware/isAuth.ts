@@ -36,7 +36,7 @@ const isAuth = (req: Request, res: Response, next: NextFunction): void => {
       companyId: tokenData.companyId
     };
     req.companyId = tokenData.companyId;
-  } catch (err) {
+  } catch {
     throw new AppError("ERR_SESSION_EXPIRED", 403, "debug");
   }
 

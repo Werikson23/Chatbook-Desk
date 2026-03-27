@@ -101,7 +101,7 @@ const MessageOptionsMenu = ({ message, data, menuOpen, handleClose, anchorEl }) 
       />
       <MessageForwardModal
         modalOpen={forwardModalOpen}
-        onClose={setForwardModalOpen}
+        onClose={() => setForwardModalOpen(false)}
         ticketId={message.ticketId}
         messageId={message.id}
       />

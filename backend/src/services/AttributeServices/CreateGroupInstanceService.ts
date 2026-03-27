@@ -23,7 +23,11 @@ const CreateGroupInstanceService = async ({
   const container = await AttributeContainer.findOne({
     where: { id: containerId, companyId }
   });
-  if (!container || !container.isRepeatable || container.entityType !== entityType) {
+  if (
+    !container ||
+    !container.isRepeatable ||
+    container.entityType !== entityType
+  ) {
     throw new Error("ERR_INVALID_CONTAINER");
   }
 

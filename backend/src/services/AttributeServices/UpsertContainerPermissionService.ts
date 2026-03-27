@@ -13,7 +13,9 @@ const UpsertContainerPermissionService = async (
   containerId: number,
   rows: Row[]
 ) => {
-  const c = await AttributeContainer.findOne({ where: { id: containerId, companyId } });
+  const c = await AttributeContainer.findOne({
+    where: { id: containerId, companyId }
+  });
   if (!c) {
     throw new Error("ERR_CONTAINER_NOT_FOUND");
   }

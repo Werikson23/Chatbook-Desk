@@ -2,7 +2,6 @@ import Message from "../../models/Message";
 import { logger } from "../../utils/logger";
 import Contact from "../../models/Contact";
 import Queue from "../../models/Queue";
-import GetDefaultWhatsApp from "../../helpers/GetDefaultWhatsApp";
 import AppError from "../../errors/AppError";
 import { getWbot } from "../../libs/wbot";
 import {

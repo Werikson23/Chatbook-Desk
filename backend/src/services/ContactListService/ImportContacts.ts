@@ -1,6 +1,6 @@
-import { head } from "lodash";
+import { head, has } from "lodash";
 import XLSX from "xlsx";
-import { has } from "lodash";
+
 import ContactListItem from "../../models/ContactListItem";
 import CheckContactNumber from "../WbotServices/CheckNumber";
 import { logger } from "../../utils/logger";
@@ -69,7 +69,7 @@ export async function ImportContacts(
         const number = response.jid.replace(/\D/g, "");
         newContact.number = number;
         await newContact.save();
-      } catch (e) {
+      } catch {
         logger.error(`Número de contato inválido: ${newContact.number}`);
       }
     }

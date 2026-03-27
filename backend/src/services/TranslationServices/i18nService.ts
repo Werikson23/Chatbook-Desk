@@ -69,7 +69,6 @@ export async function reloadTranslations() {
   });
 }
 
-// eslint-disable-next-line no-underscore-dangle
 export function _t(
   key: string,
   lngSource:

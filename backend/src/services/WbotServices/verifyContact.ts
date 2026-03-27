@@ -55,7 +55,6 @@ async function checkAndDedup(contact: Contact, lid: string): Promise<void> {
 
   // eslint-disable-next-line no-restricted-syntax
   for (const ticket of notClosedTickets) {
-    // eslint-disable-next-line no-await-in-loop
     await UpdateTicketService({
       ticketData: { status: "closed", justClose: true },
       ticketId: ticket.id,
@@ -103,7 +102,7 @@ export async function verifyContact(
   try {
     profilePicUrl =
       (await GetProfilePicUrl(msgContact.id, "preview", wbot)) || noPicture;
-  } catch (error) {
+  } catch {
     profilePicUrl = noPicture;
   }
 

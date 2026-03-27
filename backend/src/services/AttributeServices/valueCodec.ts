@@ -64,7 +64,11 @@ export const encodeValueForStorage = (
             : JSON.stringify(raw).slice(0, 512)
       };
     default:
-      return { ...cleared, valueText: String(raw), valueStringIndex: String(raw).slice(0, 512) };
+      return {
+        ...cleared,
+        valueText: String(raw),
+        valueStringIndex: String(raw).slice(0, 512)
+      };
   }
 };
 
@@ -95,6 +99,10 @@ export const decodeStoredValue = (
   }
 };
 
-export const valuesEqual = (dataType: string, a: unknown, b: unknown): boolean => {
+export const valuesEqual = (
+  dataType: string,
+  a: unknown,
+  b: unknown
+): boolean => {
   return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 };

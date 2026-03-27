@@ -10,6 +10,8 @@ import {
 } from "@material-ui/core";
 import FileCopyOutlinedIcon from "@material-ui/icons/FileCopyOutlined";
 import EditOutlinedIcon from "@material-ui/icons/EditOutlined";
+import ExpandLessIcon from "@material-ui/icons/ExpandLess";
+import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import api from "../../services/api";
 import toastError from "../../errors/toastError";
 import { toast } from "react-toastify";
@@ -17,26 +19,33 @@ import { getBackendURL } from "../../services/config";
 
 const useStyles = makeStyles((theme) => ({
   root: { width: "100%" },
-  containerTabs: {
+  section: {
+    borderBottom: "1px solid #2b2e33",
+    background: "#1c1e21",
+    marginBottom: 8,
+  },
+  sectionHeader: {
+    width: "100%",
+    border: 0,
+    background: "#1c1e21",
+    padding: "11px 12px",
     display: "flex",
-    flexWrap: "wrap",
-    gap: 6,
-    marginBottom: 12,
+    alignItems: "center",
+    justifyContent: "space-between",
+    cursor: "pointer",
+    textAlign: "left",
+    color: "#f8f9fa",
+  },
+  sectionTitle: {
+    fontSize: 12.5,
+    fontWeight: 500,
+    color: "#f8f9fa",
+  },
+  sectionBody: {
+    padding: "0 12px 12px 12px",
   },
   tab: {
-    padding: "6px 10px",
-    borderRadius: 6,
-    border: "1px solid #2b2e33",
-    background: "#1c1e21",
     color: "#e8e8ec",
-    fontSize: 12,
-    fontWeight: 600,
-    cursor: "pointer",
-  },
-  tabActive: {
-    borderColor: "#1c64f2",
-    background: "rgba(28,100,242,0.15)",
-    color: "#fff",
   },
   instanceRow: {
     display: "flex",
@@ -226,11 +235,18 @@ const FieldEditor = ({ def, value, disabled, onChange, chatwoot }) => {
   );
 };
 
-const DynamicAttributesPanel = ({ entityType, entityId, chatwoot = true, title }) => {
+const DynamicAttributesPanel = ({
+  entityType,
+  entityId,
+  chatwoot = true,
+  title,
+  containerId = null,
+  renderAsSection = true,
+}) => {
   const classes = useStyles();
   const [loading, setLoading] = useState(true);
   const [schema, setSchema] = useState({ containers: [] });
-  const [activeContainerIdx, setActiveContainerIdx] = useState(0);
+  const [openContainers, setOpenContainers] = useState({});
   const [editMode, setEditMode] = useState(true);
   const pendingRef = useRef([]);
 
@@ -278,8 +294,8 @@ const DynamicAttributesPanel = ({ entityType, entityId, chatwoot = true, title }
     [debouncedFlush]
   );
 
-  const onFieldChange = (def, groupInstanceId, newVal) => {
-    const c = schema.containers[activeContainerIdx];
+  const onFieldChange = (containerIdx, def, groupInstanceId, newVal) => {
+    const c = schema.containers[containerIdx];
     if (!c?.permissions?.canEdit) return;
     queueSave({
       attributeDefinitionId: def.id,
@@ -288,7 +304,7 @@ const DynamicAttributesPanel = ({ entityType, entityId, chatwoot = true, title }
     });
     setSchema((prev) => {
       const next = { ...prev, containers: prev.containers.map((cont, ci) => {
-        if (ci !== activeContainerIdx) return cont;
+        if (ci !== containerIdx) return cont;
         return {
           ...cont,
           instances: cont.instances.map((inst) => {
@@ -328,7 +344,25 @@ const DynamicAttributesPanel = ({ entityType, entityId, chatwoot = true, title }
     }
   };
 
-  const containers = schema.containers || [];
+  const containers = useMemo(() => {
+    const rows = schema.containers || [];
+    if (!containerId) return rows;
+    return rows.filter((c) => c.id === containerId);
+  }, [schema.containers, containerId]);
+
+  useEffect(() => {
+    if (!containers.length) {
+      setOpenContainers({});
+      return;
+    }
+    setOpenContainers((prev) => {
+      const next = {};
+      containers.forEach((c, idx) => {
+        next[c.id] = prev[c.id] ?? idx === 0;
+      });
+      return next;
+    });
+  }, [containers]);
 
   if (loading) {
     return (
@@ -347,10 +381,6 @@ const DynamicAttributesPanel = ({ entityType, entityId, chatwoot = true, title }
     );
   }
 
-  const active = containers[activeContainerIdx] || containers[0];
-  const canEdit = active?.permissions?.canEdit && editMode;
-  const canCopy = active?.permissions?.canCopy;
-
   return (
     <div className={classes.root}>
       {title ? (
@@ -358,99 +388,121 @@ const DynamicAttributesPanel = ({ entityType, entityId, chatwoot = true, title }
           {title}
         </Typography>
       ) : null}
-      <div className={classes.containerTabs}>
-        {containers.map((c, idx) => (
-          <button
-            key={c.id}
-            type="button"
-            className={`${classes.tab} ${idx === activeContainerIdx ? classes.tabActive : ""}`}
-            onClick={() => setActiveContainerIdx(idx)}
-          >
-            {c.icon ? `${c.icon} ` : ""}
-            {c.name}
-          </button>
-        ))}
-      </div>
-
-      <div className={classes.instanceRow}>
-        <Typography variant="caption" style={{ color: "#9ca3af" }}>
-          {active?.name}
-        </Typography>
-        <div className={classes.actions}>
-          <Tooltip title={editMode ? "Modo edição" : "Somente leitura"}>
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => setEditMode((v) => !v)}
-                style={{ color: "#9ca3af" }}
+      {containers.map((container, containerIdx) => {
+        const isOpen = openContainers[container.id] ?? false;
+        const canEdit = container?.permissions?.canEdit && editMode;
+        const canCopy = container?.permissions?.canCopy;
+        return (
+          <div key={container.id} className={renderAsSection ? classes.section : undefined}>
+            {renderAsSection ? (
+              <button
+                type="button"
+                className={classes.sectionHeader}
+                onClick={() =>
+                  setOpenContainers((prev) => ({
+                    ...prev,
+                    [container.id]: !isOpen,
+                  }))
+                }
               >
-                <EditOutlinedIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-        </div>
-      </div>
-
-      {(active.instances || []).map((inst) => (
-        <div key={inst.id ?? "single"} style={{ marginBottom: 16 }}>
-          <div className={classes.instanceRow}>
-            <Typography variant="subtitle2" style={{ color: "#e8e8ec" }}>
-              {inst.label}
-            </Typography>
-            {active.isRepeatable && inst.id && canCopy ? (
-              <Tooltip title="Copiar conjunto">
-                <IconButton size="small" onClick={() => handleCopy(inst.id)} style={{ color: "#9ca3af" }}>
-                  <FileCopyOutlinedIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
+                <div className={classes.sectionTitle}>
+                  {container.icon ? `${container.icon} ` : ""}
+                  {container.name}
+                </div>
+                {isOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+              </button>
+            ) : null}
+            {isOpen || !renderAsSection ? (
+              <div className={renderAsSection ? classes.sectionBody : undefined}>
+                <div className={classes.instanceRow}>
+                  <Typography variant="caption" style={{ color: "#9ca3af" }}>
+                    {container.name}
+                  </Typography>
+                  <div className={classes.actions}>
+                    <Tooltip title={editMode ? "Modo edição" : "Somente leitura"}>
+                      <span>
+                        <IconButton
+                          size="small"
+                          onClick={() => setEditMode((v) => !v)}
+                          style={{ color: "#9ca3af" }}
+                        >
+                          <EditOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </div>
+                </div>
+                {(container.instances || []).map((inst) => (
+                  <div key={inst.id ?? `single-${container.id}`} style={{ marginBottom: 16 }}>
+                    <div className={classes.instanceRow}>
+                      <Typography variant="subtitle2" style={{ color: "#e8e8ec" }}>
+                        {inst.label}
+                      </Typography>
+                      {container.isRepeatable && inst.id && canCopy ? (
+                        <Tooltip title="Copiar conjunto">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleCopy(inst.id)}
+                            style={{ color: "#9ca3af" }}
+                          >
+                            <FileCopyOutlinedIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      ) : null}
+                    </div>
+                    {(inst.attributes || []).map((def) => (
+                      <div key={def.id} className={classes.field}>
+                        <div
+                          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}
+                        >
+                          <Typography variant="caption" style={{ color: "#9ca3af" }}>
+                            {def.name}
+                            {def.isRequired ? " *" : ""}
+                          </Typography>
+                          <Tooltip title="Copiar valor">
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                copyToClipboard(
+                                  typeof def.value === "object"
+                                    ? JSON.stringify(def.value ?? {})
+                                    : String(def.value ?? "")
+                                )
+                              }
+                              style={{ color: "#9ca3af", padding: 4 }}
+                            >
+                              <FileCopyOutlinedIcon style={{ fontSize: 16 }} />
+                            </IconButton>
+                          </Tooltip>
+                        </div>
+                        <FieldEditor
+                          def={def}
+                          value={def.value}
+                          disabled={!canEdit}
+                          chatwoot={chatwoot}
+                          onChange={(v) => {
+                            let out = v;
+                            if (def.dataType === "location") {
+                              const n = normalizeLocation(v);
+                              out = {
+                                lat: n.lat === "" ? null : Number(n.lat),
+                                lng: n.lng === "" ? null : Number(n.lng),
+                                address: n.address || "",
+                                city: n.city || "",
+                              };
+                            }
+                            onFieldChange(containerIdx, def, inst.id, out);
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
             ) : null}
           </div>
-          {(inst.attributes || []).map((def) => (
-            <div key={def.id} className={classes.field}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
-                <Typography variant="caption" style={{ color: "#9ca3af" }}>
-                  {def.name}
-                  {def.isRequired ? " *" : ""}
-                </Typography>
-                <Tooltip title="Copiar valor">
-                  <IconButton
-                    size="small"
-                    onClick={() =>
-                      copyToClipboard(
-                        typeof def.value === "object"
-                          ? JSON.stringify(def.value ?? {})
-                          : String(def.value ?? "")
-                      )
-                    }
-                    style={{ color: "#9ca3af", padding: 4 }}
-                  >
-                    <FileCopyOutlinedIcon style={{ fontSize: 16 }} />
-                  </IconButton>
-                </Tooltip>
-              </div>
-              <FieldEditor
-                def={def}
-                value={def.value}
-                disabled={!canEdit}
-                chatwoot={chatwoot}
-                onChange={(v) => {
-                  let out = v;
-                  if (def.dataType === "location") {
-                    const n = normalizeLocation(v);
-                    out = {
-                      lat: n.lat === "" ? null : Number(n.lat),
-                      lng: n.lng === "" ? null : Number(n.lng),
-                      address: n.address || "",
-                      city: n.city || "",
-                    };
-                  }
-                  onFieldChange(def, inst.id, out);
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

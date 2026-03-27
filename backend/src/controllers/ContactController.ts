@@ -280,7 +280,7 @@ export const importCsv = async (
   try {
     const firstLine = fs.readFileSync(file.path, "utf8").split("\n")[0];
     delimiter = firstLine.includes(";") ? ";" : ",";
-  } catch (error) {
+  } catch {
     throw new AppError("ERR_INVALID_CSV", 400);
   }
 
@@ -293,7 +293,7 @@ export const importCsv = async (
       let extraInfo: any[];
       try {
         extraInfo = JSON.parse(record.ExtraInfo);
-      } catch (error) {
+      } catch {
         extraInfo = [];
       }
 
